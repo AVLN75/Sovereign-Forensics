@@ -1,158 +1,616 @@
-<p>#include &#34;esp_camera.h&#34;</p>
-<p>#include</p>
-<p>#include</p>
-<p>/* Wifi Crdentials */</p>
-<p>String sta_ssid = &#34;&#34;; // set Wifi network you want to connect to</p>
-<p>String sta_password = &#34;&#34;; // set password for Wifi network</p>
-<p>/* define CAMERA_MODEL_AI_THINKER */</p>
-<p>#define PWDN_GPIO_NUM 32</p>
-<p>#define RESET_GPIO_NUM -1</p>
-<p>#define XCLK_GPIO_NUM 0</p>
-<p>#define SIOD_GPIO_NUM 26</p>
-<p>#define SIOC_GPIO_NUM 27</p>
-<p>#define Y9_GPIO_NUM 35</p>
-<p>#define Y8_GPIO_NUM 34</p>
-<p>#define Y7_GPIO_NUM 39</p>
-<p>#define Y6_GPIO_NUM 36</p>
-<p>#define Y5_GPIO_NUM 21</p>
-<p>#define Y4_GPIO_NUM 19</p>
-<p>#define Y3_GPIO_NUM 18</p>
-<p>#define Y2_GPIO_NUM 5</p>
-<p>#define VSYNC_GPIO_NUM 25</p>
-<p>#define HREF_GPIO_NUM 23</p>
-<p>#define PCLK_GPIO_NUM 22</p>
-<p>/* Defining motor and servo pins */</p>
-<p>extern int DRV_A = 12;</p>
-<p>extern int DRV_B = 13;</p>
-<p>extern int DIR_A = 14;</p>
-<p>extern int DIR_B = 15;</p>
-<p>extern int ledVal = 20; // setting bright of flash LED 0-255</p>
-<p>extern int ledPin = 4; // set digital pin GPIO4 as LED pin (use biult-in LED)</p>
-<p>extern int servoPin = 2; // set digital pin GPIO2 as servo pin (use SG90)</p>
-<p>unsigned long previousMillis = 0;</p>
-<p>void startCameraServer();</p>
-<p>void initServo() {</p>
-<p>ledcSetup(8, 50, 16); /*50 hz PWM, 16-bit resolution and range from 3250 to 6500 */</p>
-<p>ledcAttachPin(servoPin, 8);</p>
-<p>}</p>
-<p>void initLed() {</p>
-<p>ledcSetup(7, 5000, 8); /* 5000 hz PWM, 8-bit resolution and range from 0 to 255 */</p>
-<p>ledcAttachPin(ledPin, 7);</p>
-<p>}</p>
-<p>void setup() {</p>
-<p>Serial.begin(115200); // set up seriamonitor at 115200 bps</p>
-<p>Serial.setDebugOutput(true);</p>
-<p>Serial.println();</p>
-<p>Serial.println(&#34;<em>ESP32 Camera Remote Control - L293D Bluino Shield</em>&#34;);</p>
-<p>Serial.println(&#34;--------------------------------------------------------&#34;);</p>
-<p>// Set all the motor control pin to Output</p>
-<p>pinMode(DRV_A, OUTPUT);</p>
-<p>pinMode(DRV_B, OUTPUT);</p>
-<p>pinMode(DIR_A, OUTPUT);</p>
-<p>pinMode(DIR_B, OUTPUT);</p>
-<p>pinMode(ledPin, OUTPUT); // set the LED pin as an Output</p>
-<p>pinMode(servoPin, OUTPUT); // set the servo pin as an Output</p>
-<p>// Initial state - turn off motors, LED &amp; buzzer</p>
-<p>digitalWrite(DRV_A, LOW);</p>
-<p>digitalWrite(DRV_B, LOW);</p>
-<p>digitalWrite(DIR_A, LOW);</p>
-<p>digitalWrite(DIR_B, LOW);</p>
-<p>digitalWrite(ledPin, LOW);</p>
-<p>digitalWrite(servoPin, LOW);</p>
-<p>/* Initializing Servo and LED */</p>
-<p>initServo();</p>
-<p>initLed();</p>
-<p>camera_config_t config;</p>
-<p>config.ledc_channel = LEDC_CHANNEL_0;</p>
-<p>config.ledc_timer = LEDC_TIMER_0;</p>
-<p>config.pin_d0 = Y2_GPIO_NUM;</p>
-<p>config.pin_d1 = Y3_GPIO_NUM;</p>
-<p>config.pin_d2 = Y4_GPIO_NUM;</p>
-<p>config.pin_d3 = Y5_GPIO_NUM;</p>
-<p>config.pin_d4 = Y6_GPIO_NUM;</p>
-<p>config.pin_d5 = Y7_GPIO_NUM;</p>
-<p>config.pin_d6 = Y8_GPIO_NUM;</p>
-<p>config.pin_d7 = Y9_GPIO_NUM;</p>
-<p>config.pin_xclk = XCLK_GPIO_NUM;</p>
-<p>config.pin_pclk = PCLK_GPIO_NUM;</p>
-<p>config.pin_vsync = VSYNC_GPIO_NUM;</p>
-<p>config.pin_href = HREF_GPIO_NUM;</p>
-<p>config.pin_sscb_sda = SIOD_GPIO_NUM;</p>
-<p>config.pin_sscb_scl = SIOC_GPIO_NUM;</p>
-<p>config.pin_pwdn = PWDN_GPIO_NUM;</p>
-<p>config.pin_reset = RESET_GPIO_NUM;</p>
-<p>config.xclk_freq_hz = 20000000;</p>
-<p>config.pixel_format = PIXFORMAT_JPEG;</p>
-<p>//init with high specs to pre-allocate larger buffers</p>
-<p>if(psramFound()){</p>
-<p>config.frame_size = FRAMESIZE_UXGA;</p>
-<p>config.jpeg_quality = 10;</p>
-<p>config.fb_count = 2;</p>
-<p>} else {</p>
-<p>config.frame_size = FRAMESIZE_SVGA;</p>
-<p>config.jpeg_quality = 12;</p>
-<p>config.fb_count = 1;</p>
-<p>}</p>
-<p>// camera init</p>
-<p>esp_err_t err = esp_camera_init(&amp;config);</p>
-<p>if (err != ESP_OK) {</p>
-<p>Serial.printf(&#34;Camera init failed with error 0x%x&#34;, err);</p>
-<p>return;</p>
-<p>}</p>
-<p>//drop down frame size for higher initial frame rate</p>
-<p>sensor_t * s = esp_camera_sensor_get();</p>
-<p>s-&gt;set_framesize(s, FRAMESIZE_CIF);</p>
-<p>// Set NodeMCU Wifi hostname based on chip mac address</p>
-<p>char chip_id[15];</p>
-<p>snprintf(chip_id, 15, &#34;%04X&#34;, (uint16_t)(ESP.getEfuseMac()&gt;&gt;32));</p>
-<p>String hostname = &#34;esp32cam-&#34; + String(chip_id);</p>
-<p>Serial.println();</p>
-<p>Serial.println(&#34;Hostname: &#34;+hostname);</p>
-<p>// first, set NodeMCU as STA mode to connect with a Wifi network</p>
-<p>WiFi.mode(WIFI_STA);</p>
-<p>WiFi.begin(sta_ssid.c_str(), sta_password.c_str());</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.print(&#34;Connecting to: &#34;);</p>
-<p>Serial.println(sta_ssid);</p>
-<p>Serial.print(&#34;Password: &#34;);</p>
-<p>Serial.println(sta_password);</p>
-<p>// try to connect with Wifi network about 10 seconds</p>
-<p>unsigned long currentMillis = millis();</p>
-<p>previousMillis = currentMillis;</p>
-<p>while (WiFi.status() != WL_CONNECTED &amp;&amp; currentMillis - previousMillis &lt;= 10000) {</p>
-<p>delay(500);</p>
-<p>Serial.print(&#34;.&#34;);</p>
-<p>currentMillis = millis();</p>
-<p>}</p>
-<p>// if failed to connect with Wifi network set NodeMCU as AP mode</p>
-<p>IPAddress myIP;</p>
-<p>if (WiFi.status() == WL_CONNECTED) {</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.println(&#34;<em>WiFi-STA-Mode</em>&#34;);</p>
-<p>Serial.print(&#34;IP: &#34;);</p>
-<p>myIP=WiFi.localIP();</p>
-<p>Serial.println(myIP);</p>
-<p>delay(2000);</p>
-<p>} else {</p>
-<p>WiFi.mode(WIFI_AP);</p>
-<p>WiFi.softAP(hostname.c_str());</p>
-<p>myIP = WiFi.softAPIP();</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.println(&#34;WiFi failed connected to &#34; + sta_ssid);</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.println(&#34;<em>WiFi-AP-Mode</em>&#34;);</p>
-<p>Serial.print(&#34;AP IP address: &#34;);</p>
-<p>Serial.println(myIP);</p>
-<p>delay(2000);</p>
-<p>}</p>
-<p>// Start camera server to get realtime view</p>
-<p>startCameraServer();</p>
-<p>Serial.print(&#34;Camera Ready! Use &#39;http://&#34;);</p>
-<p>Serial.print(myIP);</p>
-<p>Serial.println(&#34;&#39; to connect &#34;);</p>
-<p>ArduinoOTA.begin(); // enable to receive update/upload firmware via Wifi OTA</p>
-<p>}</p>
-<p>void loop() {</p>
-<p>// put your main code here, to run repeatedly:</p>
-<p>ArduinoOTA.handle();</p>
-<p>}</p>
+<p>/* XSUB.h</p>
+<ul>
+<li></li>
+<li>
+<p>Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,</p>
+</li>
+<li>
+<p>2003, 2004, 2005, 2006, 2007, 2008 by Larry Wall and others</p>
+</li>
+<li></li>
+<li>
+<p>You may distribute under the terms of either the GNU General Public</p>
+</li>
+<li>
+<p>License or the Artistic License, as specified in the README file.</p>
+</li>
+<li></li>
+</ul>
+<p>*/</p>
+<p>#ifndef PERL_XSUB_H_</p>
+<p>#define PERL_XSUB_H_ 1</p>
+<p>/* first, some documentation for xsubpp-generated items */</p>
+<p>/*</p>
+<p>=for apidoc_section $XS</p>
+<p>F compiles XS code into C. See L.</p>
+<p>=for comment</p>
+<p>Some variables below are flagged with &#39;u&#39; because Devel::PPPort can&#39;t currently</p>
+<p>readily test them as they spring into existence by compiling with xsubpp.</p>
+<p>=for apidoc Amnu|char*|CLASS</p>
+<p>Variable which is setup by C to indicate the</p>
+<p>class name for a C++ XS constructor. This is always a C. See</p>
+<p>C&gt;.</p>
+<p>=for apidoc Amnu|type|RETVAL</p>
+<p>Variable which is setup by C to hold the return value for an</p>
+<p>XSUB. This is always the proper type for the XSUB. See</p>
+<p>L.</p>
+<p>=for apidoc Amnu|type|THIS</p>
+<p>Variable which is setup by C to designate the object in a C++</p>
+<p>XSUB. This is always the proper type for the C++ object. See C&gt; and</p>
+<p>L.</p>
+<p>=for apidoc Amn|Stack_off_t|ax</p>
+<p>Variable which is setup by C to indicate the stack base offset,</p>
+<p>used by the C, C and C macros. The C macro</p>
+<p>must be called prior to setup the C variable.</p>
+<p>=for apidoc Amn|Stack_off_t|items</p>
+<p>Variable which is setup by C to indicate the number of</p>
+<p>items on the stack. See L.</p>
+<p>=for apidoc Amn|I32|ix</p>
+<p>Variable which is setup by C to indicate which of an</p>
+<p>XSUB&#39;s aliases was used to invoke it. See L.</p>
+<p>=for apidoc Am|SV*|ST|int ix</p>
+<p>Used to access elements on the XSUB&#39;s stack.</p>
+<p>=for apidoc Ay||XS|name</p>
+<p>Macro to declare an XSUB and its C parameter list. This is handled by</p>
+<p>C. It is the same as using the more explicit C macro; the</p>
+<p>latter is preferred.</p>
+<p>=for apidoc Ayu||XS_INTERNAL|name</p>
+<p>Macro to declare an XSUB and its C parameter list without exporting the symbols.</p>
+<p>This is handled by C and generally preferable over exporting the XSUB</p>
+<p>symbols unnecessarily.</p>
+<p>=for comment</p>
+<p>XS_INTERNAL marked &#39;u&#39; because declaring a function static within our test</p>
+<p>function doesn&#39;t work</p>
+<p>=for apidoc Ay||XS_EXTERNAL|name</p>
+<p>Macro to declare an XSUB and its C parameter list explicitly exporting the symbols.</p>
+<p>=for apidoc Ay||XSPROTO|name</p>
+<p>Macro used by C&gt; and C&gt; to declare a function</p>
+<p>prototype. You probably shouldn&#39;t be using this directly yourself.</p>
+<p>=for apidoc Amn;||dAX</p>
+<p>Sets up the C variable.</p>
+<p>This is usually handled automatically by C by calling C.</p>
+<p>=for apidoc Amn;||dAXMARK</p>
+<p>Sets up the C variable and stack marker variable C.</p>
+<p>This is usually handled automatically by C by calling C.</p>
+<p>=for apidoc Amn;||dITEMS</p>
+<p>Sets up the C variable.</p>
+<p>This is usually handled automatically by C by calling C.</p>
+<p>=for apidoc Amn;||dXSARGS</p>
+<p>Sets up stack and mark pointers for an XSUB, calling C and C.</p>
+<p>Sets up the C and C variables by calling C and C.</p>
+<p>This is usually handled automatically by C.</p>
+<p>=for apidoc Amn;||dXSI32</p>
+<p>Sets up the C variable for an XSUB which has aliases. This is usually</p>
+<p>handled automatically by C.</p>
+<p>=for apidoc Amn;||dUNDERBAR</p>
+<p>Sets up any variable needed by the C macro. It used to define</p>
+<p>C, but it is currently a noop. However, it is strongly advised</p>
+<p>to still use it for ensuring past and future compatibility.</p>
+<p>=for apidoc AmnU||UNDERBAR</p>
+<p>The SV* corresponding to the C&lt;$_&gt; variable. Works even if there</p>
+<p>is a lexical C&lt;$_&gt; in scope.</p>
+<p>=cut</p>
+<p>*/</p>
+<p>#ifndef PERL_UNUSED_ARG</p>
+<h1 id="define-perl_unused_arg-x-void-sizeof-x">define PERL_UNUSED_ARG(x) ((void)sizeof(x))</h1>
+<p>#endif</p>
+<p>#ifndef PERL_UNUSED_VAR</p>
+<h1 id="define-perl_unused_var-x-void-sizeof-x">define PERL_UNUSED_VAR(x) ((void)sizeof(x))</h1>
+<p>#endif</p>
+<p>#define ST(off) PL_stack_base[ax + (off)]</p>
+<p>/* XSPROTO() is also used by SWIG like this:</p>
+<ul>
+<li></li>
+<li>
+<p>typedef XSPROTO(SwigPerlWrapper);</p>
+</li>
+<li>
+<p>typedef SwigPerlWrapper *SwigPerlWrapperPtr;</p>
+</li>
+<li></li>
+<li>
+<p>This code needs to be compilable under both C and C++.</p>
+</li>
+<li></li>
+<li>
+<p>Don&#39;t forget to change the <strong>attribute__unused</strong> version of XS()</p>
+</li>
+<li>
+<p>below too if you change XSPROTO() here.</p>
+</li>
+</ul>
+<p>*/</p>
+<p>/* XS_INTERNAL is the explicit static-linkage variant of the default</p>
+<ul>
+<li>
+<p>XS macro.</p>
+</li>
+<li></li>
+<li>
+<p>XS_EXTERNAL is the same as XS_INTERNAL except it does not include</p>
+</li>
+<li>
+<p>&#34;STATIC&#34;, ie. it exports XSUB symbols. You probably don&#39;t want that.</p>
+</li>
+</ul>
+<p>*/</p>
+<p>#define XSPROTO(name) void name(pTHX_ CV* cv <strong>attribute__unused</strong>)</p>
+<p>#undef XS</p>
+<p>#undef XS_EXTERNAL</p>
+<p>#undef XS_INTERNAL</p>
+<p>#if defined(<strong>CYGWIN</strong>) &amp;&amp; defined(USE_DYNAMIC_LOADING)</p>
+<h1 id="define-xs_external-name-__declspec-dllexport-xsproto-name">define XS_EXTERNAL(name) __declspec(dllexport) XSPROTO(name)</h1>
+<h1 id="define-xs_internal-name-static-xsproto-name">define XS_INTERNAL(name) STATIC XSPROTO(name)</h1>
+<p>#elif defined(__cplusplus)</p>
+<h1 id="define-xs_external-name-extern-c-xsproto-name">define XS_EXTERNAL(name) extern &#34;C&#34; XSPROTO(name)</h1>
+<h1 id="define-xs_internal-name-static-xsproto-name-2">define XS_INTERNAL(name) static XSPROTO(name)</h1>
+<p>#elif defined(HASATTRIBUTE_UNUSED)</p>
+<h1 id="define-xs_external-name-void-name-pthx_-cv-cv-attribute__unused">define XS_EXTERNAL(name) void name(pTHX_ CV* cv <strong>attribute__unused</strong>)</h1>
+<h1 id="define-xs_internal-name-static-void-name-pthx_-cv-cv-attribute__unused">define XS_INTERNAL(name) STATIC void name(pTHX_ CV* cv <strong>attribute__unused</strong>)</h1>
+<p>#else</p>
+<h1 id="define-xs_external-name-xsproto-name">define XS_EXTERNAL(name) XSPROTO(name)</h1>
+<h1 id="define-xs_internal-name-static-xsproto-name-3">define XS_INTERNAL(name) STATIC XSPROTO(name)</h1>
+<p>#endif</p>
+<p>/* We do export xsub symbols by default for the public XS macro.</p>
+<ul>
+<li>Try explicitly using XS_INTERNAL/XS_EXTERNAL instead, please. */</li>
+</ul>
+<p>#define XS(name) XS_EXTERNAL(name)</p>
+<p>#define dAX const Stack_off_t ax = (Stack_off_t)(MARK - PL_stack_base + 1)</p>
+<p>#define dAXMARK \</p>
+<p>Stack_off_t ax = POPMARK; \</p>
+<p>SV **mark = PL_stack_base + ax++</p>
+<p>#define dITEMS Stack_off_t items = (Stack_off_t)(SP - MARK)</p>
+<p>#define dXSARGS \</p>
+<p>dSP; dAXMARK; dITEMS</p>
+<p>/* These 3 macros are replacements for dXSARGS macro only in bootstrap.</p>
+<p>They factor out common code in every BOOT XSUB. Computation of vars mark</p>
+<p>and items will optimize away in most BOOT functions. Var ax can never be</p>
+<p>optimized away since BOOT must return &amp;PL_sv_yes by default from xsubpp.</p>
+<p>Note these macros are not drop in replacements for dXSARGS since they set</p>
+<p>PL_xsubfilename. */</p>
+<p>#define dXSBOOTARGSXSAPIVERCHK \</p>
+<p>Stack_off_t ax = XS_BOTHVERSION_SETXSUBFN_POPMARK_BOOTCHECK; \</p>
+<p>SV **mark = PL_stack_base + ax - 1; dSP; dITEMS</p>
+<p>#define dXSBOOTARGSAPIVERCHK \</p>
+<p>Stack_off_t ax = XS_APIVERSION_SETXSUBFN_POPMARK_BOOTCHECK; \</p>
+<p>SV **mark = PL_stack_base + ax - 1; dSP; dITEMS</p>
+<p>/* dXSBOOTARGSNOVERCHK has no API in xsubpp to choose it so do</p>
+<p>#undef dXSBOOTARGSXSAPIVERCHK</p>
+<p>#define dXSBOOTARGSXSAPIVERCHK dXSBOOTARGSNOVERCHK */</p>
+<p>#define dXSBOOTARGSNOVERCHK \</p>
+<p>Stack_off_t ax = XS_SETXSUBFN_POPMARK; \</p>
+<p>SV **mark = PL_stack_base + ax - 1; dSP; dITEMS</p>
+<p>#define dXSTARG SV * const targ = ((PL_op-&gt;op_private &amp; OPpENTERSUB_HASTARG) \</p>
+<p>? PAD_SV(PL_op-&gt;op_targ) : sv_newmortal())</p>
+<p>/* Should be used before final PUSHi etc. if not in PPCODE section. */</p>
+<p>#define XSprePUSH (sp = PL_stack_base + ax - 1)</p>
+<p>#define XSANY CvXSUBANY(cv)</p>
+<p>#define dXSI32 I32 ix = XSANY.any_i32</p>
+<p>#ifdef __cplusplus</p>
+<h1 id="define-xsinterface_cvt-ret-name-ret-name">define XSINTERFACE_CVT(ret,name) ret (*name)(...)</h1>
+<h1 id="define-xsinterface_cvt_anon-ret-ret">define XSINTERFACE_CVT_ANON(ret) ret (*)(...)</h1>
+<p>#else</p>
+<h1 id="define-xsinterface_cvt-ret-name-ret-name-2">define XSINTERFACE_CVT(ret,name) ret (*name)()</h1>
+<h1 id="define-xsinterface_cvt_anon-ret-ret-2">define XSINTERFACE_CVT_ANON(ret) ret (*)()</h1>
+<p>#endif</p>
+<p>#define dXSFUNCTION(ret) XSINTERFACE_CVT(ret,XSFUNCTION)</p>
+<p>#define XSINTERFACE_FUNC(ret,cv,f) ((XSINTERFACE_CVT_ANON(ret))(f))</p>
+<p>#define XSINTERFACE_FUNC_SET(cv,f) \</p>
+<p>CvXSUBANY(cv).any_dxptr = (void (<em>) (pTHX_ void</em>))(f)</p>
+<p>#define dUNDERBAR dNOOP</p>
+<p>#define UNDERBAR find_rundefsv()</p>
+<p>/* Simple macros to put new mortal values onto the stack. */</p>
+<p>/* Typically used to return values from XS functions. */</p>
+<p>/*</p>
+<p>=for apidoc_section $stack</p>
+<p>=for apidoc Am|void|XST_mIV|int pos|IV iv</p>
+<p>Place an integer into the specified position C on the stack. The</p>
+<p>value is stored in a new mortal SV.</p>
+<p>=for apidoc Am|void|XST_mNV|int pos|NV nv</p>
+<p>Place a double into the specified position C on the stack. The value</p>
+<p>is stored in a new mortal SV.</p>
+<p>=for apidoc Am|void|XST_mPV|int pos|char* str</p>
+<p>Place a copy of a string into the specified position C on the stack.</p>
+<p>The value is stored in a new mortal SV.</p>
+<p>=for apidoc Am|void|XST_mUV|int pos|UV uv</p>
+<p>Place an unsigned integer into the specified position C on the stack. The</p>
+<p>value is stored in a new mortal SV.</p>
+<p>=for apidoc Am|void|XST_mNO|int pos</p>
+<p>Place C&lt;&amp;PL_sv_no&gt; into the specified position C on the</p>
+<p>stack.</p>
+<p>=for apidoc Am|void|XST_mYES|int pos</p>
+<p>Place C&lt;&amp;PL_sv_yes&gt; into the specified position C on the</p>
+<p>stack.</p>
+<p>=for apidoc Am|void|XST_mUNDEF|int pos</p>
+<p>Place C&lt;&amp;PL_sv_undef&gt; into the specified position C on the</p>
+<p>stack.</p>
+<p>=for apidoc Am|void|XSRETURN|int nitems</p>
+<p>Return from XSUB, indicating number of items on the stack. This is usually</p>
+<p>handled by C.</p>
+<p>=for apidoc Am|void|XSRETURN_IV|IV iv</p>
+<p>Return an integer from an XSUB immediately. Uses C.</p>
+<p>=for apidoc Am|void|XSRETURN_UV|IV uv</p>
+<p>Return an integer from an XSUB immediately. Uses C.</p>
+<p>=for apidoc Am|void|XSRETURN_NV|NV nv</p>
+<p>Return a double from an XSUB immediately. Uses C.</p>
+<p>=for apidoc Am|void|XSRETURN_PV|char* str</p>
+<p>Return a copy of a string from an XSUB immediately. Uses C.</p>
+<p>=for apidoc Amn;||XSRETURN_NO</p>
+<p>Return C&lt;&amp;PL_sv_no&gt; from an XSUB immediately. Uses C.</p>
+<p>=for apidoc Amn;||XSRETURN_YES</p>
+<p>Return C&lt;&amp;PL_sv_yes&gt; from an XSUB immediately. Uses C.</p>
+<p>=for apidoc Amn;||XSRETURN_UNDEF</p>
+<p>Return C&lt;&amp;PL_sv_undef&gt; from an XSUB immediately. Uses C.</p>
+<p>=for apidoc Amn;||XSRETURN_EMPTY</p>
+<p>Return an empty list from an XSUB immediately.</p>
+<p>=for apidoc AmU||newXSproto|char* name|XSUBADDR_t f|char* filename|const char *proto</p>
+<p>Used by C to hook up XSUBs as Perl subs. Adds Perl prototypes to</p>
+<p>the subs.</p>
+<p>=for apidoc AmnU||XS_VERSION</p>
+<p>The version identifier for an XS module. This is usually</p>
+<p>handled automatically by C. See</p>
+<p>C&gt;.</p>
+<p>=for apidoc Amn;||XS_VERSION_BOOTCHECK</p>
+<p>Macro to verify that a PM module&#39;s C&lt;$VERSION&gt; variable matches the XS</p>
+<p>module&#39;s C variable. This is usually handled automatically by</p>
+<p>C. See L.</p>
+<p>=for apidoc Amn;||XS_APIVERSION_BOOTCHECK</p>
+<p>Macro to verify that the perl api version an XS module has been compiled against</p>
+<p>matches the api version of the perl interpreter it&#39;s being loaded into.</p>
+<p>=for apidoc_section $exceptions</p>
+<p>=for apidoc Amn;||dXCPT</p>
+<p>Set up necessary local variables for exception handling.</p>
+<p>See L.</p>
+<p>=for apidoc AmnU||XCPT_TRY_START</p>
+<p>Starts a try block. See L.</p>
+<p>=for apidoc AmnU||XCPT_TRY_END</p>
+<p>Ends a try block. See L.</p>
+<p>=for apidoc AmnU||XCPT_CATCH</p>
+<p>Introduces a catch block. See L.</p>
+<p>=for apidoc Amn;||XCPT_RETHROW</p>
+<p>Rethrows a previously caught exception. See L.</p>
+<p>=cut</p>
+<p>*/</p>
+<p>#define XST_mIV(i,v) (ST(i) = sv_2mortal(newSViv(v)) )</p>
+<p>#define XST_mUV(i,v) (ST(i) = sv_2mortal(newSVuv(v)) )</p>
+<p>#define XST_mNV(i,v) (ST(i) = sv_2mortal(newSVnv(v)) )</p>
+<p>#define XST_mPV(i,v) (ST(i) = sv_2mortal(newSVpv(v,0)))</p>
+<p>#define XST_mPVN(i,v,n) (ST(i) = newSVpvn_flags(v,n, SVs_TEMP))</p>
+<p>#define XST_mNO(i) (ST(i) = &amp;PL_sv_no )</p>
+<p>#define XST_mYES(i) (ST(i) = &amp;PL_sv_yes )</p>
+<p>#define XST_mUNDEF(i) (ST(i) = &amp;PL_sv_undef)</p>
+<p>#define XSRETURN(off) \</p>
+<p>STMT_START { \</p>
+<p>const IV tmpXSoff = (off); \</p>
+<p>assert(tmpXSoff &gt;= 0);\</p>
+<p>PL_stack_sp = PL_stack_base + ax + (tmpXSoff - 1); \</p>
+<p>return; \</p>
+<p>} STMT_END</p>
+<p>#define XSRETURN_IV(v) STMT_START { XST_mIV(0,v); XSRETURN(1); } STMT_END</p>
+<p>#define XSRETURN_UV(v) STMT_START { XST_mUV(0,v); XSRETURN(1); } STMT_END</p>
+<p>#define XSRETURN_NV(v) STMT_START { XST_mNV(0,v); XSRETURN(1); } STMT_END</p>
+<p>#define XSRETURN_PV(v) STMT_START { XST_mPV(0,v); XSRETURN(1); } STMT_END</p>
+<p>#define XSRETURN_PVN(v,n) STMT_START { XST_mPVN(0,v,n); XSRETURN(1); } STMT_END</p>
+<p>#define XSRETURN_NO STMT_START { XST_mNO(0); XSRETURN(1); } STMT_END</p>
+<p>#define XSRETURN_YES STMT_START { XST_mYES(0); XSRETURN(1); } STMT_END</p>
+<p>#define XSRETURN_UNDEF STMT_START { XST_mUNDEF(0); XSRETURN(1); } STMT_END</p>
+<p>#define XSRETURN_EMPTY STMT_START { XSRETURN(0); } STMT_END</p>
+<p>#define newXSproto(a,b,c,d) newXS_flags(a,b,c,d,0)</p>
+<p>#ifdef XS_VERSION</p>
+<h1 id="define-xs_version_bootcheck">define XS_VERSION_BOOTCHECK \</h1>
+<p>Perl_xs_handshake(HS_KEY(FALSE, FALSE, &#34;&#34;, XS_VERSION), HS_CXT, <strong>FILE</strong>, \</p>
+<p>items, ax, XS_VERSION)</p>
+<p>#else</p>
+<h1 id="define-xs_version_bootcheck-2">define XS_VERSION_BOOTCHECK</h1>
+<p>#endif</p>
+<p>#define XS_APIVERSION_BOOTCHECK \</p>
+<p>Perl_xs_handshake(HS_KEY(FALSE, FALSE, &#34;v&#34; PERL_API_VERSION_STRING, &#34;&#34;), \</p>
+<p>HS_CXT, <strong>FILE</strong>, items, ax, &#34;v&#34; PERL_API_VERSION_STRING)</p>
+<p>/* public API, this is a combination of XS_VERSION_BOOTCHECK and</p>
+<p>XS_APIVERSION_BOOTCHECK in 1, and is backportable */</p>
+<p>#ifdef XS_VERSION</p>
+<h1 id="define-xs_bothversion_bootcheck">define XS_BOTHVERSION_BOOTCHECK \</h1>
+<p>Perl_xs_handshake(HS_KEY(FALSE, FALSE, &#34;v&#34; PERL_API_VERSION_STRING, XS_VERSION), \</p>
+<p>HS_CXT, <strong>FILE</strong>, items, ax, &#34;v&#34; PERL_API_VERSION_STRING, XS_VERSION)</p>
+<p>#else</p>
+<p>/* should this be a #error? if you want both checked, you better supply XS_VERSION right? */</p>
+<h1 id="define-xs_bothversion_bootcheck-xs_apiversion_bootcheck">define XS_BOTHVERSION_BOOTCHECK XS_APIVERSION_BOOTCHECK</h1>
+<p>#endif</p>
+<p>/* private API */</p>
+<p>#define XS_APIVERSION_POPMARK_BOOTCHECK \</p>
+<p>Perl_xs_handshake(HS_KEY(FALSE, TRUE, &#34;v&#34; PERL_API_VERSION_STRING, &#34;&#34;), \</p>
+<p>HS_CXT, <strong>FILE</strong>, &#34;v&#34; PERL_API_VERSION_STRING)</p>
+<p>#ifdef XS_VERSION</p>
+<h1 id="define-xs_bothversion_popmark_bootcheck">define XS_BOTHVERSION_POPMARK_BOOTCHECK \</h1>
+<p>Perl_xs_handshake(HS_KEY(FALSE, TRUE, &#34;v&#34; PERL_API_VERSION_STRING, XS_VERSION), \</p>
+<p>HS_CXT, <strong>FILE</strong>, &#34;v&#34; PERL_API_VERSION_STRING, XS_VERSION)</p>
+<p>#else</p>
+<p>/* should this be a #error? if you want both checked, you better supply XS_VERSION right? */</p>
+<h1 id="define-xs_bothversion_popmark_bootcheck-xs_apiversion_popmark_bootcheck">define XS_BOTHVERSION_POPMARK_BOOTCHECK XS_APIVERSION_POPMARK_BOOTCHECK</h1>
+<p>#endif</p>
+<p>#define XS_APIVERSION_SETXSUBFN_POPMARK_BOOTCHECK \</p>
+<p>Perl_xs_handshake(HS_KEY(TRUE, TRUE, &#34;v&#34; PERL_API_VERSION_STRING, &#34;&#34;), \</p>
+<p>HS_CXT, <strong>FILE</strong>, &#34;v&#34; PERL_API_VERSION_STRING)</p>
+<p>#ifdef XS_VERSION</p>
+<h1 id="define-xs_bothversion_setxsubfn_popmark_bootcheck">define XS_BOTHVERSION_SETXSUBFN_POPMARK_BOOTCHECK \</h1>
+<p>Perl_xs_handshake(HS_KEY(TRUE, TRUE, &#34;v&#34; PERL_API_VERSION_STRING, XS_VERSION),\</p>
+<p>HS_CXT, <strong>FILE</strong>, &#34;v&#34; PERL_API_VERSION_STRING, XS_VERSION)</p>
+<p>#else</p>
+<p>/* should this be a #error? if you want both checked, you better supply XS_VERSION right? */</p>
+<h1 id="define-xs_bothversion_setxsubfn_popmark_bootcheck-xs_apiversion_setxsubfn_popmark_bootcheck">define XS_BOTHVERSION_SETXSUBFN_POPMARK_BOOTCHECK XS_APIVERSION_SETXSUBFN_POPMARK_BOOTCHECK</h1>
+<p>#endif</p>
+<p>/* For a normal bootstrap without API or XS version checking.</p>
+<p>Useful for static XS modules or debugging/testing scenarios.</p>
+<p>If this macro gets heavily used in the future, it should separated into</p>
+<p>a separate function independent of Perl_xs_handshake for efficiency */</p>
+<p>#define XS_SETXSUBFN_POPMARK \</p>
+<p>Perl_xs_handshake(HS_KEY(TRUE, TRUE, &#34;&#34;, &#34;&#34;) | HSf_NOCHK, HS_CXT, <strong>FILE</strong>)</p>
+<p>#ifdef NO_XSLOCKS</p>
+<h1 id="define-dxcpt-djmpenv-int-retv-0">define dXCPT dJMPENV; int rEtV = 0</h1>
+<h1 id="define-xcpt_try_start-jmpenv_push-retv-if-retv-0">define XCPT_TRY_START JMPENV_PUSH(rEtV); if (rEtV == 0)</h1>
+<h1 id="define-xcpt_try_end-jmpenv_pop">define XCPT_TRY_END JMPENV_POP;</h1>
+<h1 id="define-xcpt_catch-if-retv-0">define XCPT_CATCH if (rEtV != 0)</h1>
+<h1 id="define-xcpt_rethrow-jmpenv_jump-retv">define XCPT_RETHROW JMPENV_JUMP(rEtV)</h1>
+<p>#endif</p>
+<p>/*</p>
+<p>The DBM_setFilter &amp; DBM_ckFilter macros are only used by</p>
+<p>the <em>DB</em>_File modules</p>
+<p>*/</p>
+<p>#define DBM_setFilter(db_type,code) \</p>
+<p>STMT_START { \</p>
+<p>if (db_type) \</p>
+<p>RETVAL = sv_mortalcopy(db_type) ; \</p>
+<p>ST(0) = RETVAL ; \</p>
+<p>if (db_type &amp;&amp; (code == &amp;PL_sv_undef)) { \</p>
+<p>SvREFCNT_dec_NN(db_type) ; \</p>
+<p>db_type = NULL ; \</p>
+<p>} \</p>
+<p>else if (code) { \</p>
+<p>if (db_type) \</p>
+<p>sv_setsv(db_type, code) ; \</p>
+<p>else \</p>
+<p>db_type = newSVsv(code) ; \</p>
+<p>} \</p>
+<p>} STMT_END</p>
+<p>#define DBM_ckFilter(arg,type,name) \</p>
+<p>STMT_START { \</p>
+<p>if (db-&gt;type) { \</p>
+<p>if (db-&gt;filtering) { \</p>
+<p>croak(&#34;recursion detected in %s&#34;, name) ; \</p>
+<p>} \</p>
+<p>ENTER ; \</p>
+<p>SAVETMPS ; \</p>
+<p>SAVEINT(db-&gt;filtering) ; \</p>
+<p>db-&gt;filtering = TRUE ; \</p>
+<p>SAVE_DEFSV ; \</p>
+<p>if (name[7] == &#39;s&#39;) \</p>
+<p>arg = newSVsv(arg); \</p>
+<p>DEFSV_set(arg) ; \</p>
+<p>SvTEMP_off(arg) ; \</p>
+<p>PUSHMARK(SP) ; \</p>
+<p>PUTBACK ; \</p>
+<p>(void) perl_call_sv(db-&gt;type, G_DISCARD); \</p>
+<p>SPAGAIN ; \</p>
+<p>PUTBACK ; \</p>
+<p>FREETMPS ; \</p>
+<p>LEAVE ; \</p>
+<p>if (name[7] == &#39;s&#39;){ \</p>
+<p>arg = sv_2mortal(arg); \</p>
+<p>} \</p>
+<p>} \</p>
+<p>} STMT_END</p>
+<p>#if 1 /* for compatibility */</p>
+<h1 id="define-vtbl_sv-pl_vtbl_sv">define VTBL_sv &amp;PL_vtbl_sv</h1>
+<h1 id="define-vtbl_env-pl_vtbl_env">define VTBL_env &amp;PL_vtbl_env</h1>
+<h1 id="define-vtbl_envelem-pl_vtbl_envelem">define VTBL_envelem &amp;PL_vtbl_envelem</h1>
+<h1 id="define-vtbl_sigelem-pl_vtbl_sigelem">define VTBL_sigelem &amp;PL_vtbl_sigelem</h1>
+<h1 id="define-vtbl_pack-pl_vtbl_pack">define VTBL_pack &amp;PL_vtbl_pack</h1>
+<h1 id="define-vtbl_packelem-pl_vtbl_packelem">define VTBL_packelem &amp;PL_vtbl_packelem</h1>
+<h1 id="define-vtbl_dbline-pl_vtbl_dbline">define VTBL_dbline &amp;PL_vtbl_dbline</h1>
+<h1 id="define-vtbl_isa-pl_vtbl_isa">define VTBL_isa &amp;PL_vtbl_isa</h1>
+<h1 id="define-vtbl_isaelem-pl_vtbl_isaelem">define VTBL_isaelem &amp;PL_vtbl_isaelem</h1>
+<h1 id="define-vtbl_arylen-pl_vtbl_arylen">define VTBL_arylen &amp;PL_vtbl_arylen</h1>
+<h1 id="define-vtbl_glob-pl_vtbl_glob">define VTBL_glob &amp;PL_vtbl_glob</h1>
+<h1 id="define-vtbl_mglob-pl_vtbl_mglob">define VTBL_mglob &amp;PL_vtbl_mglob</h1>
+<h1 id="define-vtbl_nkeys-pl_vtbl_nkeys">define VTBL_nkeys &amp;PL_vtbl_nkeys</h1>
+<h1 id="define-vtbl_taint-pl_vtbl_taint">define VTBL_taint &amp;PL_vtbl_taint</h1>
+<h1 id="define-vtbl_substr-pl_vtbl_substr">define VTBL_substr &amp;PL_vtbl_substr</h1>
+<h1 id="define-vtbl_vec-pl_vtbl_vec">define VTBL_vec &amp;PL_vtbl_vec</h1>
+<h1 id="define-vtbl_pos-pl_vtbl_pos">define VTBL_pos &amp;PL_vtbl_pos</h1>
+<h1 id="define-vtbl_bm-pl_vtbl_bm">define VTBL_bm &amp;PL_vtbl_bm</h1>
+<h1 id="define-vtbl_fm-pl_vtbl_fm">define VTBL_fm &amp;PL_vtbl_fm</h1>
+<h1 id="define-vtbl_uvar-pl_vtbl_uvar">define VTBL_uvar &amp;PL_vtbl_uvar</h1>
+<h1 id="define-vtbl_defelem-pl_vtbl_defelem">define VTBL_defelem &amp;PL_vtbl_defelem</h1>
+<h1 id="define-vtbl_regexp-pl_vtbl_regexp">define VTBL_regexp &amp;PL_vtbl_regexp</h1>
+<h1 id="define-vtbl_regdata-pl_vtbl_regdata">define VTBL_regdata &amp;PL_vtbl_regdata</h1>
+<h1 id="define-vtbl_regdatum-pl_vtbl_regdatum">define VTBL_regdatum &amp;PL_vtbl_regdatum</h1>
+<h1 id="ifdef-use_locale_collate">ifdef USE_LOCALE_COLLATE</h1>
+<h1 id="define-vtbl_collxfrm-pl_vtbl_collxfrm">define VTBL_collxfrm &amp;PL_vtbl_collxfrm</h1>
+<h1 id="endif">endif</h1>
+<h1 id="define-vtbl_amagic-pl_vtbl_amagic">define VTBL_amagic &amp;PL_vtbl_amagic</h1>
+<h1 id="define-vtbl_amagicelem-pl_vtbl_amagicelem">define VTBL_amagicelem &amp;PL_vtbl_amagicelem</h1>
+<p>#endif</p>
+<p>#if defined(MULTIPLICITY) &amp;&amp; !defined(PERL_NO_GET_CONTEXT) &amp;&amp; !defined(PERL_CORE)</p>
+<h1 id="undef-athx">undef aTHX</h1>
+<h1 id="undef-athx_">undef aTHX_</h1>
+<h1 id="define-athx-perl_get_thx">define aTHX PERL_GET_THX</h1>
+<h1 id="define-athx_-athx">define aTHX_ aTHX,</h1>
+<p>#endif</p>
+<p>#if defined(PERL_IMPLICIT_SYS) &amp;&amp; !defined(PERL_CORE)</p>
+<h1 id="ifndef-no_xslocks">ifndef NO_XSLOCKS</h1>
+<h1 id="undef-closedir">undef closedir</h1>
+<h1 id="undef-opendir">undef opendir</h1>
+<h1 id="undef-stdin">undef stdin</h1>
+<h1 id="undef-stdout">undef stdout</h1>
+<h1 id="undef-stderr">undef stderr</h1>
+<h1 id="undef-feof">undef feof</h1>
+<h1 id="undef-ferror">undef ferror</h1>
+<h1 id="undef-fgetpos">undef fgetpos</h1>
+<h1 id="undef-ioctl">undef ioctl</h1>
+<h1 id="undef-getlogin">undef getlogin</h1>
+<h1 id="undef-getc">undef getc</h1>
+<h1 id="undef-ungetc">undef ungetc</h1>
+<h1 id="undef-fileno">undef fileno</h1>
+<p>/* to avoid warnings: &#34;xyz&#34; redefined */</p>
+<p>#ifdef WIN32</p>
+<h1 id="undef-popen">undef popen</h1>
+<h1 id="undef-pclose">undef pclose</h1>
+<p>#endif /* WIN32 */</p>
+<h1 id="undef-socketpair">undef socketpair</h1>
+<h1 id="define-mkdir-perldir_mkdir">define mkdir PerlDir_mkdir</h1>
+<h1 id="define-chdir-perldir_chdir">define chdir PerlDir_chdir</h1>
+<h1 id="define-rmdir-perldir_rmdir">define rmdir PerlDir_rmdir</h1>
+<h1 id="define-closedir-perldir_close">define closedir PerlDir_close</h1>
+<h1 id="define-opendir-perldir_open">define opendir PerlDir_open</h1>
+<h1 id="define-readdir-perldir_read">define readdir PerlDir_read</h1>
+<h1 id="define-rewinddir-perldir_rewind">define rewinddir PerlDir_rewind</h1>
+<h1 id="define-seekdir-perldir_seek">define seekdir PerlDir_seek</h1>
+<h1 id="define-telldir-perldir_tell">define telldir PerlDir_tell</h1>
+<h1 id="define-putenv-perlenv_putenv">define putenv PerlEnv_putenv</h1>
+<h1 id="define-getenv-perlenv_getenv">define getenv PerlEnv_getenv</h1>
+<h1 id="define-uname-perlenv_uname">define uname PerlEnv_uname</h1>
+<h1 id="define-stdin-perlsio_stdin">define stdin PerlSIO_stdin</h1>
+<h1 id="define-stdout-perlsio_stdout">define stdout PerlSIO_stdout</h1>
+<h1 id="define-stderr-perlsio_stderr">define stderr PerlSIO_stderr</h1>
+<h1 id="define-fopen-perlsio_fopen">define fopen PerlSIO_fopen</h1>
+<h1 id="define-fclose-perlsio_fclose">define fclose PerlSIO_fclose</h1>
+<h1 id="define-feof-perlsio_feof">define feof PerlSIO_feof</h1>
+<h1 id="define-ferror-perlsio_ferror">define ferror PerlSIO_ferror</h1>
+<h1 id="define-clearerr-perlsio_clearerr">define clearerr PerlSIO_clearerr</h1>
+<h1 id="define-getc-perlsio_getc">define getc PerlSIO_getc</h1>
+<h1 id="define-fgets-perlsio_fgets">define fgets PerlSIO_fgets</h1>
+<h1 id="define-fputc-perlsio_fputc">define fputc PerlSIO_fputc</h1>
+<h1 id="define-fputs-perlsio_fputs">define fputs PerlSIO_fputs</h1>
+<h1 id="define-fflush-perlsio_fflush">define fflush PerlSIO_fflush</h1>
+<h1 id="define-ungetc-perlsio_ungetc">define ungetc PerlSIO_ungetc</h1>
+<h1 id="define-fileno-perlsio_fileno">define fileno PerlSIO_fileno</h1>
+<h1 id="define-fdopen-perlsio_fdopen">define fdopen PerlSIO_fdopen</h1>
+<h1 id="define-freopen-perlsio_freopen">define freopen PerlSIO_freopen</h1>
+<h1 id="define-fread-perlsio_fread">define fread PerlSIO_fread</h1>
+<h1 id="define-fwrite-perlsio_fwrite">define fwrite PerlSIO_fwrite</h1>
+<h1 id="define-setbuf-perlsio_setbuf">define setbuf PerlSIO_setbuf</h1>
+<h1 id="define-setvbuf-perlsio_setvbuf">define setvbuf PerlSIO_setvbuf</h1>
+<h1 id="define-setlinebuf-perlsio_setlinebuf">define setlinebuf PerlSIO_setlinebuf</h1>
+<h1 id="define-stdoutf-perlsio_stdoutf">define stdoutf PerlSIO_stdoutf</h1>
+<h1 id="define-vfprintf-perlsio_vprintf">define vfprintf PerlSIO_vprintf</h1>
+<h1 id="define-ftell-perlsio_ftell">define ftell PerlSIO_ftell</h1>
+<h1 id="define-fseek-perlsio_fseek">define fseek PerlSIO_fseek</h1>
+<h1 id="define-fgetpos-perlsio_fgetpos">define fgetpos PerlSIO_fgetpos</h1>
+<h1 id="define-fsetpos-perlsio_fsetpos">define fsetpos PerlSIO_fsetpos</h1>
+<h1 id="define-frewind-perlsio_rewind">define frewind PerlSIO_rewind</h1>
+<h1 id="define-tmpfile-perlsio_tmpfile">define tmpfile PerlSIO_tmpfile</h1>
+<h1 id="define-access-perllio_access">define access PerlLIO_access</h1>
+<h1 id="define-chmod-perllio_chmod">define chmod PerlLIO_chmod</h1>
+<h1 id="define-chsize-perllio_chsize">define chsize PerlLIO_chsize</h1>
+<h1 id="define-close-perllio_close">define close PerlLIO_close</h1>
+<h1 id="define-dup-perllio_dup">define dup PerlLIO_dup</h1>
+<h1 id="define-dup2-perllio_dup2">define dup2 PerlLIO_dup2</h1>
+<h1 id="define-flock-perllio_flock">define flock PerlLIO_flock</h1>
+<h1 id="define-fstat-perllio_fstat">define fstat PerlLIO_fstat</h1>
+<h1 id="define-ioctl-perllio_ioctl">define ioctl PerlLIO_ioctl</h1>
+<h1 id="define-isatty-perllio_isatty">define isatty PerlLIO_isatty</h1>
+<h1 id="define-link-perllio_link">define link PerlLIO_link</h1>
+<h1 id="define-lseek-perllio_lseek">define lseek PerlLIO_lseek</h1>
+<h1 id="define-lstat-perllio_lstat">define lstat PerlLIO_lstat</h1>
+<h1 id="define-mktemp-perllio_mktemp">define mktemp PerlLIO_mktemp</h1>
+<h1 id="define-open-perllio_open">define open PerlLIO_open</h1>
+<h1 id="define-read-perllio_read">define read PerlLIO_read</h1>
+<h1 id="define-rename-perllio_rename">define rename PerlLIO_rename</h1>
+<h1 id="define-setmode-perllio_setmode">define setmode PerlLIO_setmode</h1>
+<h1 id="define-stat-buf-sb-perllio_stat-buf-sb">define stat(buf,sb) PerlLIO_stat(buf,sb)</h1>
+<h1 id="define-tmpnam-perllio_tmpnam">define tmpnam PerlLIO_tmpnam</h1>
+<h1 id="define-umask-perllio_umask">define umask PerlLIO_umask</h1>
+<h1 id="define-unlink-perllio_unlink">define unlink PerlLIO_unlink</h1>
+<h1 id="define-utime-perllio_utime">define utime PerlLIO_utime</h1>
+<h1 id="define-write-perllio_write">define write PerlLIO_write</h1>
+<h1 id="define-malloc-perlmem_malloc">define malloc PerlMem_malloc</h1>
+<h1 id="define-calloc-perlmem_calloc">define calloc PerlMem_calloc</h1>
+<h1 id="define-realloc-perlmem_realloc">define realloc PerlMem_realloc</h1>
+<h1 id="define-free-perlmem_free">define free PerlMem_free</h1>
+<h1 id="define-abort-perlproc_abort">define abort PerlProc_abort</h1>
+<h1 id="define-exit-perlproc_exit">define exit PerlProc_exit</h1>
+<h1 id="define-_exit-perlproc__exit">define _exit PerlProc__exit</h1>
+<h1 id="define-execl-perlproc_execl">define execl PerlProc_execl</h1>
+<h1 id="define-execv-perlproc_execv">define execv PerlProc_execv</h1>
+<h1 id="define-execvp-perlproc_execvp">define execvp PerlProc_execvp</h1>
+<h1 id="define-getuid-perlproc_getuid">define getuid PerlProc_getuid</h1>
+<h1 id="define-geteuid-perlproc_geteuid">define geteuid PerlProc_geteuid</h1>
+<h1 id="define-getgid-perlproc_getgid">define getgid PerlProc_getgid</h1>
+<h1 id="define-getegid-perlproc_getegid">define getegid PerlProc_getegid</h1>
+<h1 id="define-getlogin-perlproc_getlogin">define getlogin PerlProc_getlogin</h1>
+<h1 id="define-kill-perlproc_kill">define kill PerlProc_kill</h1>
+<h1 id="define-killpg-perlproc_killpg">define killpg PerlProc_killpg</h1>
+<h1 id="define-pause-perlproc_pause">define pause PerlProc_pause</h1>
+<h1 id="define-popen-perlproc_popen">define popen PerlProc_popen</h1>
+<h1 id="define-pclose-perlproc_pclose">define pclose PerlProc_pclose</h1>
+<h1 id="define-pipe-perlproc_pipe">define pipe PerlProc_pipe</h1>
+<h1 id="define-setuid-perlproc_setuid">define setuid PerlProc_setuid</h1>
+<h1 id="define-setgid-perlproc_setgid">define setgid PerlProc_setgid</h1>
+<h1 id="define-sleep-perlproc_sleep">define sleep PerlProc_sleep</h1>
+<h1 id="define-times-perlproc_times">define times PerlProc_times</h1>
+<h1 id="define-wait-perlproc_wait">define wait PerlProc_wait</h1>
+<h1 id="define-signal-perlproc_signal">define signal PerlProc_signal</h1>
+<h1 id="define-getpid-perlproc_getpid">define getpid PerlProc_getpid</h1>
+<h1 id="define-gettimeofday-perlproc_gettimeofday">define gettimeofday PerlProc_gettimeofday</h1>
+<h1 id="define-htonl-perlsock_htonl">define htonl PerlSock_htonl</h1>
+<h1 id="define-htons-perlsock_htons">define htons PerlSock_htons</h1>
+<h1 id="define-ntohl-perlsock_ntohl">define ntohl PerlSock_ntohl</h1>
+<h1 id="define-ntohs-perlsock_ntohs">define ntohs PerlSock_ntohs</h1>
+<h1 id="define-accept-perlsock_accept">define accept PerlSock_accept</h1>
+<h1 id="define-bind-perlsock_bind">define bind PerlSock_bind</h1>
+<h1 id="define-connect-perlsock_connect">define connect PerlSock_connect</h1>
+<h1 id="define-endhostent-perlsock_endhostent">define endhostent PerlSock_endhostent</h1>
+<h1 id="define-endnetent-perlsock_endnetent">define endnetent PerlSock_endnetent</h1>
+<h1 id="define-endprotoent-perlsock_endprotoent">define endprotoent PerlSock_endprotoent</h1>
+<h1 id="define-endservent-perlsock_endservent">define endservent PerlSock_endservent</h1>
+<h1 id="define-gethostbyaddr-perlsock_gethostbyaddr">define gethostbyaddr PerlSock_gethostbyaddr</h1>
+<h1 id="define-gethostbyname-perlsock_gethostbyname">define gethostbyname PerlSock_gethostbyname</h1>
+<h1 id="define-gethostent-perlsock_gethostent">define gethostent PerlSock_gethostent</h1>
+<h1 id="define-gethostname-perlsock_gethostname">define gethostname PerlSock_gethostname</h1>
+<h1 id="define-getnetbyaddr-perlsock_getnetbyaddr">define getnetbyaddr PerlSock_getnetbyaddr</h1>
+<h1 id="define-getnetbyname-perlsock_getnetbyname">define getnetbyname PerlSock_getnetbyname</h1>
+<h1 id="define-getnetent-perlsock_getnetent">define getnetent PerlSock_getnetent</h1>
+<h1 id="define-getpeername-perlsock_getpeername">define getpeername PerlSock_getpeername</h1>
+<h1 id="define-getprotobyname-perlsock_getprotobyname">define getprotobyname PerlSock_getprotobyname</h1>
+<h1 id="define-getprotobynumber-perlsock_getprotobynumber">define getprotobynumber PerlSock_getprotobynumber</h1>
+<h1 id="define-getprotoent-perlsock_getprotoent">define getprotoent PerlSock_getprotoent</h1>
+<h1 id="define-getservbyname-perlsock_getservbyname">define getservbyname PerlSock_getservbyname</h1>
+<h1 id="define-getservbyport-perlsock_getservbyport">define getservbyport PerlSock_getservbyport</h1>
+<h1 id="define-getservent-perlsock_getservent">define getservent PerlSock_getservent</h1>
+<h1 id="define-getsockname-perlsock_getsockname">define getsockname PerlSock_getsockname</h1>
+<h1 id="define-getsockopt-perlsock_getsockopt">define getsockopt PerlSock_getsockopt</h1>
+<h1 id="define-inet_addr-perlsock_inet_addr">define inet_addr PerlSock_inet_addr</h1>
+<h1 id="define-inet_ntoa-perlsock_inet_ntoa">define inet_ntoa PerlSock_inet_ntoa</h1>
+<h1 id="define-listen-perlsock_listen">define listen PerlSock_listen</h1>
+<h1 id="define-recv-perlsock_recv">define recv PerlSock_recv</h1>
+<h1 id="define-recvfrom-perlsock_recvfrom">define recvfrom PerlSock_recvfrom</h1>
+<h1 id="define-select-perlsock_select">define select PerlSock_select</h1>
+<h1 id="define-send-perlsock_send">define send PerlSock_send</h1>
+<h1 id="define-sendto-perlsock_sendto">define sendto PerlSock_sendto</h1>
+<h1 id="define-sethostent-perlsock_sethostent">define sethostent PerlSock_sethostent</h1>
+<h1 id="define-setnetent-perlsock_setnetent">define setnetent PerlSock_setnetent</h1>
+<h1 id="define-setprotoent-perlsock_setprotoent">define setprotoent PerlSock_setprotoent</h1>
+<h1 id="define-setservent-perlsock_setservent">define setservent PerlSock_setservent</h1>
+<h1 id="define-setsockopt-perlsock_setsockopt">define setsockopt PerlSock_setsockopt</h1>
+<h1 id="define-shutdown-perlsock_shutdown">define shutdown PerlSock_shutdown</h1>
+<h1 id="define-socket-perlsock_socket">define socket PerlSock_socket</h1>
+<h1 id="define-socketpair-perlsock_socketpair">define socketpair PerlSock_socketpair</h1>
+<h1 id="undef-fd_set">undef fd_set</h1>
+<h1 id="undef-fd_set-2">undef FD_SET</h1>
+<h1 id="undef-fd_clr">undef FD_CLR</h1>
+<h1 id="undef-fd_isset">undef FD_ISSET</h1>
+<h1 id="undef-fd_zero">undef FD_ZERO</h1>
+<h1 id="define-fd_set-perl_fd_set">define fd_set Perl_fd_set</h1>
+<h1 id="define-fd_set-n-p-perl_fd_set-n-p">define FD_SET(n,p) PERL_FD_SET(n,p)</h1>
+<h1 id="define-fd_clr-n-p-perl_fd_clr-n-p">define FD_CLR(n,p) PERL_FD_CLR(n,p)</h1>
+<h1 id="define-fd_isset-n-p-perl_fd_isset-n-p">define FD_ISSET(n,p) PERL_FD_ISSET(n,p)</h1>
+<h1 id="define-fd_zero-p-perl_fd_zero-p">define FD_ZERO(p) PERL_FD_ZERO(p)</h1>
+<h1 id="endif-no_xslocks">endif /* NO_XSLOCKS */</h1>
+<p>#endif /* PERL_IMPLICIT_SYS &amp;&amp; !PERL_CORE */</p>
+<p>#endif /* PERL_XSUB_H_ <em>/ /</em> include guard */</p>
+<p>/*</p>
+<ul>
+<li>ex: set ts=8 sts=4 sw=4 et:</li>
+</ul>
+<p>*/</p>

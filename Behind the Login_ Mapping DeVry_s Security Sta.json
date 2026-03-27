@@ -1,0 +1,22 @@
+﻿{
+    "title":  "Behind the Login: Mapping DeVry\u0027s Security Stack, Mandatory OneDrive, and Okta\u0027s Digital Bouncer Role",
+    "type":  "ARTIFACT_TYPE_AUDIO_OVERVIEW",
+    "sources":  [
+                    {
+                        "sourceId":  {
+                                         "id":  "ec164b43-28eb-40bd-a2ae-70208d4553b6"
+                                     }
+                    }
+                ],
+    "status":  "ARTIFACT_STATUS_READY",
+    "audioOverview":  {
+                          "generationOptions":  {
+                                                    "episodeFocus":  "",
+                                                    "episodeLength":  "EPISODE_LENGTH_MEDIUM",
+                                                    "targetAudience":  "TARGET_AUDIENCE_UNSPECIFIED",
+                                                    "languageCode":  "en",
+                                                    "showFormat":  "SHOW_FORMAT_UNSPECIFIED"
+                                                },
+                          "isInteractive":  true
+                      }
+}

@@ -1,0 +1,484 @@
+<p>169.254.145.148
+// build.gradle
+// android { compileSdk 34 ... }
+// manifest: add permissions per docs (NEARBY_WIFI_DEVICES for API 33+,
+ACCESS_FINE_LOCATION, ACCESS_WIFI_STATE, CHANGE_WIFI_STATE,
+INTERNET)
+// MainActivity.kt
+class MainActivity : AppCompatActivity() {
+private lateinit var mgr: WifiP2pManager
+private lateinit var channel: WifiP2pManager.Channel
+private val peers = mutableListOf</p>
+<h1 id="nmea_burst-py-send-a-short-announce-sentence-on-dev-ttyusb0">nmea_burst.py — send a short &#39;announce&#39; sentence on /dev/ttyUSB0</h1>
+<p>import serial, functools
+def nmea_checksum(s):
+cs = 0
+for ch in s:
+cs ^= ord(ch)
+return f&#34;{cs:02X}&#34;
+def send_announce(port=&#34;/dev/ttyUSB0&#34;, baud=4800, session=&#34;ABCD1234&#34;):
+talker = &#34;PDV&#34;                   # Proprietary talker &#39;PD&#39;
+payload = f&#34;{talker},HELLO,{session}&#34;
+sentence = f&#34;${payload}*{nmea_checksum(payload)}\r\n&#34;
+with serial.Serial(port, baudrate=baud, timeout=1) as ser:
+ser.write(sentence.encode(&#34;ascii&#34;))
+print(&#34;sent:&#34;, sentence.strip())
+if <strong>name</strong> == &#34;<strong>main</strong>&#34;:
+send_announce()</p>
+<h1 id="nmea_listen-py-watch-for-pdv-hello">nmea_listen.py — watch for $PDV,HELLO,</h1>
+<p>import serial, re
+pat = re.compile(r&#39;^$(PDV),HELLO,([A-Z0-9]+)*([0-9A-F]{2})\r\n$&#39;)
+def verify(line):
+body = line[1:line.find(&#39;<em>&#39;)]
+cs = 0
+for ch in body: cs ^= ord(ch)
+return f&#34;{cs:02X}&#34; == line[line.find(&#39;</em>&#39;)+1:line.find(&#39;*&#39;)+3]
+with serial.Serial(&#34;/dev/ttyUSB0&#34;, baudrate=4800, timeout=1) as ser:
+while True:
+line = ser.readline().decode(errors=&#34;ignore&#34;)
+if pat.match(line) and verify(line):
+session = pat.match(line).group(2)
+print(&#34;Device session:&#34;, session)</p>
+<h1 id="todo-invoke-your-android-desktop-app-to-connect-via-wi-fi-direct">TODO: invoke your Android/desktop app to connect via Wi-Fi Direct</h1>
+<p>Gathering references
+Searching
+Searching
+Searching
+Compiling provisioning methods
+Mapping out integrations
+Pulling together
+Awesome—let’s turn your ideas into working, modern “<a class="g3mark-shortlink" href="https://tap.corp.google.com/flick-to-share">tap/flick-to-share</a>” blueprints you can build today. Below you’ll find:</p>
+<ol>
+<li>Tap phones together (S-Beam-style) for high-speed transfer — NFC (or BLE)  $handshake → Wi-Fi Direct data path (Android sample code)$
+$2. “Flick transfers” for IoT — phone motion + BLE discovery → provision device or$ push data (ESP32 + mobile code)</li>
+<li>NMEA-style bursts as discovery beacons — tiny serial “I’m here; upgrade the link”  $→ then switch to fast wireless$</li>
+<li>How AirDrop / Nearby Share differ from S-Beam — what each uses under the hood, with sources
+All samples are for legitimate, user-consented sharing/provisioning only (no exploits). They follow platform rules and security models.</li>
+</ol>
+<ol start="0">
+<li>The common pattern (what S-Beam pioneered)</li>
+</ol>
+<ul>
+<li>Control plane: very-short-range, low-power tech to signal intent and exchange a tiny session token (NFC, BLE, NMEA burst, QR, UWB).</li>
+<li>Data plane: automatically “upgrade” to a fast peer-to-peer link for the real transfer (Wi-Fi Direct / P2P Wi-Fi). S-Beam used NFC for the tap, then Wi-Fi Direct for the file.
+1
+2
+3
+AirDrop does the same pattern with BLE discovery + peer-to-peer Wi-Fi. Nearby Share/Quick Share use BLE/BLE-Audio/NFC/UWB for discovery and P2P Wi-Fi/WebRTC for transport depending on context. [support.apple.com], [9to5google.com], [gizmohopper.com], [producthubspot.com]
+$1) Tap phones together to share (Android • NFC/BLE hand-shake → Wi-Fi Direct)$
+What you’ll build: An Android app that, on “tap” (NFC or BLE proximity), passes a session token to the peer; both apps then form a Wi-Fi Direct group and transfer a file via sockets.
+1A) Wi-Fi Direct skeleton (Android, Kotlin)
+Why Wi-Fi Direct? Android’s official way to do peer-to-peer high-throughput links (WPA2-secured, no AP required). Use WifiP2pManager to discover/ connect and then send bytes via normal TCP sockets. [developer....ndroid.com], [developer....ndroid.com]
+Kotlin
+// build.gradle
+// android { compileSdk 34 ... }
+// manifest: add permissions per docs (NEARBY_WIFI_DEVICES for API 33+, ACCESS_FINE_LOCATION, ACCESS_WIFI_STATE, CHANGE_WIFI_STATE, INTERNET)
+// MainActivity.kt
+class MainActivity : AppCompatActivity() {
+private lateinit var mgr: WifiP2pManager
+private lateinit var channel: WifiP2pManager.Channel
+private val peers = mutableListOf</li>
+</ul>
+<ol start="2">
+<li>“Flick transfers” for IoT (BLE discovery + provisioning or data push)
+Goal: Phone detects a “flick” (IMU gesture), discovers device over BLE, then either:</li>
+</ol>
+<ul>
+<li>Provision Wi-Fi (so the IoT device joins your LAN), or</li>
+<li>Open a direct P2P Wi-Fi link for a one-off payload.
+2A) ESP32 Wi-Fi provisioning via BLE (production-ready path)
+Espressif provides official provisioning over BLE (and SoftAP) with sample apps—no need to invent your own crypto/flows. [docs.espressif.com]</li>
+<li>Tutorial (Arduino-friendly): ESP32 Wi-Fi Provisioning via BLE. [randomnerd...orials.com]</li>
+<li>Quick walk-through using ESP-IDF example &amp; the ESP BLE Provisioning App (Android/iOS). [maksonlee.com]
+ESP-IDF C (minimal)
+C
+// CMakeLists + sdkconfig from ESP-IDF provisioning example
+#include &#34;wifi_provisioning/manager.h&#34;
+#include &#34;wifi_provisioning/scheme_ble.h&#34;
+#include &#34;esp_wifi.h&#34;
+#include &#34;nvs_flash.h&#34;
+void app_main(void) {
+nvs_flash_init();
+tcpip_adapter_init();
+esp_event_loop_create_default();
+wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+esp_wifi_init(&amp;cfg);
+esp_wifi_set_mode(WIFI_MODE_STA);
+esp_wifi_start();
+wifi_prov_mgr_config_t prov_cfg = {
+.scheme = wifi_prov_scheme_ble,
+.scheme_event_handler = WIFI_PROV_SCHEME_BLE_EVENT_HANDLER_FREE_BTDM
+};
+wifi_prov_mgr_init(prov_cfg);
+bool provisioned = false;
+wifi_prov_mgr_is_provisioned(&amp;provisioned);
+if (!provisioned) {
+wifi_prov_security_t sec = WIFI_PROV_SECURITY_1; // proof-of-possession etc.
+const char *pop = &#34;abcd1234&#34;;
+wifi_prov_mgr_start_provisioning(sec, (const void *)pop, &#34;MyDevice&#34;, NULL);
+} else {
+wifi_prov_mgr_deinit();
+}
+}
+Show more lines
+This uses the official ESP-IDF provisioning manager (BLE transport). The phone app sends SSID/password securely; device then connects to Wi-Fi. [docs.espressif.com]
+Arduino route (faster prototyping): try community libs or tutorials. [randomnerd...orials.com], [docs.arduino.cc]
+2B) Gesture-gated “flick to share” on the phone
+Detect a flick with the phone’s IMU; when isFlick==true, start BLE scan for your device’s name/UUID, then trigger provisioning (above) or open a P2P Wi-Fi socket.
+Pseudo-Kotlin:
+Kotlin
+// On motion event true -&gt; start BLE scan for device advertising service UUID
+// On found -&gt; connect GATT, write a small &#34;HELLO {sessionId}&#34; to a characteristic
+// Device replies &#34;READY&#34;, phone displays &#34;Provision?&#34; -&gt; launches ESP BLE Provisioning app intent
+``
+Show more lines
+Provisioning remains on the Espressif flow for safety &amp; reliability. [docs.espressif.com]</li>
+</ul>
+<ol start="3">
+<li>NMEA-style bursts as discovery signals (“I’m here; upgrade link”)
+$NMEA 0183 is an ASCII sentence protocol (typical 4800 bps, $ … checksum, “talker →$ listeners”). You can emit a proprietary sentence (e.g., $PDV,HELLO,SESSIONID*CS) over a serial/UART, audio modem, or short-range RF, just to announce presence; the phone or gateway listening to that serial feed can then switch to Wi-Fi Direct or join the device on Wi-Fi for the real transfer. [nmea.org], [en.wikipedia.org]
+Caveat: the detailed NMEA standard is proprietary; but the general structure, baud rates, and examples are widely documented (e.g., GPRMC/GGA). [rfwireless-world.com], [tavotech.com], [serialmon.com]
+3A) Emit a proprietary NMEA burst (Python)
+Python</li>
+</ol>
+<h1 id="nmea_burst-py-send-a-short-announce-sentence-on-dev-ttyusb0-2">nmea_burst.py — send a short &#39;announce&#39; sentence on /dev/ttyUSB0</h1>
+<p>import serial, functools
+def nmea_checksum(s):
+cs = 0
+for ch in s:
+cs ^= ord(ch)
+return f&#34;{cs:02X}&#34;
+def send_announce(port=&#34;/dev/ttyUSB0&#34;, baud=4800, session=&#34;ABCD1234&#34;):
+talker = &#34;PDV&#34; # Proprietary talker &#39;PD&#39;
+payload = f&#34;{talker},HELLO,{session}&#34;
+sentence = f&#34;${payload}*{nmea_checksum(payload)}\r\n&#34;
+with serial.Serial(port, baudrate=baud, timeout=1) as ser:
+ser.write(sentence.encode(&#34;ascii&#34;))
+print(&#34;sent:&#34;, sentence.strip())
+if <strong>name</strong> == &#34;<strong>main</strong>&#34;:
+send_announce()
+Show more lines
+Receiver (Python) that listens and triggers your Wi-Fi Direct workflow on the host (e.g., a gateway app) once it sees your sentence:
+Python</p>
+<h1 id="nmea_listen-py-watch-for-pdv-hello-2">nmea_listen.py — watch for $PDV,HELLO,</h1>
+<p>import serial, re
+pat = re.compile(r&#39;^$(PDV),HELLO,([A-Z0-9]+)*([0-9A-F]{2})\r\n
+)
+def verify(line):
+body = line[1:line.find(&#39;<em>&#39;)]
+cs = 0
+for ch in body: cs ^= ord(ch)
+return f&#34;{cs:02X}&#34; == line[line.find(&#39;</em>&#39;)+1:line.find(&#39;*&#39;)+3]
+with serial.Serial(&#34;/dev/ttyUSB0&#34;, baudrate=4800, timeout=1) as ser:
+while True:
+line = ser.readline().decode(errors=&#34;ignore&#34;)
+if pat.match(line) and verify(line):
+session = pat.match(line).group(2)
+print(&#34;Device session:&#34;, session)</p>
+<h1 id="todo-invoke-your-android-desktop-app-to-connect-via-wi-fi-direct-2">TODO: invoke your Android/desktop app to connect via Wi-Fi Direct</h1>
+<p>Show more lines
+Why this works: A tiny, robust discovery shim that you can send over any low-rate channel (UART, acoustic modem, LoRa) to cue the upgrade to high-speed Wi-Fi P2P—exactly the 2-stage pattern S-Beam, AirDrop, and Nearby use. [nmea.org], [en.wikipedia.org], [developer....ndroid.com]
+4) Tap-to-provision (NFC or BLE) for IoT
+Two popular ways:</p>
+<ul>
+<li>BLE provisioning (recommended): ship device in BLE-prov mode; user opens your  $app (or Espressif’s), taps Provision, enters SSID/password → device joins Wi-Fi.$ (Official SDK and mobile apps available.) [docs.espressif.com], [maksonlee.com]</li>
+<li>NFC NDEF tag: embed a tag in the device that encodes a deep link or QR carrying a Bootstrap token; your phone app reads it and then continues over BLE or Wi-Fi to provision.
+If you’re using ESP32, start with Espressif’s wifi_prov_mgr (BLE) shown earlier; it’s the fastest path to a secure, shippable experience. [docs.espressif.com]</li>
+</ul>
+<ol start="5">
+<li>How AirDrop and Nearby Share (Quick Share) differ from S-Beam</li>
+</ol>
+<ul>
+<li>S-Beam (2012 era): NFC used only to initiate; large files sent over Wi-Fi Direct between Samsung phones. Feature was later removed; Samsung now leans on Quick Share, but is experimenting with bringing NFC-triggered Quick Share UX back (akin to S-Beam).
+22
+1
+23</li>
+<li>AirDrop: Uses BLE for discovery/identity and a peer-to-peer Wi-Fi link for the actual data; the connection is TLS-encrypted and leverages iCloud identity for contact-based privacy. [support.apple.com], [apple.stac...change.com]</li>
+<li>Nearby Share / Quick Share (Google): Uses Bluetooth/BLE for discovery and then picks the best transport automatically (Wi-Fi Direct / P2P Wi-Fi, WebRTC, sometimes NFC/UWB assists). Recently consolidated branding with Samsung’s Quick Share across Android/ChromeOS/Windows. [gizmohopper.com], [aboutchromebooks.com]</li>
+</ul>
+<ol start="6">
+<li>End-to-end build steps (quick checklists)
+A) Android S-Beam-style file share (your app)</li>
+</ol>
+<ol>
+<li>Implement Wi-Fi Direct flow (sample above; or clone Google’s WiFiDirectDemo). [devdoc.net]</li>
+<li>Choose handshake: NFC tag or BLE advert carrying sessionId.
+$3. On receiver: match discovered peer by deviceName/sessionId → connect() → socket → stream file. [developer....ndroid.com]$
+B) IoT flick-to-share</li>
+<li>Add IMU gesture detector in your mobile app.
+$2. On “flick”: BLE scan for your device → connect → either$
+o Provision Wi-Fi using ESP-IDF wifi_prov_mgr (recommended), or
+o Ask device to open Wi-Fi Direct and send payload. [docs.espressif.com], [developer....ndroid.com]
+C) NMEA burst discovery</li>
+<li>Device emits $PDV,HELLO,</li>
+<li>Phone/gateway listens; on match, triggers Wi-Fi Direct connection or LAN rendezvous. [developer....ndroid.com]</li>
+</ol>
+<ol start="7">
+<li>Security &amp; UX guardrails</li>
+</ol>
+<ul>
+<li>Consent UI: Always show sender/receiver confirmation; Wi-Fi Direct requires user approval on Android by design. [developer....ndroid.com]</li>
+<li>Encryption: Your app-level traffic can also be TLS on top of Wi-Fi Direct (like AirDrop does). [support.apple.com]</li>
+<li>Discovery privacy: Use short-lived sessionId tokens; rotate BLE advert payloads.</li>
+<li>NMEA: Keep to a private $Pxx sentence; don’t claim standard talker IDs; the formal spec is copyrighted. [nmea.org]</li>
+</ul>
+<ol start="8">
+<li>Ready-to-run references (for deeper dives)</li>
+</ol>
+<ul>
+<li>$S-Beam / Android Beam background (NFC→Wi-Fi Direct vs NFC→Bluetooth)$
+1
+12</li>
+<li>S-Beam-like Quick Share revival rumor (One UI 8.5)
+23</li>
+<li>AirDrop internals (BLE discovery + P2P Wi-Fi, TLS, iCloud identity) [support.apple.com]</li>
+<li>Nearby Share / Quick Share transports (BLE, Wi-Fi Direct, WebRTC) [gizmohopper.com], [producthubspot.com], [aboutchromebooks.com]</li>
+<li>Wi-Fi Direct APIs &amp; sample apps (Android) [developer....ndroid.com], [devdoc.net]</li>
+<li>NMEA 0183 overview (ASCII sentences, 4800 bps baseline) &amp; common GPS sentences (GPRMC/GGA) [nmea.org], [en.wikipedia.org], [rfwireless-world.com]</li>
+<li>ESP32 BLE Provisioning (official docs + practical guides) [docs.espressif.com], [maksonlee.com]
+Want me to package this as a starter project?
+I can generate:</li>
+<li>Android Studio project: BLE (or NFC-tag) handshake + Wi-Fi Direct file transfer with a simple UI.</li>
+<li>ESP32 project: BLE provisioning demo (ESP-IDF) + a stub HTTP server to confirm success.</li>
+<li>Python tools: NMEA burst sender/listener.
+Tell me your target devices (Android models / ESP32 board) and whether you want BLE or NFC for discovery, and I’ll scaffold the repos and docs for you.
+{{referencesBody}}
+-----------------------------------------------------------------------------------------------------------1) Detecting BLE advertisements (for <a class="g3mark-shortlink" href="https://tap.corp.google.com/flick">tap/flick</a> flows, Nearby/Quick Share-style discovery)
+Best low-cost sniffer (recommended): Nordic nRF Sniffer + Wireshark</li>
+<li>Hardware: nRF52840 USB Dongle (or any nRF52 DK).</li>
+<li>Software: Nordic’s nRF Sniffer for Bluetooth LE (integrates into Wireshark). It lists nearby advertisers in (near) real time and can follow connections, including pairing flows, right inside Wireshark. [nordicsemi.com], [docs-be.no...icsemi.com]
+Fast setup (CLI or Wireshark):
+Shell</li>
+</ul>
+<h1 id="program-the-sniffer-firmware-nrf-util">Program the sniffer firmware (nRF Util)</h1>
+<p>nrfutil install ble-sniffer
+nrfutil ble-sniffer bootstrap # wires the extcap into Wireshark
+$# Then open Wireshark → select the &#34;nRF Sniffer&#34; interface → Start$
+Show more lines
+Nordic’s current docs also include a new nrfutil ble-sniffer CLI with follow-by-address, IRK, and Wireshark bootstrap steps. [docs.nordicsemi.com]
+Alternative: Ubertooth One (open-source BLE/BT analyzer) The Ubertooth One can pipe BLE adverts (and follow connections) into Wireshark (ubertooth-btle -f -c /tmp/pipe), with documented steps for creating a FIFO “pipe” capture interface in Wireshark. [ubertooth....thedocs.io]
+If you just want a phone-only detector (no dongle): Android provides BLE scanning APIs. A minimal scanner calling BluetoothLeScanner.startScan() will list advertisements; you can filter on your Service UUID or manufacturer data (handshake tokens).  For long-range / coded PHY or extended advertising, set ScanSettings.setPhy(PHY_LE_ALL_SUPPORTED) and setLegacy(false). [developer....ndroid.com] [source.android.com], [stackoverflow.com]
+2) Detecting Wi-Fi Direct (P2P) formation (S-Beam-style “upgrade” link)
+Packet capture (PC/laptop):</p>
+<ul>
+<li>Put a Wi-Fi adapter into monitor mode to see 802.11 Management frames (Probe Req/Resp, GO Negotiation, P2P IE fields). Tools like Wireshark can capture these frames when your card and OS support monitor mode; this is how you’ll spot P2P negotiation and group creation. [emlogic.no], [ask.wireshark.org]</li>
+<li>To enable monitor mode on Linux you can create a mon0 interface with iw and capture on that channel (Wireshark will then display 802.11 mgmt frames). [nayab.dev]
+Automated detection (wardriving/WIDS-style):</li>
+<li>Kismet passively detects Wi-Fi devices, clients, and also Bluetooth—handy when you want one dashboard watching both BLE adverts and Wi-Fi P2P traffic. [kismetwireless.net]
+Developer angle: If you’re instrumenting your own Android app to create P2P links, the WifiP2pManager APIs (discover/connect, requestConnectionInfo()) are the official path. You can log P2P state changes locally and in a test app to verify the upgrade handshake.
+13 [anker.com]</li>
+</ul>
+<ol start="3">
+<li>Detecting NFC “tap” signals (tap-to-share / tap-to-provision)
+Simple reader (“is anything NFC here?”):</li>
+</ol>
+<ul>
+<li>ACR122U USB NFC reader is a cheap, PC/SC-compliant desktop reader that can read NDEF and common ISO 14443 tags. It’s widely used for quick “is a tag present / what type is it” checks and basic NDEF reads. [manualslib.com], [acs.com.hk]
+Analyzer/snooper (research-grade):</li>
+<li>Proxmark3 can snoop/listen to LF/HF RFID/NFC traffic, not just read tags. It’s the most flexible “RFID lab” tool for seeing raw waveforms and frames if you’re debugging the actual RF exchange during a tap. (It supports “snoop”/“listen” modes and a wide command set.) [Proxmark I...ELECHOUSE], [github.com]</li>
+<li>Newer portable options like Chameleon Ultra emphasize emulation and basic analysis; Proxmark3 is still the broadest research tool. [shop.mtoolstec.com], [sdrstore.eu]
+Phone-as-detector: Android devices in reader mode can receive NFC tags and dispatch NDEF to your app via the NFC tag dispatch system, so your app can act as the “detector” and pop a UI when a tap occurs. [developer....ndroid.com], [developer....ndroid.com]</li>
+</ul>
+<ol start="4">
+<li>Detecting NMEA-style “announce” bursts (serial ASCII beacons)
+If your device emits a short NMEA 0183 sentence like $PDV,HELLO,SESSION*CS, you don’t need exotic gear:</li>
+</ol>
+<ul>
+<li>Use any USB-to-UART dongle and a serial terminal (or a tiny Python script) to listen at 4800 bps, 8-N-1, parse the sentence, and react (e.g., trigger your Wi-Fi Direct  $connect). NMEA 0183 is a printable ASCII, talker→listener protocol; 4800 bps is$ the typical baseline rate. [agentcalc.com]</li>
+<li>If you prefer off-the-shelf tooling, apps like SerialMon document the sentence framing and checksums for quick validation. [turn2engineering.com]</li>
+</ul>
+<ol start="5">
+<li>What to buy/use (quick picks)</li>
+</ol>
+<ul>
+<li>BLE: Nordic nRF52840 Dongle + nRF Sniffer (Wireshark extcap). Great visibility for adverts and connections, minimal cost.  Alt: Ubertooth One + Wireshark (ubertooth-btle). [nordicsemi.com] [ubertooth....thedocs.io]</li>
+<li>Wi-Fi Direct: Your laptop + Wireshark in monitor mode; optionally Kismet for passive detection across protocols. [ask.wireshark.org], [kismetwireless.net]</li>
+<li>NFC: ACR122U for tag presence / NDEF read; Proxmark3 for sniffing/emulation research. [manualslib.com], [Proxmark I...ELECHOUSE]</li>
+<li>NMEA: Any USB-UART + terminal/Python; follow NMEA 0183 framing and speed. [agentcalc.com]</li>
+</ul>
+<ol start="6">
+<li>Mini how-tos you can run today
+A) See BLE adverts in 2 minutes (Nordic)</li>
+</ol>
+<ol>
+<li>Install Nordic’s sniffer &amp; bootstrap into Wireshark: nrfutil install ble-sniffer &amp;&amp; nrfutil ble-sniffer bootstrap.
+$2. Plug in the nRF52840 Dongle and pick the nRF Sniffer interface in Wireshark →$ Start. You’ll see advertisers with address, RSSI, and can “follow” a selected device’s connection. [docs.nordicsemi.com], [nordicsemi.com]
+B) Watch Wi-Fi Direct negotiations (PC)</li>
+<li>Put your Wi-Fi NIC in monitor mode (Linux iw phy … interface add mon0 type monitor).
+<img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMHRUSHREbERETEBwXExQaFRkRERkYGh0dHx8fGxcYJCIeJBweHxUBBQUFBwYHDggIDh4UERQeFh4eHh4eHh4eHh4aHR0YHR0eHh4ZHh4eHR8VFR0XGB4eGhgeHhgeHhodFxcdFRUdGv/AABEIACUAJQMBIgACEQEDEQH/xAAbAAABBAMAAAAAAAAAAAAAAAAABQYHCAEDBP/EADQQAAECBAMGBAMJAQAAAAAAAAECAwAEBREGIXESEzFBUWEHgbHBFSJiNENScnOCkaHxFP/EABoBAAEFAQAAAAAAAAAAAAAAAAYAAgQFBwP/xAAlEQACAgEDAwQDAAAAAAAAAAABAgADBAUREgYhQRMiMVFhkcH/2gAMAwEAAhEDEQA/AJ0x94uylMefp1AZE5ONqKFvuAhptWd8uKiDoO5hrYR8Y6zJTBbxC2KlLqN942lKHUaAWSodjY9+UJ1epkpUJp4vo2XdtVnU5KGvXz/qGjVKNNyO0sjfMD7xA4DuOXp3gyo07ENXAr3PmY5l9S6k2R6qvsB4Hx+pYCseKWHWJBL9KdNSecF0tpBSE/mJGWlrxHbni1iiTraZlwy8xKKHzShQEpA+lQzB1vp0jNtxbawttRSRzEbJp9UwUlQAKRbLnHanR8asEFd9/uRszqrU8i5XD8QPA/v3LN4R8QsO4hkVPImP+N5u29ZmCElN72seBGR4edoIrvhnjMZfh94IrbdDq5ni3aEmN1jlGockBMek59re/UV6xqBtmD5iFjE9CqVHnHFTbB3C1koeTmg3OVzyPY6C8MdHxFdfclqY268+65kyhJVt+Q7Xz5RZUsticlPaBuXVbj3+m6HkfE6KnQZWaBXL2lnvpHyHUctR/BhsT8jMyLmxMtFIJslYzSrQxLM1hLEclTW5ybkBci7iGV7xTeoHte3qhLQ283u1oS6hyw2SLhXTLnD6ctWHtO4iycC2kgWoVJ/Ea2FeMz+z3giSMNeF08627Nbz4c29s7LTydtXPvcDhkc4xEe3UcfmfdLfG0DUWqBFZk1PNNPNqbdbStChYpULgiOCkUKkUdby6dIMy6nlbTikJzUdenQQQQHBmA2B7TXjTWzhyo3HmKXGE5qi0tmpKqLciwmaXxcCBf8A3qYzBDQzL8GOepHILDfaKIggghR8/9k=" alt="image">
+<img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAUDBAQEAwUEBAUFBQUGBwwIBwcHBw8LCwgMEQ8SCBEPERETFhwXExQaFQcRGCEYGh0dHx8fExciJCIeJBweHx4BBQUFBwYHDggIDh4UERQeHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4bHh4eHh4VHB4eHhseHh4WHBweHh0eHBkeFf/AABEIACEAIQMBIgACEQEDEQH/xAAcAAEAAgIDAQAAAAAAAAAAAAAABQYEBwIDCAH/xAA8EAAABAQDBAQJDQAAAAAAAAABAgMEAAUGEQcSIRMVMUEUIkKzIzc4YXN1gbHRFiQlMjZRVGJ0kZOhsv/EABkBAAMBAQEAAAAAAAAAAAAAAAADBgIFAf/EACERAAICAQMFAQAAAAAAAAAAAAABAhEDEjFBFGFxkdEi/9oADAMBAAIRAxEAPwCPkUoa1JihWaM4eTIjVku7cADZwJR6q4hbW/IR0iFnsxw83Q53M7qzeGTwG3VDZ5vzWHhFooLxnYi+jfd+MUnDZVJNB6ClFr1ZcxLHTz/N9B0HKQ3H2cI5OWc+oyybdR00k0t/InhH2jpjSG7FPlU7qTpu2HJ0JUMmzylte48b5v6iaruVSFvh4xqqmHk8yun/AEaztx2QKoI6B50A5x01ougemXZSYbOpAI5PpA4K2Q65R7SYBr9Xj2o5zzycpD65N7l4xLLOU8eaLauVVaa27BW6NebxmH4t1/Kb4wjFhFIKs3XQXjOxF9G+78YqGFiE9Wbv9z1Owp8oHJtCuVwT2w2GwhoN7a/vE/TE9kcjxUrgZ88Fk3dqvG5VASOp1hXHkUB5AMV2eyXDdvKHK0qqh48fEJdFA7FQgKG+4REgAETmVPqcsJJ/rTT02vg7hE5XjSqU6UenmVbyqbtQ2edmi6A51fCFALBbWwiA+yMeeeTlIfXJvcvFeo6V0Q9liitSz9zKngLCUiKbU6oGTylEDXKUeZjBbzRYq9m1IJYXS6lqcm6kzUbTHbiJ2yiY5RKqIj1igHFYAjDg4Tx4Yptqdt6aW3oOGzWMIQimE0eqqh+0Ex/Vq/7GMCEIWNEIQj0BCEIAP//Z" alt="image">
+<img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAUDBAQEAwUEBAUFBQUGBwwIBwcHBw8LCwgMEQ8SCBEPERETFhwXExQaFQcRGCEYGh0dHx8fExciJCIeJBweHx4BBQUFBwYHDggIDh4UERQeHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4bHh4eHh4VHB4eHhseHh4WHBweHh0eHBkeFf/AABEIACEAIQMBIgACEQEDEQH/xAAcAAEAAgIDAQAAAAAAAAAAAAAABQYEBwIDCAH/xAA8EAAABAQDBAQJDQAAAAAAAAABAgMEAAUGEQcSIRMVMUEUIkKzIzc4YXN1gbHRFiQlMjZRVGJ0kZOhsv/EABkBAAMBAQEAAAAAAAAAAAAAAAADBgIFAf/EACERAAICAQMFAQAAAAAAAAAAAAABAhEDEjFBFGFxkdEi/9oADAMBAAIRAxEAPwCPkUoa1JihWaM4eTIjVku7cADZwJR6q4hbW/IR0iFnsxw83Q53M7qzeGTwG3VDZ5vzWHhFooLxnYi+jfd+MUnDZVJNB6ClFr1ZcxLHTz/N9B0HKQ3H2cI5OWc+oyybdR00k0t/InhH2jpjSG7FPlU7qTpu2HJ0JUMmzylte48b5v6iaruVSFvh4xqqmHk8yun/AEaztx2QKoI6B50A5x01ougemXZSYbOpAI5PpA4K2Q65R7SYBr9Xj2o5zzycpD65N7l4xLLOU8eaLauVVaa27BW6NebxmH4t1/Kb4wjFhFIKs3XQXjOxF9G+78YqGFiE9Wbv9z1Owp8oHJtCuVwT2w2GwhoN7a/vE/TE9kcjxUrgZ88Fk3dqvG5VASOp1hXHkUB5AMV2eyXDdvKHK0qqh48fEJdFA7FQgKG+4REgAETmVPqcsJJ/rTT02vg7hE5XjSqU6UenmVbyqbtQ2edmi6A51fCFALBbWwiA+yMeeeTlIfXJvcvFeo6V0Q9liitSz9zKngLCUiKbU6oGTylEDXKUeZjBbzRYq9m1IJYXS6lqcm6kzUbTHbiJ2yiY5RKqIj1igHFYAjDg4Tx4Yptqdt6aW3oOGzWMIQimE0eqqh+0Ex/Vq/7GMCEIWNEIQj0BCEIAP//Z" alt="image"></li>
+<li>Start Wireshark on mon0 and set channel to match the devices. You’ll see 802.11 Mgmt frames and P2P IEs as devices form a P2P Group (that’s the S-Beam/Quick Share “upgrade” layer). [nayab.dev], [ask.wireshark.org]
+C) Detect a tap (NFC)</li>
+</ol>
+<ul>
+<li>Plug an ACR122U, install its SDK/tools, and open the reader tool. When you bring a tag/phone near the reader you’ll get ATR/tag info or NDEF contents—immediate “presence detected.” [manualslib.com]</li>
+<li>Or add Android NFC Basics to your app to handle ACTION_NDEF_DISCOVERED and show a toast/dialog on tap. [developer....ndroid.com]
+D) Listen for an NMEA “HELLO” (USB-UART)</li>
+<li>Configure 4800-8-N-1, read lines, and verify checksum. When $PDV,HELLO,</li>
+<li>On a Linux box with the right adapters, Kismet can watch Wi-Fi (incl. P2P) and Bluetooth/BLE simultaneously from a web UI (it won’t decode NFC, but it’s fantastic for RF discovery dashboards). [kismetwireless.net]
+If you tell me which signal you want to detect first (NFC tap, BLE adverts, Wi-Fi Direct, or NMEA bursts) and whether you prefer phone-only vs PC + dongle, I’ll give you a step-by-step kit list and a copy-paste capture workflow tuned to your setup.
+Sources
+Provide your feedback on BizChat
+Show me a step-by-step guide for detecting BLE advertsHow to use Kismet for Wi-Fi Direct detection?How to parse NMEA sentences in Python?
+Show me a step-by-step guide for detecting BLE advertsHow to use Kismet for Wi-Fi Direct detection?How to parse NMEA sentences in Python?
+You said:
+Show me a step-by-step guide for detecting BLE advertsHow to use Kismet for Wi-Fi Direct detection?How to parse NMEA sentences in Python?
+Copilot said:
+Copilot
+Here’s a clear, practical, step-by-step set of guides for all three topics you asked about. No web sources or files were required—this is standard technical knowledge.</li>
+</ul>
+<ol>
+<li>Detecting BLE (Bluetooth Low Energy) Advertisements
+Below is a simple, platform-agnostic guide using Linux + BlueZ, the most common setup. I can provide Windows, macOS, or Python-based scanning methods too—just ask.
+Step-by-Step (Linux with BlueZ)
+Step 1 — Install required tools
+Shell
+sudo apt update
+sudo apt install bluez bluez-tools
+Show more lines
+Step 2 — Bring up your Bluetooth interface
+Check interface name:
+Shell
+hciconfig
+Show more lines
+Typically it’s hci0.
+Enable it:
+Shell
+sudo hciconfig hci0 up
+Show more lines
+Step 3 — Enable LE scanning mode
+Shell
+sudo btmgmt --index 0 le on
+Show more lines
+Step 4 — Start scanning
+Option A: hcitool (deprecated but simple)
+Shell
+sudo hcitool lescan --duplicates
+Show more lines
+Option B: bluetoothctl (newer + reliable)
+Shell
+bluetoothctl
+scan on
+Show more lines
+Option C: hcidump to show raw advertisement packets
+Shell
+sudo hcidump --raw
+Show more lines
+Step 5 — Interpret results
+You will see devices like:
+LE Scan ...
+AA:BB:CC:DD:EE:FF (public) Device_Name
+For raw packets, look for:</li>
+</ol>
+<ul>
+<li>Flags (0x01)</li>
+<li>Service UUIDs (0x03, 0x07)</li>
+<li>Manufacturer data (0xFF)
+I can show how to interpret specific packet formats if you want.</li>
+</ul>
+<ol start="2">
+<li>Using Kismet to Detect Wi-Fi Direct (P2P)
+Kismet can detect Wi-Fi Direct probes and groups because they follow recognizable SSID patterns (e.g., DIRECT-xy-DEVICE).
+Step-by-Step Kismet Setup
+Step 1 — Install Kismet
+Linux example:
+Shell
+sudo apt update
+sudo apt install kismet
+Show more lines
+Step 2 — Add a Wi-Fi interface in monitor mode
+Kismet can usually do this automatically:
+Shell
+sudo kismet
+Show more lines
+Or manually set your NIC to monitor mode:
+Shell
+sudo ip link set wlan0 down
+sudo iw wlan0 set monitor control
+sudo ip link set wlan0 up
+Show more lines
+Step 3 — Start Kismet and open the web interface
+Navigate to:
+<a href="http://localhost:2501">http://localhost:2501</a>
+Step 4 — Identify Wi-Fi Direct devices
+Wi-Fi Direct uses:</li>
+</ol>
+<ul>
+<li>SSID pattern:
+o DIRECT-XY-xxxx</li>
+<li>OUI patterns &amp; vendor tags</li>
+<li>P2P action frames</li>
+<li>Service discovery frames for Wi-Fi Direct
+Kismet will label these as:</li>
+<li>Wi-Fi Direct / P2P Device</li>
+<li>P2P Group Owner</li>
+<li>P2P Client</li>
+<li>WPS-based negotiation packets
+Step 5 — Drill into device details
+In Kismet Web UI:
+$Devices → Filters → “Wi-Fi Direct” or “P2P”$
+You can view:</li>
+<li>P2P capabilities</li>
+<li>Group Owner Intent</li>
+<li>Channel</li>
+<li>Device names</li>
+<li>Probe requests</li>
+</ul>
+<ol start="3">
+<li>Parsing NMEA GPS Sentences in Python
+NMEA sentences look like:
+$GPGGA,123519,4807.038,N,01131.000,E,1,08,...*checksum
+You can parse NMEA in Python in two ways: manual parsing or using a library.
+Option A — Using the pynmea2 library (easy &amp; reliable)
+Step 1 — Install
+Shell
+pip install pynmea2
+Show more lines
+Step 2 — Parse sentences
+Python
+import pynmea2
+data = &#34;$GPGGA,123519,4807.038,N,01131.000,E,1,08,...<em>47&#34;
+msg = pynmea2.parse(data)
+print(msg.latitude, msg.longitude)
+Show more lines
+Step 3 — Read from a serial GPS device
+Python
+import serial, pynmea2
+ser = serial.Serial(&#39;/dev/ttyUSB0&#39;, 9600)
+while True:
+line = ser.readline().decode(&#39;ascii&#39;, errors=&#39;replace&#39;)
+if line.startswith(&#39;
+):
+try:
+msg = pynmea2.parse(line)
+print(msg)
+except pynmea2.ParseError:
+continue
+Show more lines
+Option B — Manual parsing (no library)
+Python
+sentence = &#34;$GPRMC,225446,A,4916.45,N,12311.12,W,000.5,054.7,191194,020.3,E</em>68&#34;
+fields = sentence.split(&#39;,&#39;)
+latitude = fields[3]
+lat_dir = fields[4]
+longitude = fields[5]
+lon_dir = fields[6]
+print(latitude, lat_dir, longitude, lon_dir)
+Show more lines
+To convert the latitude format (ddmm.mmmm) to decimal degrees:
+Python
+def convert_nmea(coord, direction):
+degrees = float(coord[:2])
+minutes = float(coord[2:])
+result = degrees + minutes/60
+if direction in [&#39;S&#39;, &#39;W&#39;]:
+result = -result
+return result
+Show more lines
+Want me to combine all three into a single cheat sheet PDF or a lab guide?
+Or would you like code that does BLE scanning + NMEA GPS parsing + Wi-Fi Direct detection automatically?
+Just tell me!
+{{referencesBody}}
+------------------------------------------------------------------------No index entries found.</li>
+</ol>

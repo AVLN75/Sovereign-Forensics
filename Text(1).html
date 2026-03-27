@@ -1,119 +1,1690 @@
-<p>/******************* WiFi Robot Obstacle Avoidance Mode ********************/</p>
-<p>#include</p>
-<p>#include</p>
-<p>// connections for drive Motors</p>
-<p>int PWM_A = D1;</p>
-<p>int PWM_B = D2;</p>
-<p>int DIR_A = D3;</p>
-<p>int DIR_B = D4;</p>
-<p>// ultrasonic setup:</p>
-<p>const int trigPin = D6; // trig pin connected to Arduino&#39;s pin D6</p>
-<p>const int echoPin = D7; // echo pin connected to Arduino&#39;s pin D7</p>
-<p>const int wifiLedPin = D0; // set digital pin D0 as indication, the LED turn on if NodeMCU connected to WiFi as STA mode</p>
-<p>// defines variables</p>
-<p>int distanceCm = 0;</p>
-<p>int distanceHold = 15;</p>
-<p>int SPEED = 1023; // set 1023 to max speed motor</p>
-<p>unsigned long previousMillis = 0;</p>
-<p>String sta_ssid = &#34;&#34;; // set Wifi networks you want to connect to</p>
-<p>String sta_password = &#34;&#34;; // set password for Wifi networks</p>
-<p>void setup() {</p>
-<p>Serial.begin(115200); // set up Serial library at 115200 bps</p>
-<p>Serial.println();</p>
-<p>Serial.println(&#34;<em>WiFi Robot Obstacle Avoidance Mode</em>&#34;);</p>
-<p>Serial.println(&#34;--------------------------------------&#34;);</p>
-<p>pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output</p>
-<p>pinMode(echoPin, INPUT); // Sets the echoPin as an Input</p>
-<p>pinMode(wifiLedPin, OUTPUT); // sets the Wifi LED pin as an Output</p>
-<p>digitalWrite(wifiLedPin, HIGH);</p>
-<p>// Set all the motor control pins to outputs</p>
-<p>pinMode(PWM_A, OUTPUT);</p>
-<p>pinMode(PWM_B, OUTPUT);</p>
-<p>pinMode(DIR_A, OUTPUT);</p>
-<p>pinMode(DIR_B, OUTPUT);</p>
-<p>// set NodeMCU Wifi hostname based on chip mac address</p>
-<p>String chip_id = String(ESP.getChipId(), HEX);</p>
-<p>int i = chip_id.length()-4;</p>
-<p>chip_id = chip_id.substring(i);</p>
-<p>chip_id = &#34;wificar-&#34; + chip_id;</p>
-<p>String hostname(chip_id);</p>
-<p>Serial.println();</p>
-<p>Serial.println(&#34;Hostname: &#34;+hostname);</p>
-<p>// first, set NodeMCU as STA mode to connect with a Wifi network</p>
-<p>WiFi.mode(WIFI_STA);</p>
-<p>WiFi.begin(sta_ssid.c_str(), sta_password.c_str());</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.print(&#34;Connecting to: &#34;);</p>
-<p>Serial.println(sta_ssid);</p>
-<p>Serial.print(&#34;Password: &#34;);</p>
-<p>Serial.println(sta_password);</p>
-<p>// try to connect with Wifi network about 10 seconds</p>
-<p>unsigned long currentMillis = millis();</p>
-<p>previousMillis = currentMillis;</p>
-<p>while (WiFi.status() != WL_CONNECTED &amp;&amp; currentMillis - previousMillis &lt;= 10000) {</p>
-<p>delay(500);</p>
-<p>Serial.print(&#34;.&#34;);</p>
-<p>currentMillis = millis();</p>
-<p>}</p>
-<p>// if failed to connect with Wifi network set NodeMCU as AP mode</p>
-<p>if (WiFi.status() == WL_CONNECTED) {</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.println(&#34;<em>WiFi-STA-Mode</em>&#34;);</p>
-<p>Serial.print(&#34;IP: &#34;);</p>
-<p>Serial.println(WiFi.localIP());</p>
-<p>digitalWrite(wifiLedPin, LOW); // Wifi LED on when connected to Wifi as STA mode</p>
-<p>delay(3000);</p>
-<p>} else {</p>
-<p>WiFi.mode(WIFI_AP);</p>
-<p>WiFi.softAP(hostname.c_str());</p>
-<p>IPAddress myIP = WiFi.softAPIP();</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.println(&#34;WiFi failed connected to &#34; + sta_ssid);</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.println(&#34;<em>WiFi-AP-Mode</em>&#34;);</p>
-<p>Serial.print(&#34;AP IP address: &#34;);</p>
-<p>Serial.println(myIP);</p>
-<p>digitalWrite(wifiLedPin, HIGH); // Wifi LED off when status as AP mode</p>
-<p>delay(3000);</p>
-<p>}</p>
-<p>ArduinoOTA.begin(); // enable to receive update/uploade firmware via Wifi OTA</p>
-<p>// set the speed to start, from 0 (off) to 1023 (max speed)</p>
-<p>analogWrite(PWM_A, SPEED);</p>
-<p>analogWrite(PWM_B, SPEED);</p>
-<p>// move forward - Initial state</p>
-<p>digitalWrite(DIR_A, HIGH);</p>
-<p>digitalWrite(DIR_B, HIGH);</p>
-<p>}</p>
-<p>// main program loop</p>
-<p>void loop() {</p>
-<p>ArduinoOTA.handle(); // listen for update OTA request from clients</p>
-<p>distanceCm=getDistance(); // variable to store the distance measured by the sensor</p>
-<p>Serial.println(distanceCm); // print the distance that was measured</p>
-<p>//if the distance is less than value of distanceHold, The robot will turn right then move forward</p>
-<p>if(distanceCm &lt;= distanceHold){</p>
-<p>// turn right</p>
-<p>analogWrite(PWM_A, SPEED);</p>
-<p>analogWrite(PWM_B, SPEED);</p>
-<p>digitalWrite(DIR_A, LOW);</p>
-<p>digitalWrite(DIR_B, HIGH);</p>
-<p>delay(400);</p>
-<p>// move forward</p>
-<p>analogWrite(PWM_A, SPEED);</p>
-<p>analogWrite(PWM_B, SPEED);</p>
-<p>digitalWrite(DIR_A, HIGH);</p>
-<p>digitalWrite(DIR_B, HIGH);</p>
-<p>}</p>
-<p>}</p>
-<p>// returns the distance measured by the HC-SR04 distance sensor</p>
-<p>int getDistance() {</p>
-<p>int echoTime; //variable to store the time it takes for a ping to bounce off an object</p>
-<p>int calcualtedDistance; //variable to store the distance calculated from the echo time</p>
-<p>//send out an ultrasonic pulse that&#39;s 10ms long</p>
-<p>digitalWrite(trigPin, HIGH);</p>
-<p>delayMicroseconds(10);</p>
-<p>digitalWrite(trigPin, LOW);</p>
-<p>echoTime = pulseIn(echoPin, HIGH); //use the pulsein command to see how long it takes for the</p>
-<p>//pulse to bounce back to the sensor</p>
-<p>calcualtedDistance = echoTime / 58.26; //calculate the distance of the object that reflected the pulse (half the bounce time multiplied by the speed of sound)</p>
-<p>return calcualtedDistance; //send back the distance that was calculated</p>
-<p>}</p>
+<h1 id="note-do-not-modify-this-file">NOTE: Do not modify this file.</h1>
+<h1 id></h1>
+<h1 id="this-file-is-generated-via-the-xx-dumploadedclasslist-option">This file is generated via the -XX:DumpLoadedClassList= option</h1>
+<h1 id="and-is-used-at-cds-archive-dump-time-see-xshare-dump">and is used at CDS archive dump time (see -Xshare:dump).</h1>
+<h1 id="-2"></h1>
+<p>java/io/BufferedInputStream</p>
+<p>java/io/BufferedOutputStream</p>
+<p>java/io/BufferedWriter</p>
+<p>java/io/ByteArrayInputStream</p>
+<p>java/io/ByteArrayOutputStream</p>
+<p>java/io/Closeable</p>
+<p>java/io/DataInput</p>
+<p>java/io/DataInputStream</p>
+<p>java/io/DataOutput</p>
+<p>java/io/DefaultFileSystem</p>
+<p>java/io/File</p>
+<p>java/io/File$PathStatus</p>
+<p>java/io/FileCleanable</p>
+<p>java/io/FileDescriptor</p>
+<p>java/io/FileDescriptor$1</p>
+<p>java/io/FileInputStream</p>
+<p>java/io/FileInputStream$1</p>
+<p>java/io/FileOutputStream</p>
+<p>java/io/FileSystem</p>
+<p>java/io/FilterInputStream</p>
+<p>java/io/FilterOutputStream</p>
+<p>java/io/Flushable</p>
+<p>java/io/InputStream</p>
+<p>java/io/ObjectStreamClass</p>
+<p>java/io/ObjectStreamField</p>
+<p>java/io/OutputStream</p>
+<p>java/io/OutputStreamWriter</p>
+<p>java/io/PrintStream</p>
+<p>java/io/RandomAccessFile</p>
+<p>java/io/RandomAccessFile$1</p>
+<p>java/io/RandomAccessFile$2</p>
+<p>java/io/Serializable</p>
+<p>java/io/WinNTFileSystem</p>
+<p>java/io/Writer</p>
+<p>java/lang/AbstractStringBuilder</p>
+<p>java/lang/Appendable</p>
+<p>java/lang/ApplicationShutdownHooks</p>
+<p>java/lang/ApplicationShutdownHooks$1</p>
+<p>java/lang/ArithmeticException</p>
+<p>java/lang/ArrayIndexOutOfBoundsException</p>
+<p>java/lang/ArrayStoreException</p>
+<p>java/lang/AssertionStatusDirectives</p>
+<p>java/lang/AutoCloseable</p>
+<p>java/lang/BaseVirtualThread</p>
+<p>java/lang/Boolean</p>
+<p>java/lang/BootstrapMethodError</p>
+<p>java/lang/Byte</p>
+<p>java/lang/Byte$ByteCache</p>
+<p>java/lang/CharSequence</p>
+<p>java/lang/Character</p>
+<p>java/lang/Character$CharacterCache</p>
+<p>java/lang/CharacterData</p>
+<p>java/lang/CharacterData00</p>
+<p>java/lang/CharacterDataLatin1</p>
+<p>java/lang/Class</p>
+<p>java/lang/Class$Atomic</p>
+<p>java/lang/Class$ReflectionData</p>
+<p>java/lang/ClassCastException</p>
+<p>java/lang/ClassFrameInfo</p>
+<p>java/lang/ClassLoader</p>
+<p>java/lang/ClassLoader$ParallelLoaders</p>
+<p>java/lang/ClassNotFoundException</p>
+<p>java/lang/ClassValue</p>
+<p>java/lang/ClassValue$Entry</p>
+<p>java/lang/ClassValue$Identity</p>
+<p>java/lang/ClassValue$Version</p>
+<p>java/lang/Cloneable</p>
+<p>java/lang/Comparable</p>
+<p>java/lang/CompoundEnumeration</p>
+<p>java/lang/Double</p>
+<p>java/lang/Enum</p>
+<p>java/lang/Error</p>
+<p>java/lang/Exception</p>
+<p>java/lang/Float</p>
+<p>java/lang/IllegalArgumentException</p>
+<p>java/lang/IllegalCallerException</p>
+<p>java/lang/IllegalMonitorStateException</p>
+<p>java/lang/IncompatibleClassChangeError</p>
+<p>java/lang/IndexOutOfBoundsException</p>
+<p>java/lang/Integer</p>
+<p>java/lang/Integer$IntegerCache</p>
+<p>java/lang/InternalError</p>
+<p>java/lang/Iterable</p>
+<p>java/lang/LinkageError</p>
+<p>java/lang/LiveStackFrame</p>
+<p>java/lang/LiveStackFrameInfo</p>
+<p>java/lang/Long</p>
+<p>java/lang/Long$LongCache</p>
+<p>java/lang/Math</p>
+<p>java/lang/Module</p>
+<p>java/lang/Module$ArchivedData</p>
+<p>java/lang/Module$EnableNativeAccess</p>
+<p>java/lang/ModuleLayer</p>
+<p>java/lang/ModuleLayer$Controller</p>
+<p>java/lang/NamedPackage</p>
+<p>java/lang/NoClassDefFoundError</p>
+<p>java/lang/NoSuchFieldException</p>
+<p>java/lang/NoSuchMethodError</p>
+<p>java/lang/NoSuchMethodException</p>
+<p>java/lang/NullPointerException</p>
+<p>java/lang/Number</p>
+<p>java/lang/Object</p>
+<p>java/lang/OutOfMemoryError</p>
+<p>java/lang/Package</p>
+<p>java/lang/Package$VersionInfo</p>
+<p>java/lang/PublicMethods$Key</p>
+<p>java/lang/PublicMethods$MethodList</p>
+<p>java/lang/Readable</p>
+<p>java/lang/Record</p>
+<p>java/lang/ReflectiveOperationException</p>
+<p>java/lang/Runnable</p>
+<p>java/lang/Runtime</p>
+<p>java/lang/Runtime$Version</p>
+<p>java/lang/RuntimeException</p>
+<p>java/lang/Short</p>
+<p>java/lang/Short$ShortCache</p>
+<p>java/lang/Shutdown</p>
+<p>java/lang/Shutdown$Lock</p>
+<p>java/lang/StackFrameInfo</p>
+<p>java/lang/StackOverflowError</p>
+<p>java/lang/StackStreamFactory$AbstractStackWalker</p>
+<p>java/lang/StackTraceElement</p>
+<p>java/lang/StackWalker</p>
+<p>java/lang/StackWalker$StackFrame</p>
+<p>java/lang/StrictMath</p>
+<p>java/lang/String</p>
+<p>java/lang/String$CaseInsensitiveComparator</p>
+<p>java/lang/StringBuffer</p>
+<p>java/lang/StringBuilder</p>
+<p>java/lang/StringCoding</p>
+<p>java/lang/StringConcatHelper</p>
+<p>java/lang/StringConcatHelper$Concat1</p>
+<p>java/lang/StringConcatHelper$StringConcatBase</p>
+<p>java/lang/StringLatin1</p>
+<p>java/lang/StringUTF16</p>
+<p>java/lang/System</p>
+<p>java/lang/System$1</p>
+<p>java/lang/System$In</p>
+<p>java/lang/System$Logger</p>
+<p>java/lang/System$LoggerFinder</p>
+<p>java/lang/System$Out</p>
+<p>java/lang/Terminator</p>
+<p>java/lang/Terminator$1</p>
+<p>java/lang/Thread</p>
+<p>java/lang/Thread$Constants</p>
+<p>java/lang/Thread$FieldHolder</p>
+<p>java/lang/Thread$State</p>
+<p>java/lang/Thread$ThreadIdentifiers</p>
+<p>java/lang/Thread$UncaughtExceptionHandler</p>
+<p>java/lang/ThreadBuilders$BoundVirtualThread</p>
+<p>java/lang/ThreadGroup</p>
+<p>java/lang/ThreadLocal</p>
+<p>java/lang/ThreadLocal$ThreadLocalMap</p>
+<p>java/lang/ThreadLocal$ThreadLocalMap$Entry</p>
+<p>java/lang/Throwable</p>
+<p>java/lang/VersionProps</p>
+<p>java/lang/VirtualMachineError</p>
+<p>java/lang/VirtualThread</p>
+<p>java/lang/Void</p>
+<p>java/lang/annotation/Annotation</p>
+<p>java/lang/classfile/AccessFlags</p>
+<p>java/lang/classfile/Annotation</p>
+<p>java/lang/classfile/AnnotationElement</p>
+<p>java/lang/classfile/Attribute</p>
+<p>java/lang/classfile/AttributeMapper</p>
+<p>java/lang/classfile/AttributeMapper$AttributeStability</p>
+<p>java/lang/classfile/AttributedElement</p>
+<p>java/lang/classfile/Attributes</p>
+<p>java/lang/classfile/BootstrapMethodEntry</p>
+<p>java/lang/classfile/BufWriter</p>
+<p>java/lang/classfile/ClassBuilder</p>
+<p>java/lang/classfile/ClassElement</p>
+<p>java/lang/classfile/ClassFile</p>
+<p>java/lang/classfile/ClassFile$Option</p>
+<p>java/lang/classfile/ClassFile$StackMapsOption</p>
+<p>java/lang/classfile/ClassFileBuilder</p>
+<p>java/lang/classfile/ClassFileElement</p>
+<p>java/lang/classfile/ClassHierarchyResolver</p>
+<p>java/lang/classfile/ClassHierarchyResolver$1Factory</p>
+<p>java/lang/classfile/ClassHierarchyResolver$ClassHierarchyInfo</p>
+<p>java/lang/classfile/ClassModel</p>
+<p>java/lang/classfile/ClassReader</p>
+<p>java/lang/classfile/CodeBuilder</p>
+<p>java/lang/classfile/CodeBuilder$1</p>
+<p>java/lang/classfile/CodeElement</p>
+<p>java/lang/classfile/CompoundElement</p>
+<p>java/lang/classfile/CustomAttribute</p>
+<p>java/lang/classfile/FieldBuilder</p>
+<p>java/lang/classfile/FieldElement</p>
+<p>java/lang/classfile/FieldModel</p>
+<p>java/lang/classfile/Interfaces</p>
+<p>java/lang/classfile/Label</p>
+<p>java/lang/classfile/MethodBuilder</p>
+<p>java/lang/classfile/MethodElement</p>
+<p>java/lang/classfile/MethodModel</p>
+<p>java/lang/classfile/Opcode</p>
+<p>java/lang/classfile/Opcode$Kind</p>
+<p>java/lang/classfile/PseudoInstruction</p>
+<p>java/lang/classfile/Superclass</p>
+<p>java/lang/classfile/TypeKind</p>
+<p>java/lang/classfile/attribute/RuntimeVisibleAnnotationsAttribute</p>
+<p>java/lang/classfile/attribute/SourceFileAttribute</p>
+<p>java/lang/classfile/attribute/StackMapFrameInfo</p>
+<p>java/lang/classfile/attribute/StackMapFrameInfo$ObjectVerificationTypeInfo</p>
+<p>java/lang/classfile/attribute/StackMapFrameInfo$SimpleVerificationTypeInfo</p>
+<p>java/lang/classfile/attribute/StackMapFrameInfo$VerificationTypeInfo</p>
+<p>java/lang/classfile/attribute/StackMapTableAttribute</p>
+<p>java/lang/classfile/constantpool/AnnotationConstantValueEntry</p>
+<p>java/lang/classfile/constantpool/ClassEntry</p>
+<p>java/lang/classfile/constantpool/ConstantPool</p>
+<p>java/lang/classfile/constantpool/ConstantPoolBuilder</p>
+<p>java/lang/classfile/constantpool/FieldRefEntry</p>
+<p>java/lang/classfile/constantpool/InterfaceMethodRefEntry</p>
+<p>java/lang/classfile/constantpool/LoadableConstantEntry</p>
+<p>java/lang/classfile/constantpool/MemberRefEntry</p>
+<p>java/lang/classfile/constantpool/MethodRefEntry</p>
+<p>java/lang/classfile/constantpool/NameAndTypeEntry</p>
+<p>java/lang/classfile/constantpool/PoolEntry</p>
+<p>java/lang/classfile/constantpool/Utf8Entry</p>
+<p>java/lang/classfile/instruction/CharacterRange</p>
+<p>java/lang/classfile/instruction/LabelTarget</p>
+<p>java/lang/classfile/instruction/LocalVariable</p>
+<p>java/lang/classfile/instruction/LocalVariableType</p>
+<p>java/lang/classfile/instruction/SwitchCase</p>
+<p>java/lang/constant/ClassDesc</p>
+<p>java/lang/constant/Constable</p>
+<p>java/lang/constant/ConstantDesc</p>
+<p>java/lang/constant/ConstantDescs</p>
+<p>java/lang/constant/DirectMethodHandleDesc</p>
+<p>java/lang/constant/DirectMethodHandleDesc$Kind</p>
+<p>java/lang/constant/DynamicConstantDesc</p>
+<p>java/lang/constant/DynamicConstantDesc$AnonymousDynamicConstantDesc</p>
+<p>java/lang/constant/MethodHandleDesc</p>
+<p>java/lang/constant/MethodHandleDesc$1</p>
+<p>java/lang/constant/MethodTypeDesc</p>
+<p>java/lang/invoke/AbstractValidatingLambdaMetafactory</p>
+<p>java/lang/invoke/BootstrapMethodInvoker</p>
+<p>java/lang/invoke/BoundMethodHandle</p>
+<p>java/lang/invoke/BoundMethodHandle$Specializer</p>
+<p>java/lang/invoke/BoundMethodHandle$Specializer$Factory</p>
+<p>java/lang/invoke/BoundMethodHandle$SpeciesData</p>
+<p>java/lang/invoke/BoundMethodHandle$Species_D</p>
+<p>java/lang/invoke/BoundMethodHandle$Species_DL</p>
+<p>java/lang/invoke/BoundMethodHandle$Species_I</p>
+<p>java/lang/invoke/BoundMethodHandle$Species_IL</p>
+<p>java/lang/invoke/BoundMethodHandle$Species_L</p>
+<p>java/lang/invoke/BoundMethodHandle$Species_LL</p>
+<p>java/lang/invoke/BoundMethodHandle$Species_LLL</p>
+<p>java/lang/invoke/BoundMethodHandle$Species_LLLL</p>
+<p>java/lang/invoke/BoundMethodHandle$Species_LLLLL</p>
+<p>java/lang/invoke/CallSite</p>
+<p>java/lang/invoke/ClassSpecializer</p>
+<p>java/lang/invoke/ClassSpecializer$1</p>
+<p>java/lang/invoke/ClassSpecializer$Factory</p>
+<p>java/lang/invoke/ClassSpecializer$SpeciesData</p>
+<p>java/lang/invoke/ConstantCallSite</p>
+<p>java/lang/invoke/DelegatingMethodHandle</p>
+<p>java/lang/invoke/DelegatingMethodHandle$Holder</p>
+<p>java/lang/invoke/DirectMethodHandle</p>
+<p>java/lang/invoke/DirectMethodHandle$1</p>
+<p>java/lang/invoke/DirectMethodHandle$2</p>
+<p>java/lang/invoke/DirectMethodHandle$Accessor</p>
+<p>java/lang/invoke/DirectMethodHandle$Constructor</p>
+<p>java/lang/invoke/DirectMethodHandle$Holder</p>
+<p>java/lang/invoke/DirectMethodHandle$Interface</p>
+<p>java/lang/invoke/InfoFromMemberName</p>
+<p>java/lang/invoke/InnerClassLambdaMetafactory</p>
+<p>java/lang/invoke/InnerClassLambdaMetafactory$1</p>
+<p>java/lang/invoke/InnerClassLambdaMetafactory$3</p>
+<p>java/lang/invoke/InnerClassLambdaMetafactory$6</p>
+<p>java/lang/invoke/InvokerBytecodeGenerator</p>
+<p>java/lang/invoke/InvokerBytecodeGenerator$1</p>
+<p>java/lang/invoke/InvokerBytecodeGenerator$2</p>
+<p>java/lang/invoke/InvokerBytecodeGenerator$3</p>
+<p>java/lang/invoke/InvokerBytecodeGenerator$4</p>
+<p>java/lang/invoke/InvokerBytecodeGenerator$4$1</p>
+<p>java/lang/invoke/InvokerBytecodeGenerator$8</p>
+<p>java/lang/invoke/InvokerBytecodeGenerator$ClassData</p>
+<p>java/lang/invoke/Invokers</p>
+<p>java/lang/invoke/Invokers$Holder</p>
+<p>java/lang/invoke/LambdaForm</p>
+<p>java/lang/invoke/LambdaForm$BasicType</p>
+<p>java/lang/invoke/LambdaForm$Holder</p>
+<p>java/lang/invoke/LambdaForm$Kind</p>
+<p>java/lang/invoke/LambdaForm$Name</p>
+<p>java/lang/invoke/LambdaForm$NamedFunction</p>
+<p>java/lang/invoke/LambdaFormBuffer</p>
+<p>java/lang/invoke/LambdaFormEditor</p>
+<p>java/lang/invoke/LambdaFormEditor$1</p>
+<p>java/lang/invoke/LambdaFormEditor$Transform</p>
+<p>java/lang/invoke/LambdaFormEditor$TransformKey</p>
+<p>java/lang/invoke/LambdaMetafactory</p>
+<p>java/lang/invoke/LambdaProxyClassArchive</p>
+<p>java/lang/invoke/MemberName</p>
+<p>java/lang/invoke/MemberName$Factory</p>
+<p>java/lang/invoke/MethodHandle</p>
+<p>java/lang/invoke/MethodHandleImpl</p>
+<p>java/lang/invoke/MethodHandleImpl$1</p>
+<p>java/lang/invoke/MethodHandleImpl$2</p>
+<p>java/lang/invoke/MethodHandleImpl$ArrayAccess</p>
+<p>java/lang/invoke/MethodHandleImpl$AsVarargsCollector</p>
+<p>java/lang/invoke/MethodHandleImpl$CasesHolder</p>
+<p>java/lang/invoke/MethodHandleImpl$CountingWrapper</p>
+<p>java/lang/invoke/MethodHandleImpl$Intrinsic</p>
+<p>java/lang/invoke/MethodHandleImpl$IntrinsicMethodHandle</p>
+<p>java/lang/invoke/MethodHandleImpl$LoopClauses</p>
+<p>java/lang/invoke/MethodHandleImpl$Makers</p>
+<p>java/lang/invoke/MethodHandleImpl$Makers$1</p>
+<p>java/lang/invoke/MethodHandleImpl$Makers$2</p>
+<p>java/lang/invoke/MethodHandleImpl$Makers$3</p>
+<p>java/lang/invoke/MethodHandleInfo</p>
+<p>java/lang/invoke/MethodHandleNatives</p>
+<p>java/lang/invoke/MethodHandleStatics</p>
+<p>java/lang/invoke/MethodHandles</p>
+<p>java/lang/invoke/MethodHandles$1</p>
+<p>java/lang/invoke/MethodHandles$Lookup</p>
+<p>java/lang/invoke/MethodHandles$Lookup$ClassDefiner</p>
+<p>java/lang/invoke/MethodHandles$Lookup$ClassOption</p>
+<p>java/lang/invoke/MethodType</p>
+<p>java/lang/invoke/MethodType$1</p>
+<p>java/lang/invoke/MethodTypeForm</p>
+<p>java/lang/invoke/MutableCallSite</p>
+<p>java/lang/invoke/ResolvedMethodName</p>
+<p>java/lang/invoke/SimpleMethodHandle</p>
+<p>java/lang/invoke/StringConcatFactory</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy$1</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy$2</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy$3</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy$3$1</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy$3$2</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy$3$3</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy$3$4</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy$4</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy$5</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy$6</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy$7</p>
+<p>java/lang/invoke/StringConcatFactory$InlineHiddenClassStrategy$MethodHandlePair</p>
+<p>java/lang/invoke/TypeConvertingMethodAdapter</p>
+<p>java/lang/invoke/TypeDescriptor</p>
+<p>java/lang/invoke/TypeDescriptor$OfField</p>
+<p>java/lang/invoke/TypeDescriptor$OfMethod</p>
+<p>java/lang/invoke/VarForm</p>
+<p>java/lang/invoke/VarHandle</p>
+<p>java/lang/invoke/VarHandle$AccessDescriptor</p>
+<p>java/lang/invoke/VarHandle$AccessMode</p>
+<p>java/lang/invoke/VarHandle$AccessType</p>
+<p>java/lang/invoke/VarHandleBooleans$FieldInstanceReadOnly</p>
+<p>java/lang/invoke/VarHandleBooleans$FieldInstanceReadWrite</p>
+<p>java/lang/invoke/VarHandleByteArrayAsChars$ArrayHandle</p>
+<p>java/lang/invoke/VarHandleByteArrayAsChars$ByteArrayViewVarHandle</p>
+<p>java/lang/invoke/VarHandleByteArrayAsDoubles$ArrayHandle</p>
+<p>java/lang/invoke/VarHandleByteArrayAsDoubles$ByteArrayViewVarHandle</p>
+<p>java/lang/invoke/VarHandleByteArrayAsFloats$ArrayHandle</p>
+<p>java/lang/invoke/VarHandleByteArrayAsFloats$ByteArrayViewVarHandle</p>
+<p>java/lang/invoke/VarHandleByteArrayAsInts$ArrayHandle</p>
+<p>java/lang/invoke/VarHandleByteArrayAsInts$ByteArrayViewVarHandle</p>
+<p>java/lang/invoke/VarHandleByteArrayAsLongs$ArrayHandle</p>
+<p>java/lang/invoke/VarHandleByteArrayAsLongs$ByteArrayViewVarHandle</p>
+<p>java/lang/invoke/VarHandleByteArrayAsShorts$ArrayHandle</p>
+<p>java/lang/invoke/VarHandleByteArrayAsShorts$ByteArrayViewVarHandle</p>
+<p>java/lang/invoke/VarHandleGuards</p>
+<p>java/lang/invoke/VarHandleLongs$FieldInstanceReadOnly</p>
+<p>java/lang/invoke/VarHandleLongs$FieldInstanceReadWrite</p>
+<p>java/lang/invoke/VarHandleReferences$Array</p>
+<p>java/lang/invoke/VarHandleReferences$FieldInstanceReadOnly</p>
+<p>java/lang/invoke/VarHandleReferences$FieldInstanceReadWrite</p>
+<p>java/lang/invoke/VarHandles</p>
+<p>java/lang/invoke/VolatileCallSite</p>
+<p>java/lang/module/Configuration</p>
+<p>java/lang/module/ModuleDescriptor</p>
+<p>java/lang/module/ModuleDescriptor$1</p>
+<p>java/lang/module/ModuleDescriptor$Builder</p>
+<p>java/lang/module/ModuleDescriptor$Exports</p>
+<p>java/lang/module/ModuleDescriptor$Modifier</p>
+<p>java/lang/module/ModuleDescriptor$Opens</p>
+<p>java/lang/module/ModuleDescriptor$Provides</p>
+<p>java/lang/module/ModuleDescriptor$Requires</p>
+<p>java/lang/module/ModuleDescriptor$Requires$Modifier</p>
+<p>java/lang/module/ModuleDescriptor$Version</p>
+<p>java/lang/module/ModuleFinder</p>
+<p>java/lang/module/ModuleFinder$1</p>
+<p>java/lang/module/ModuleFinder$2</p>
+<p>java/lang/module/ModuleReader</p>
+<p>java/lang/module/ModuleReference</p>
+<p>java/lang/module/ResolvedModule</p>
+<p>java/lang/module/Resolver</p>
+<p>java/lang/ref/Cleaner</p>
+<p>java/lang/ref/Cleaner$1</p>
+<p>java/lang/ref/Cleaner$Cleanable</p>
+<p>java/lang/ref/FinalReference</p>
+<p>java/lang/ref/Finalizer</p>
+<p>java/lang/ref/Finalizer$FinalizerThread</p>
+<p>java/lang/ref/PhantomReference</p>
+<p>java/lang/ref/Reference</p>
+<p>java/lang/ref/Reference$1</p>
+<p>java/lang/ref/Reference$ReferenceHandler</p>
+<p>java/lang/ref/ReferenceQueue</p>
+<p>java/lang/ref/ReferenceQueue$Lock</p>
+<p>java/lang/ref/ReferenceQueue$Null</p>
+<p>java/lang/ref/SoftReference</p>
+<p>java/lang/ref/WeakReference</p>
+<p>java/lang/reflect/AccessFlag</p>
+<p>java/lang/reflect/AccessFlag$Location</p>
+<p>java/lang/reflect/AccessibleObject</p>
+<p>java/lang/reflect/AnnotatedElement</p>
+<p>java/lang/reflect/Array</p>
+<p>java/lang/reflect/ClassFileFormatVersion</p>
+<p>java/lang/reflect/Constructor</p>
+<p>java/lang/reflect/Executable</p>
+<p>java/lang/reflect/Field</p>
+<p>java/lang/reflect/GenericDeclaration</p>
+<p>java/lang/reflect/Member</p>
+<p>java/lang/reflect/Method</p>
+<p>java/lang/reflect/Modifier</p>
+<p>java/lang/reflect/Parameter</p>
+<p>java/lang/reflect/RecordComponent</p>
+<p>java/lang/reflect/ReflectAccess</p>
+<p>java/lang/reflect/Type</p>
+<p>java/lang/runtime/ObjectMethods</p>
+<p>java/lang/runtime/SwitchBootstraps</p>
+<p>java/math/BigInteger</p>
+<p>java/math/RoundingMode</p>
+<p>java/net/DefaultInterface</p>
+<p>java/net/Inet4Address</p>
+<p>java/net/Inet4AddressImpl</p>
+<p>java/net/Inet6Address</p>
+<p>java/net/Inet6Address$Inet6AddressHolder</p>
+<p>java/net/Inet6AddressImpl</p>
+<p>java/net/InetAddress</p>
+<p>java/net/InetAddress$1</p>
+<p>java/net/InetAddress$InetAddressHolder</p>
+<p>java/net/InetAddress$PlatformResolver</p>
+<p>java/net/InetAddressImpl</p>
+<p>java/net/InterfaceAddress</p>
+<p>java/net/NetworkInterface</p>
+<p>java/net/URI</p>
+<p>java/net/URI$1</p>
+<p>java/net/URI$Parser</p>
+<p>java/net/URL</p>
+<p>java/net/URL$1</p>
+<p>java/net/URL$DefaultFactory</p>
+<p>java/net/URLStreamHandler</p>
+<p>java/net/URLStreamHandlerFactory</p>
+<p>java/net/spi/InetAddressResolver</p>
+<p>java/net/spi/InetAddressResolver$LookupPolicy</p>
+<p>java/nio/Bits</p>
+<p>java/nio/Bits$1</p>
+<p>java/nio/Buffer</p>
+<p>java/nio/Buffer$1</p>
+<p>java/nio/Buffer$2</p>
+<p>java/nio/ByteBuffer</p>
+<p>java/nio/ByteOrder</p>
+<p>java/nio/CharBuffer</p>
+<p>java/nio/DirectByteBuffer</p>
+<p>java/nio/DirectByteBufferR</p>
+<p>java/nio/DirectIntBufferRU</p>
+<p>java/nio/DirectIntBufferU</p>
+<p>java/nio/DirectLongBufferU</p>
+<p>java/nio/HeapByteBuffer</p>
+<p>java/nio/HeapCharBuffer</p>
+<p>java/nio/IntBuffer</p>
+<p>java/nio/LongBuffer</p>
+<p>java/nio/MappedByteBuffer</p>
+<p>java/nio/StringCharBuffer</p>
+<p>java/nio/channels/ByteChannel</p>
+<p>java/nio/channels/Channel</p>
+<p>java/nio/channels/Channels</p>
+<p>java/nio/channels/FileChannel</p>
+<p>java/nio/channels/GatheringByteChannel</p>
+<p>java/nio/channels/InterruptibleChannel</p>
+<p>java/nio/channels/NetworkChannel</p>
+<p>java/nio/channels/ReadableByteChannel</p>
+<p>java/nio/channels/ScatteringByteChannel</p>
+<p>java/nio/channels/SeekableByteChannel</p>
+<p>java/nio/channels/SelectableChannel</p>
+<p>java/nio/channels/SocketChannel</p>
+<p>java/nio/channels/WritableByteChannel</p>
+<p>java/nio/channels/spi/AbstractInterruptibleChannel</p>
+<p>java/nio/channels/spi/AbstractInterruptibleChannel$1</p>
+<p>java/nio/channels/spi/AbstractSelectableChannel</p>
+<p>java/nio/charset/Charset</p>
+<p>java/nio/charset/CharsetDecoder</p>
+<p>java/nio/charset/CharsetEncoder</p>
+<p>java/nio/charset/CoderResult</p>
+<p>java/nio/charset/CodingErrorAction</p>
+<p>java/nio/charset/StandardCharsets</p>
+<p>java/nio/charset/spi/CharsetProvider</p>
+<p>java/nio/file/CopyOption</p>
+<p>java/nio/file/FileSystem</p>
+<p>java/nio/file/FileSystems</p>
+<p>java/nio/file/FileSystems$DefaultFileSystemHolder</p>
+<p>java/nio/file/Files</p>
+<p>java/nio/file/LinkOption</p>
+<p>java/nio/file/OpenOption</p>
+<p>java/nio/file/Path</p>
+<p>java/nio/file/Paths</p>
+<p>java/nio/file/StandardOpenOption</p>
+<p>java/nio/file/Watchable</p>
+<p>java/nio/file/attribute/AttributeView</p>
+<p>java/nio/file/attribute/BasicFileAttributeView</p>
+<p>java/nio/file/attribute/BasicFileAttributes</p>
+<p>java/nio/file/attribute/DosFileAttributes</p>
+<p>java/nio/file/attribute/FileAttribute</p>
+<p>java/nio/file/attribute/FileAttributeView</p>
+<p>java/nio/file/attribute/FileTime</p>
+<p>java/nio/file/spi/FileSystemProvider</p>
+<p>java/security/AccessControlContext</p>
+<p>java/security/AccessController</p>
+<p>java/security/CodeSource</p>
+<p>java/security/PermissionCollection</p>
+<p>java/security/Permissions</p>
+<p>java/security/Principal</p>
+<p>java/security/PrivilegedAction</p>
+<p>java/security/ProtectionDomain</p>
+<p>java/security/SecureClassLoader</p>
+<p>java/security/SecureClassLoader$1</p>
+<p>java/security/SecureClassLoader$CodeSourceKey</p>
+<p>java/security/Security</p>
+<p>java/security/Security$1</p>
+<p>java/security/Security$2</p>
+<p>java/security/Security$SecPropLoader</p>
+<p>java/security/Security$SecPropLoader$LoadingMode</p>
+<p>java/security/cert/Certificate</p>
+<p>java/text/AttributedCharacterIterator$Attribute</p>
+<p>java/text/DateFormat</p>
+<p>java/text/DateFormat$Field</p>
+<p>java/text/DateFormatSymbols</p>
+<p>java/text/DecimalFormat</p>
+<p>java/text/DecimalFormatSymbols</p>
+<p>java/text/DigitList</p>
+<p>java/text/DontCareFieldPosition</p>
+<p>java/text/DontCareFieldPosition$1</p>
+<p>java/text/FieldPosition</p>
+<p>java/text/Format</p>
+<p>java/text/Format$Field</p>
+<p>java/text/Format$FieldDelegate</p>
+<p>java/text/Format$StringBuf</p>
+<p>java/text/NumberFormat</p>
+<p>java/text/NumberFormat$Field</p>
+<p>java/text/ParsePosition</p>
+<p>java/text/SimpleDateFormat</p>
+<p>java/text/StringBufFactory</p>
+<p>java/text/StringBufFactory$StringBuilderImpl</p>
+<p>java/text/spi/BreakIteratorProvider</p>
+<p>java/text/spi/CollatorProvider</p>
+<p>java/text/spi/DateFormatProvider</p>
+<p>java/text/spi/DateFormatSymbolsProvider</p>
+<p>java/text/spi/DecimalFormatSymbolsProvider</p>
+<p>java/text/spi/NumberFormatProvider</p>
+<p>java/time/Clock</p>
+<p>java/time/Clock$SystemClock</p>
+<p>java/time/Duration</p>
+<p>java/time/Instant</p>
+<p>java/time/InstantSource</p>
+<p>java/time/LocalDate</p>
+<p>java/time/LocalDate$1</p>
+<p>java/time/LocalDateTime</p>
+<p>java/time/LocalTime</p>
+<p>java/time/LocalTime$1</p>
+<p>java/time/Period</p>
+<p>java/time/ZoneId</p>
+<p>java/time/ZoneOffset</p>
+<p>java/time/ZoneRegion</p>
+<p>java/time/chrono/AbstractChronology</p>
+<p>java/time/chrono/ChronoLocalDate</p>
+<p>java/time/chrono/ChronoLocalDateTime</p>
+<p>java/time/chrono/ChronoPeriod</p>
+<p>java/time/chrono/Chronology</p>
+<p>java/time/chrono/IsoChronology</p>
+<p>java/time/format/DateTimeFormatter</p>
+<p>java/time/format/DateTimeFormatterBuilder</p>
+<p>java/time/format/DateTimeFormatterBuilder$1</p>
+<p>java/time/format/DateTimeFormatterBuilder$2</p>
+<p>java/time/format/DateTimeFormatterBuilder$CharLiteralPrinterParser</p>
+<p>java/time/format/DateTimeFormatterBuilder$CompositePrinterParser</p>
+<p>java/time/format/DateTimeFormatterBuilder$DateTimePrinterParser</p>
+<p>java/time/format/DateTimeFormatterBuilder$InstantPrinterParser</p>
+<p>java/time/format/DateTimeFormatterBuilder$NanosPrinterParser</p>
+<p>java/time/format/DateTimeFormatterBuilder$NumberPrinterParser</p>
+<p>java/time/format/DateTimeFormatterBuilder$OffsetIdPrinterParser</p>
+<p>java/time/format/DateTimeFormatterBuilder$SettingsParser</p>
+<p>java/time/format/DateTimeFormatterBuilder$StringLiteralPrinterParser</p>
+<p>java/time/format/DateTimeFormatterBuilder$TextPrinterParser</p>
+<p>java/time/format/DateTimeFormatterBuilder$ZoneIdPrinterParser</p>
+<p>java/time/format/DateTimePrintContext</p>
+<p>java/time/format/DateTimeTextProvider</p>
+<p>java/time/format/DateTimeTextProvider$1</p>
+<p>java/time/format/DateTimeTextProvider$LocaleStore</p>
+<p>java/time/format/DecimalStyle</p>
+<p>java/time/format/ResolverStyle</p>
+<p>java/time/format/SignStyle</p>
+<p>java/time/format/TextStyle</p>
+<p>java/time/temporal/ChronoField</p>
+<p>java/time/temporal/ChronoUnit</p>
+<p>java/time/temporal/IsoFields</p>
+<p>java/time/temporal/IsoFields$Field</p>
+<p>java/time/temporal/IsoFields$Field$1</p>
+<p>java/time/temporal/IsoFields$Field$2</p>
+<p>java/time/temporal/IsoFields$Field$3</p>
+<p>java/time/temporal/IsoFields$Field$4</p>
+<p>java/time/temporal/IsoFields$Unit</p>
+<p>java/time/temporal/JulianFields</p>
+<p>java/time/temporal/JulianFields$Field</p>
+<p>java/time/temporal/Temporal</p>
+<p>java/time/temporal/TemporalAccessor</p>
+<p>java/time/temporal/TemporalAdjuster</p>
+<p>java/time/temporal/TemporalAmount</p>
+<p>java/time/temporal/TemporalField</p>
+<p>java/time/temporal/TemporalQueries</p>
+<p>java/time/temporal/TemporalQueries$1</p>
+<p>java/time/temporal/TemporalQueries$2</p>
+<p>java/time/temporal/TemporalQueries$3</p>
+<p>java/time/temporal/TemporalQueries$4</p>
+<p>java/time/temporal/TemporalQueries$5</p>
+<p>java/time/temporal/TemporalQueries$6</p>
+<p>java/time/temporal/TemporalQueries$7</p>
+<p>java/time/temporal/TemporalQuery</p>
+<p>java/time/temporal/TemporalUnit</p>
+<p>java/time/temporal/ValueRange</p>
+<p>java/time/zone/ZoneOffsetTransitionRule</p>
+<p>java/time/zone/ZoneRules</p>
+<p>java/util/AbstractCollection</p>
+<p>java/util/AbstractList</p>
+<p>java/util/AbstractList$RandomAccessSpliterator</p>
+<p>java/util/AbstractMap</p>
+<p>java/util/AbstractMap$SimpleImmutableEntry</p>
+<p>java/util/AbstractSet</p>
+<p>java/util/ArrayDeque</p>
+<p>java/util/ArrayDeque$DeqIterator</p>
+<p>java/util/ArrayList</p>
+<p>java/util/ArrayList$ArrayListSpliterator</p>
+<p>java/util/ArrayList$Itr</p>
+<p>java/util/ArrayList$SubList</p>
+<p>java/util/Arrays</p>
+<p>java/util/Arrays$ArrayItr</p>
+<p>java/util/Arrays$ArrayList</p>
+<p>java/util/Arrays$LegacyMergeSort</p>
+<p>java/util/BitSet</p>
+<p>java/util/Calendar</p>
+<p>java/util/Calendar$Builder</p>
+<p>java/util/Collection</p>
+<p>java/util/Collections</p>
+<p>java/util/Collections$1</p>
+<p>java/util/Collections$2</p>
+<p>java/util/Collections$3</p>
+<p>java/util/Collections$EmptyEnumeration</p>
+<p>java/util/Collections$EmptyIterator</p>
+<p>java/util/Collections$EmptyList</p>
+<p>java/util/Collections$EmptyMap</p>
+<p>java/util/Collections$EmptySet</p>
+<p>java/util/Collections$SetFromMap</p>
+<p>java/util/Collections$SingletonMap</p>
+<p>java/util/Collections$SingletonSet</p>
+<p>java/util/Collections$SynchronizedCollection</p>
+<p>java/util/Collections$SynchronizedMap</p>
+<p>java/util/Collections$SynchronizedSet</p>
+<p>java/util/Collections$UnmodifiableCollection</p>
+<p>java/util/Collections$UnmodifiableCollection$1</p>
+<p>java/util/Collections$UnmodifiableList</p>
+<p>java/util/Collections$UnmodifiableRandomAccessList</p>
+<p>java/util/Collections$UnmodifiableSet</p>
+<p>java/util/Comparator</p>
+<p>java/util/Date</p>
+<p>java/util/Deque</p>
+<p>java/util/Dictionary</p>
+<p>java/util/EnumMap</p>
+<p>java/util/EnumMap$1</p>
+<p>java/util/EnumSet</p>
+<p>java/util/Enumeration</p>
+<p>java/util/Formattable</p>
+<p>java/util/Formatter</p>
+<p>java/util/Formatter$Conversion</p>
+<p>java/util/Formatter$Flags</p>
+<p>java/util/Formatter$FormatSpecifier</p>
+<p>java/util/Formatter$FormatString</p>
+<p>java/util/GregorianCalendar</p>
+<p>java/util/HashMap</p>
+<p>java/util/HashMap$EntryIterator</p>
+<p>java/util/HashMap$EntrySet</p>
+<p>java/util/HashMap$HashIterator</p>
+<p>java/util/HashMap$HashMapSpliterator</p>
+<p>java/util/HashMap$KeyIterator</p>
+<p>java/util/HashMap$KeySet</p>
+<p>java/util/HashMap$KeySpliterator</p>
+<p>java/util/HashMap$Node</p>
+<p>java/util/HashMap$TreeNode</p>
+<p>java/util/HashMap$ValueIterator</p>
+<p>java/util/HashMap$ValueSpliterator</p>
+<p>java/util/HashMap$Values</p>
+<p>java/util/HashSet</p>
+<p>java/util/Hashtable</p>
+<p>java/util/Hashtable$Entry</p>
+<p>java/util/Hashtable$Enumerator</p>
+<p>java/util/HexFormat</p>
+<p>java/util/IdentityHashMap</p>
+<p>java/util/IdentityHashMap$IdentityHashMapIterator</p>
+<p>java/util/IdentityHashMap$KeyIterator</p>
+<p>java/util/IdentityHashMap$KeySet</p>
+<p>java/util/IdentityHashMap$Values</p>
+<p>java/util/ImmutableCollections</p>
+<p>java/util/ImmutableCollections$AbstractImmutableCollection</p>
+<p>java/util/ImmutableCollections$AbstractImmutableList</p>
+<p>java/util/ImmutableCollections$AbstractImmutableMap</p>
+<p>java/util/ImmutableCollections$AbstractImmutableSet</p>
+<p>java/util/ImmutableCollections$Access</p>
+<p>java/util/ImmutableCollections$Access$1</p>
+<p>java/util/ImmutableCollections$List12</p>
+<p>java/util/ImmutableCollections$ListItr</p>
+<p>java/util/ImmutableCollections$ListN</p>
+<p>java/util/ImmutableCollections$Map1</p>
+<p>java/util/ImmutableCollections$MapN</p>
+<p>java/util/ImmutableCollections$MapN$1</p>
+<p>java/util/ImmutableCollections$MapN$MapNIterator</p>
+<p>java/util/ImmutableCollections$Set12</p>
+<p>java/util/ImmutableCollections$Set12$1</p>
+<p>java/util/ImmutableCollections$SetN</p>
+<p>java/util/ImmutableCollections$SetN$SetNIterator</p>
+<p>java/util/Iterator</p>
+<p>java/util/KeyValueHolder</p>
+<p>java/util/LinkedHashMap</p>
+<p>java/util/LinkedHashMap$Entry</p>
+<p>java/util/LinkedHashMap$LinkedEntryIterator</p>
+<p>java/util/LinkedHashMap$LinkedEntrySet</p>
+<p>java/util/LinkedHashMap$LinkedHashIterator</p>
+<p>java/util/LinkedHashSet</p>
+<p>java/util/List</p>
+<p>java/util/ListIterator</p>
+<p>java/util/ListResourceBundle</p>
+<p>java/util/Locale</p>
+<p>java/util/Locale$Builder</p>
+<p>java/util/Locale$Category</p>
+<p>java/util/Locale$LocaleCache</p>
+<p>java/util/Map</p>
+<p>java/util/Map$Entry</p>
+<p>java/util/NavigableMap</p>
+<p>java/util/NavigableSet</p>
+<p>java/util/Objects</p>
+<p>java/util/Optional</p>
+<p>java/util/Properties</p>
+<p>java/util/Properties$EntrySet</p>
+<p>java/util/Properties$LineReader</p>
+<p>java/util/Queue</p>
+<p>java/util/Random</p>
+<p>java/util/RandomAccess</p>
+<p>java/util/RegularEnumSet</p>
+<p>java/util/ResourceBundle</p>
+<p>java/util/ResourceBundle$1</p>
+<p>java/util/ResourceBundle$2</p>
+<p>java/util/ResourceBundle$Control</p>
+<p>java/util/ResourceBundle$NoFallbackControl</p>
+<p>java/util/ResourceBundle$ResourceBundleProviderHelper</p>
+<p>java/util/ResourceBundle$SingleFormatControl</p>
+<p>java/util/SequencedCollection</p>
+<p>java/util/SequencedMap</p>
+<p>java/util/SequencedSet</p>
+<p>java/util/ServiceLoader</p>
+<p>java/util/ServiceLoader$1</p>
+<p>java/util/ServiceLoader$2</p>
+<p>java/util/ServiceLoader$LazyClassPathLookupIterator</p>
+<p>java/util/ServiceLoader$ModuleServicesLookupIterator</p>
+<p>java/util/ServiceLoader$Provider</p>
+<p>java/util/ServiceLoader$ProviderImpl</p>
+<p>java/util/Set</p>
+<p>java/util/SortedMap</p>
+<p>java/util/SortedSet</p>
+<p>java/util/Spliterator</p>
+<p>java/util/Spliterators</p>
+<p>java/util/Spliterators$1Adapter</p>
+<p>java/util/Spliterators$AbstractSpliterator</p>
+<p>java/util/Spliterators$ArraySpliterator</p>
+<p>java/util/Spliterators$EmptySpliterator</p>
+<p>java/util/Spliterators$EmptySpliterator$OfRef</p>
+<p>java/util/Spliterators$IteratorSpliterator</p>
+<p>java/util/StringJoiner</p>
+<p>java/util/TimSort</p>
+<p>java/util/TimeZone</p>
+<p>java/util/TreeMap</p>
+<p>java/util/TreeMap$Entry</p>
+<p>java/util/TreeMap$EntryIterator</p>
+<p>java/util/TreeMap$EntrySet</p>
+<p>java/util/TreeMap$PrivateEntryIterator</p>
+<p>java/util/WeakHashMap</p>
+<p>java/util/WeakHashMap$Entry</p>
+<p>java/util/WeakHashMap$KeySet</p>
+<p>java/util/concurrent/AbstractExecutorService</p>
+<p>java/util/concurrent/ConcurrentHashMap</p>
+<p>java/util/concurrent/ConcurrentHashMap$BaseIterator</p>
+<p>java/util/concurrent/ConcurrentHashMap$CollectionView</p>
+<p>java/util/concurrent/ConcurrentHashMap$CounterCell</p>
+<p>java/util/concurrent/ConcurrentHashMap$EntryIterator</p>
+<p>java/util/concurrent/ConcurrentHashMap$EntrySetView</p>
+<p>java/util/concurrent/ConcurrentHashMap$ForwardingNode</p>
+<p>java/util/concurrent/ConcurrentHashMap$KeyIterator</p>
+<p>java/util/concurrent/ConcurrentHashMap$KeySetView</p>
+<p>java/util/concurrent/ConcurrentHashMap$MapEntry</p>
+<p>java/util/concurrent/ConcurrentHashMap$Node</p>
+<p>java/util/concurrent/ConcurrentHashMap$ReservationNode</p>
+<p>java/util/concurrent/ConcurrentHashMap$Segment</p>
+<p>java/util/concurrent/ConcurrentHashMap$Traverser</p>
+<p>java/util/concurrent/ConcurrentHashMap$ValueIterator</p>
+<p>java/util/concurrent/ConcurrentHashMap$ValuesView</p>
+<p>java/util/concurrent/ConcurrentMap</p>
+<p>java/util/concurrent/ConcurrentNavigableMap</p>
+<p>java/util/concurrent/ConcurrentSkipListMap</p>
+<p>java/util/concurrent/ConcurrentSkipListMap$Index</p>
+<p>java/util/concurrent/ConcurrentSkipListMap$Node</p>
+<p>java/util/concurrent/ConcurrentSkipListSet</p>
+<p>java/util/concurrent/CopyOnWriteArrayList</p>
+<p>java/util/concurrent/CopyOnWriteArrayList$COWIterator</p>
+<p>java/util/concurrent/CountDownLatch</p>
+<p>java/util/concurrent/CountedCompleter</p>
+<p>java/util/concurrent/DelayScheduler</p>
+<p>java/util/concurrent/Executor</p>
+<p>java/util/concurrent/ExecutorService</p>
+<p>java/util/concurrent/ForkJoinPool</p>
+<p>java/util/concurrent/ForkJoinPool$1</p>
+<p>java/util/concurrent/ForkJoinPool$DefaultForkJoinWorkerThreadFactory</p>
+<p>java/util/concurrent/ForkJoinPool$ForkJoinWorkerThreadFactory</p>
+<p>java/util/concurrent/ForkJoinPool$WorkQueue</p>
+<p>java/util/concurrent/ForkJoinTask</p>
+<p>java/util/concurrent/ForkJoinTask$Aux</p>
+<p>java/util/concurrent/ForkJoinWorkerThread</p>
+<p>java/util/concurrent/ForkJoinWorkerThread$InnocuousForkJoinWorkerThread</p>
+<p>java/util/concurrent/Future</p>
+<p>java/util/concurrent/ScheduledExecutorService</p>
+<p>java/util/concurrent/ThreadFactory</p>
+<p>java/util/concurrent/ThreadLocalRandom</p>
+<p>java/util/concurrent/TimeUnit</p>
+<p>java/util/concurrent/atomic/AtomicInteger</p>
+<p>java/util/concurrent/atomic/AtomicLong</p>
+<p>java/util/concurrent/atomic/AtomicReferenceArray</p>
+<p>java/util/concurrent/atomic/LongAdder</p>
+<p>java/util/concurrent/atomic/Striped64</p>
+<p>java/util/concurrent/atomic/Striped64$Cell</p>
+<p>java/util/concurrent/locks/AbstractOwnableSynchronizer</p>
+<p>java/util/concurrent/locks/AbstractQueuedSynchronizer</p>
+<p>java/util/concurrent/locks/Lock</p>
+<p>java/util/concurrent/locks/LockSupport</p>
+<p>java/util/concurrent/locks/ReentrantLock</p>
+<p>java/util/concurrent/locks/ReentrantLock$NonfairSync</p>
+<p>java/util/concurrent/locks/ReentrantLock$Sync</p>
+<p>java/util/function/BiConsumer</p>
+<p>java/util/function/BiFunction</p>
+<p>java/util/function/BiPredicate</p>
+<p>java/util/function/BinaryOperator</p>
+<p>java/util/function/Consumer</p>
+<p>java/util/function/Function</p>
+<p>java/util/function/IntFunction</p>
+<p>java/util/function/Predicate</p>
+<p>java/util/function/Supplier</p>
+<p>java/util/jar/Attributes</p>
+<p>java/util/jar/Attributes$Name</p>
+<p>java/util/jar/JarEntry</p>
+<p>java/util/jar/JarFile</p>
+<p>java/util/jar/JarFile$JarFileEntry</p>
+<p>java/util/jar/JarVerifier</p>
+<p>java/util/jar/JavaUtilJarAccessImpl</p>
+<p>java/util/jar/Manifest</p>
+<p>java/util/jar/Manifest$FastInputStream</p>
+<p>java/util/logging/Handler</p>
+<p>java/util/logging/Level</p>
+<p>java/util/logging/Level$KnownLevel</p>
+<p>java/util/logging/LogManager</p>
+<p>java/util/logging/LogManager$Cleaner</p>
+<p>java/util/logging/LogManager$LogNode</p>
+<p>java/util/logging/LogManager$LoggerContext</p>
+<p>java/util/logging/LogManager$LoggerWeakRef</p>
+<p>java/util/logging/LogManager$LoggingProviderAccess</p>
+<p>java/util/logging/LogManager$RootLogger</p>
+<p>java/util/logging/LogManager$SystemLoggerContext</p>
+<p>java/util/logging/LogManager$VisitedLoggers</p>
+<p>java/util/logging/Logger</p>
+<p>java/util/logging/Logger$ConfigurationData</p>
+<p>java/util/logging/Logger$LoggerBundle</p>
+<p>java/util/logging/Logger$SystemLoggerHelper</p>
+<p>java/util/random/RandomGenerator</p>
+<p>java/util/regex/ASCII</p>
+<p>java/util/regex/CharPredicates</p>
+<p>java/util/regex/IntHashSet</p>
+<p>java/util/regex/MatchResult</p>
+<p>java/util/regex/Matcher</p>
+<p>java/util/regex/Pattern</p>
+<p>java/util/regex/Pattern$BackRef</p>
+<p>java/util/regex/Pattern$Begin</p>
+<p>java/util/regex/Pattern$BitClass</p>
+<p>java/util/regex/Pattern$BmpCharPredicate</p>
+<p>java/util/regex/Pattern$BmpCharProperty</p>
+<p>java/util/regex/Pattern$BmpCharPropertyGreedy</p>
+<p>java/util/regex/Pattern$Branch</p>
+<p>java/util/regex/Pattern$BranchConn</p>
+<p>java/util/regex/Pattern$CharPredicate</p>
+<p>java/util/regex/Pattern$CharProperty</p>
+<p>java/util/regex/Pattern$CharPropertyGreedy</p>
+<p>java/util/regex/Pattern$Curly</p>
+<p>java/util/regex/Pattern$Dollar</p>
+<p>java/util/regex/Pattern$First</p>
+<p>java/util/regex/Pattern$GroupCurly</p>
+<p>java/util/regex/Pattern$GroupHead</p>
+<p>java/util/regex/Pattern$GroupTail</p>
+<p>java/util/regex/Pattern$LastNode</p>
+<p>java/util/regex/Pattern$Node</p>
+<p>java/util/regex/Pattern$Qtype</p>
+<p>java/util/regex/Pattern$Ques</p>
+<p>java/util/regex/Pattern$Slice</p>
+<p>java/util/regex/Pattern$SliceNode</p>
+<p>java/util/regex/Pattern$Start</p>
+<p>java/util/regex/Pattern$StartS</p>
+<p>java/util/regex/Pattern$TreeInfo</p>
+<p>java/util/spi/CalendarDataProvider</p>
+<p>java/util/spi/CurrencyNameProvider</p>
+<p>java/util/spi/LocaleNameProvider</p>
+<p>java/util/spi/LocaleServiceProvider</p>
+<p>java/util/spi/TimeZoneNameProvider</p>
+<p>java/util/stream/AbstractPipeline</p>
+<p>java/util/stream/AbstractSpinedBuffer</p>
+<p>java/util/stream/AbstractTask</p>
+<p>java/util/stream/BaseStream</p>
+<p>java/util/stream/Collector</p>
+<p>java/util/stream/Collector$Characteristics</p>
+<p>java/util/stream/Collectors</p>
+<p>java/util/stream/Collectors$CollectorImpl</p>
+<p>java/util/stream/Collectors$Partition</p>
+<p>java/util/stream/DistinctOps</p>
+<p>java/util/stream/DistinctOps$1</p>
+<p>java/util/stream/DistinctOps$1$2</p>
+<p>java/util/stream/FindOps</p>
+<p>java/util/stream/FindOps$FindOp</p>
+<p>java/util/stream/FindOps$FindSink</p>
+<p>java/util/stream/FindOps$FindSink$OfRef</p>
+<p>java/util/stream/ForEachOps</p>
+<p>java/util/stream/ForEachOps$ForEachOp</p>
+<p>java/util/stream/ForEachOps$ForEachOp$OfRef</p>
+<p>java/util/stream/MatchOps</p>
+<p>java/util/stream/MatchOps$1MatchSink</p>
+<p>java/util/stream/MatchOps$BooleanTerminalSink</p>
+<p>java/util/stream/MatchOps$MatchKind</p>
+<p>java/util/stream/MatchOps$MatchOp</p>
+<p>java/util/stream/Node</p>
+<p>java/util/stream/Node$Builder</p>
+<p>java/util/stream/Node$OfDouble</p>
+<p>java/util/stream/Node$OfInt</p>
+<p>java/util/stream/Node$OfLong</p>
+<p>java/util/stream/Node$OfPrimitive</p>
+<p>java/util/stream/Nodes</p>
+<p>java/util/stream/Nodes$EmptyNode</p>
+<p>java/util/stream/Nodes$EmptyNode$OfDouble</p>
+<p>java/util/stream/Nodes$EmptyNode$OfInt</p>
+<p>java/util/stream/Nodes$EmptyNode$OfLong</p>
+<p>java/util/stream/Nodes$EmptyNode$OfRef</p>
+<p>java/util/stream/Nodes$SpinedNodeBuilder</p>
+<p>java/util/stream/PipelineHelper</p>
+<p>java/util/stream/ReduceOps</p>
+<p>java/util/stream/ReduceOps$3</p>
+<p>java/util/stream/ReduceOps$3ReducingSink</p>
+<p>java/util/stream/ReduceOps$AccumulatingSink</p>
+<p>java/util/stream/ReduceOps$Box</p>
+<p>java/util/stream/ReduceOps$ReduceOp</p>
+<p>java/util/stream/ReduceOps$ReduceTask</p>
+<p>java/util/stream/ReferencePipeline</p>
+<p>java/util/stream/ReferencePipeline$2</p>
+<p>java/util/stream/ReferencePipeline$2$1</p>
+<p>java/util/stream/ReferencePipeline$3</p>
+<p>java/util/stream/ReferencePipeline$3$1</p>
+<p>java/util/stream/ReferencePipeline$7</p>
+<p>java/util/stream/ReferencePipeline$7$1FlatMap</p>
+<p>java/util/stream/ReferencePipeline$Head</p>
+<p>java/util/stream/ReferencePipeline$StatefulOp</p>
+<p>java/util/stream/ReferencePipeline$StatelessOp</p>
+<p>java/util/stream/Sink</p>
+<p>java/util/stream/Sink$ChainedReference</p>
+<p>java/util/stream/SpinedBuffer</p>
+<p>java/util/stream/Stream</p>
+<p>java/util/stream/Stream$Builder</p>
+<p>java/util/stream/StreamOpFlag</p>
+<p>java/util/stream/StreamOpFlag$MaskBuilder</p>
+<p>java/util/stream/StreamOpFlag$Type</p>
+<p>java/util/stream/StreamShape</p>
+<p>java/util/stream/StreamSupport</p>
+<p>java/util/stream/Streams$AbstractStreamBuilderImpl</p>
+<p>java/util/stream/Streams$StreamBuilderImpl</p>
+<p>java/util/stream/TerminalOp</p>
+<p>java/util/stream/TerminalSink</p>
+<p>java/util/zip/CRC32</p>
+<p>java/util/zip/Checksum</p>
+<p>java/util/zip/Checksum$1</p>
+<p>java/util/zip/Inflater</p>
+<p>java/util/zip/Inflater$InflaterZStreamRef</p>
+<p>java/util/zip/InflaterInputStream</p>
+<p>java/util/zip/ZipCoder</p>
+<p>java/util/zip/ZipCoder$UTF8ZipCoder</p>
+<p>java/util/zip/ZipConstants</p>
+<p>java/util/zip/ZipEntry</p>
+<p>java/util/zip/ZipFile</p>
+<p>java/util/zip/ZipFile$1</p>
+<p>java/util/zip/ZipFile$CleanableResource</p>
+<p>java/util/zip/ZipFile$EntryPos</p>
+<p>java/util/zip/ZipFile$EntrySpliterator</p>
+<p>java/util/zip/ZipFile$InflaterCleanupAction</p>
+<p>java/util/zip/ZipFile$Source</p>
+<p>java/util/zip/ZipFile$Source$End</p>
+<p>java/util/zip/ZipFile$Source$Key</p>
+<p>java/util/zip/ZipFile$ZipFileInflaterInputStream</p>
+<p>java/util/zip/ZipFile$ZipFileInputStream</p>
+<p>java/util/zip/ZipUtils</p>
+<p>jdk/internal/access/JavaIOFileDescriptorAccess</p>
+<p>jdk/internal/access/JavaIORandomAccessFileAccess</p>
+<p>jdk/internal/access/JavaLangAccess</p>
+<p>jdk/internal/access/JavaLangInvokeAccess</p>
+<p>jdk/internal/access/JavaLangModuleAccess</p>
+<p>jdk/internal/access/JavaLangRefAccess</p>
+<p>jdk/internal/access/JavaLangReflectAccess</p>
+<p>jdk/internal/access/JavaNetInetAddressAccess</p>
+<p>jdk/internal/access/JavaNetURLAccess</p>
+<p>jdk/internal/access/JavaNetUriAccess</p>
+<p>jdk/internal/access/JavaNioAccess</p>
+<p>jdk/internal/access/JavaSecurityPropertiesAccess</p>
+<p>jdk/internal/access/JavaUtilCollectionAccess</p>
+<p>jdk/internal/access/JavaUtilConcurrentFJPAccess</p>
+<p>jdk/internal/access/JavaUtilJarAccess</p>
+<p>jdk/internal/access/JavaUtilResourceBundleAccess</p>
+<p>jdk/internal/access/JavaUtilZipFileAccess</p>
+<p>jdk/internal/access/SharedSecrets</p>
+<p>jdk/internal/classfile/impl/AbstractAttributeMapper</p>
+<p>jdk/internal/classfile/impl/AbstractAttributeMapper$CodeMapper</p>
+<p>jdk/internal/classfile/impl/AbstractAttributeMapper$RuntimeVisibleAnnotationsMapper</p>
+<p>jdk/internal/classfile/impl/AbstractAttributeMapper$SourceFileMapper</p>
+<p>jdk/internal/classfile/impl/AbstractAttributeMapper$StackMapTableMapper</p>
+<p>jdk/internal/classfile/impl/AbstractDirectBuilder</p>
+<p>jdk/internal/classfile/impl/AbstractElement</p>
+<p>jdk/internal/classfile/impl/AbstractInstruction$SwitchCaseImpl</p>
+<p>jdk/internal/classfile/impl/AbstractPoolEntry</p>
+<p>jdk/internal/classfile/impl/AbstractPoolEntry$AbstractMemberRefEntry</p>
+<p>jdk/internal/classfile/impl/AbstractPoolEntry$AbstractNamedEntry</p>
+<p>jdk/internal/classfile/impl/AbstractPoolEntry$AbstractRefEntry</p>
+<p>jdk/internal/classfile/impl/AbstractPoolEntry$AbstractRefsEntry</p>
+<p>jdk/internal/classfile/impl/AbstractPoolEntry$ClassEntryImpl</p>
+<p>jdk/internal/classfile/impl/AbstractPoolEntry$FieldRefEntryImpl</p>
+<p>jdk/internal/classfile/impl/AbstractPoolEntry$InterfaceMethodRefEntryImpl</p>
+<p>jdk/internal/classfile/impl/AbstractPoolEntry$MethodRefEntryImpl</p>
+<p>jdk/internal/classfile/impl/AbstractPoolEntry$NameAndTypeEntryImpl</p>
+<p>jdk/internal/classfile/impl/AbstractPoolEntry$Utf8EntryImpl</p>
+<p>jdk/internal/classfile/impl/AbstractPoolEntry$Utf8EntryImpl$State</p>
+<p>jdk/internal/classfile/impl/AccessFlagsImpl</p>
+<p>jdk/internal/classfile/impl/AnnotationImpl</p>
+<p>jdk/internal/classfile/impl/AnnotationReader</p>
+<p>jdk/internal/classfile/impl/AttributeHolder</p>
+<p>jdk/internal/classfile/impl/BootstrapMethodEntryImpl</p>
+<p>jdk/internal/classfile/impl/BoundAttribute</p>
+<p>jdk/internal/classfile/impl/BufWriterImpl</p>
+<p>jdk/internal/classfile/impl/BytecodeHelpers</p>
+<p>jdk/internal/classfile/impl/BytecodeHelpers$1</p>
+<p>jdk/internal/classfile/impl/ClassFileImpl</p>
+<p>jdk/internal/classfile/impl/ClassHierarchyImpl</p>
+<p>jdk/internal/classfile/impl/ClassHierarchyImpl$CachedClassHierarchyResolver</p>
+<p>jdk/internal/classfile/impl/ClassHierarchyImpl$CachedClassHierarchyResolver$1</p>
+<p>jdk/internal/classfile/impl/ClassHierarchyImpl$ClassHierarchyInfoImpl</p>
+<p>jdk/internal/classfile/impl/ClassHierarchyImpl$ClassLoadingClassHierarchyResolver</p>
+<p>jdk/internal/classfile/impl/ClassHierarchyImpl$ClassLoadingClassHierarchyResolver$1</p>
+<p>jdk/internal/classfile/impl/ClassImpl</p>
+<p>jdk/internal/classfile/impl/ClassReaderImpl</p>
+<p>jdk/internal/classfile/impl/DirectClassBuilder</p>
+<p>jdk/internal/classfile/impl/DirectCodeBuilder</p>
+<p>jdk/internal/classfile/impl/DirectCodeBuilder$4</p>
+<p>jdk/internal/classfile/impl/DirectCodeBuilder$8</p>
+<p>jdk/internal/classfile/impl/DirectCodeBuilder$DeferredLabel</p>
+<p>jdk/internal/classfile/impl/DirectFieldBuilder</p>
+<p>jdk/internal/classfile/impl/DirectMethodBuilder</p>
+<p>jdk/internal/classfile/impl/EntryMap</p>
+<p>jdk/internal/classfile/impl/FieldImpl</p>
+<p>jdk/internal/classfile/impl/InterfacesImpl</p>
+<p>jdk/internal/classfile/impl/LabelContext</p>
+<p>jdk/internal/classfile/impl/LabelImpl</p>
+<p>jdk/internal/classfile/impl/MethodImpl</p>
+<p>jdk/internal/classfile/impl/MethodInfo</p>
+<p>jdk/internal/classfile/impl/RawBytecodeHelper</p>
+<p>jdk/internal/classfile/impl/RawBytecodeHelper$1</p>
+<p>jdk/internal/classfile/impl/RawBytecodeHelper$CodeRange</p>
+<p>jdk/internal/classfile/impl/SplitConstantPool</p>
+<p>jdk/internal/classfile/impl/StackMapDecoder</p>
+<p>jdk/internal/classfile/impl/StackMapDecoder$1</p>
+<p>jdk/internal/classfile/impl/StackMapDecoder$ObjectVerificationTypeInfoImpl</p>
+<p>jdk/internal/classfile/impl/StackMapDecoder$StackMapFrameImpl</p>
+<p>jdk/internal/classfile/impl/StackMapGenerator</p>
+<p>jdk/internal/classfile/impl/StackMapGenerator$1</p>
+<p>jdk/internal/classfile/impl/StackMapGenerator$Frame</p>
+<p>jdk/internal/classfile/impl/StackMapGenerator$Type</p>
+<p>jdk/internal/classfile/impl/SuperclassImpl</p>
+<p>jdk/internal/classfile/impl/TemporaryConstantPool</p>
+<p>jdk/internal/classfile/impl/TerminalCodeBuilder</p>
+<p>jdk/internal/classfile/impl/TerminalFieldBuilder</p>
+<p>jdk/internal/classfile/impl/TerminalMethodBuilder</p>
+<p>jdk/internal/classfile/impl/UnboundAttribute</p>
+<p>jdk/internal/classfile/impl/UnboundAttribute$AdHocAttribute</p>
+<p>jdk/internal/classfile/impl/UnboundAttribute$UnboundRuntimeVisibleAnnotationsAttribute</p>
+<p>jdk/internal/classfile/impl/UnboundAttribute$UnboundSourceFileAttribute</p>
+<p>jdk/internal/classfile/impl/UnboundAttribute$UnboundStackMapTableAttribute</p>
+<p>jdk/internal/classfile/impl/Util</p>
+<p>jdk/internal/classfile/impl/Util$1WithCodeMethodHandler</p>
+<p>jdk/internal/classfile/impl/Util$Writable</p>
+<p>jdk/internal/constant/ArrayClassDescImpl</p>
+<p>jdk/internal/constant/ClassOrInterfaceDescImpl</p>
+<p>jdk/internal/constant/ConstantUtils</p>
+<p>jdk/internal/constant/DirectMethodHandleDescImpl</p>
+<p>jdk/internal/constant/DirectMethodHandleDescImpl$1</p>
+<p>jdk/internal/constant/MethodTypeDescImpl</p>
+<p>jdk/internal/constant/PrimitiveClassDescImpl</p>
+<p>jdk/internal/foreign/abi/ABIDescriptor</p>
+<p>jdk/internal/foreign/abi/NativeEntryPoint</p>
+<p>jdk/internal/foreign/abi/UpcallLinker$CallRegs</p>
+<p>jdk/internal/foreign/abi/VMStorage</p>
+<p>jdk/internal/invoke/MhUtil</p>
+<p>jdk/internal/jimage/BasicImageReader</p>
+<p>jdk/internal/jimage/BasicImageReader$1</p>
+<p>jdk/internal/jimage/ImageHeader</p>
+<p>jdk/internal/jimage/ImageLocation</p>
+<p>jdk/internal/jimage/ImageReader</p>
+<p>jdk/internal/jimage/ImageReader$SharedImageReader</p>
+<p>jdk/internal/jimage/ImageReaderFactory</p>
+<p>jdk/internal/jimage/ImageReaderFactory$1</p>
+<p>jdk/internal/jimage/ImageStrings</p>
+<p>jdk/internal/jimage/ImageStringsReader</p>
+<p>jdk/internal/jimage/NativeImageBuffer</p>
+<p>jdk/internal/jimage/NativeImageBuffer$1</p>
+<p>jdk/internal/jimage/decompressor/Decompressor</p>
+<p>jdk/internal/loader/AbstractClassLoaderValue</p>
+<p>jdk/internal/loader/AbstractClassLoaderValue$Memoizer</p>
+<p>jdk/internal/loader/ArchivedClassLoaders</p>
+<p>jdk/internal/loader/BootLoader</p>
+<p>jdk/internal/loader/BuiltinClassLoader</p>
+<p>jdk/internal/loader/BuiltinClassLoader$1</p>
+<p>jdk/internal/loader/BuiltinClassLoader$2</p>
+<p>jdk/internal/loader/BuiltinClassLoader$LoadedModule</p>
+<p>jdk/internal/loader/ClassLoaderHelper</p>
+<p>jdk/internal/loader/ClassLoaderValue</p>
+<p>jdk/internal/loader/ClassLoaders</p>
+<p>jdk/internal/loader/ClassLoaders$AppClassLoader</p>
+<p>jdk/internal/loader/ClassLoaders$BootClassLoader</p>
+<p>jdk/internal/loader/ClassLoaders$PlatformClassLoader</p>
+<p>jdk/internal/loader/FileURLMapper</p>
+<p>jdk/internal/loader/NativeLibraries</p>
+<p>jdk/internal/loader/NativeLibraries$1</p>
+<p>jdk/internal/loader/NativeLibraries$2</p>
+<p>jdk/internal/loader/NativeLibraries$CountedLock</p>
+<p>jdk/internal/loader/NativeLibraries$LibraryPaths</p>
+<p>jdk/internal/loader/NativeLibraries$NativeLibraryContext</p>
+<p>jdk/internal/loader/NativeLibraries$NativeLibraryContext$1</p>
+<p>jdk/internal/loader/NativeLibraries$NativeLibraryImpl</p>
+<p>jdk/internal/loader/NativeLibrary</p>
+<p>jdk/internal/loader/Resource</p>
+<p>jdk/internal/loader/URLClassPath</p>
+<p>jdk/internal/loader/URLClassPath$1</p>
+<p>jdk/internal/loader/URLClassPath$JarLoader</p>
+<p>jdk/internal/loader/URLClassPath$JarLoader$1</p>
+<p>jdk/internal/loader/URLClassPath$Loader</p>
+<p>jdk/internal/logger/BootstrapLogger</p>
+<p>jdk/internal/logger/BootstrapLogger$BootstrapExecutors</p>
+<p>jdk/internal/logger/BootstrapLogger$DetectBackend</p>
+<p>jdk/internal/logger/BootstrapLogger$LoggingBackend</p>
+<p>jdk/internal/logger/BootstrapLogger$RedirectedLoggers</p>
+<p>jdk/internal/logger/DefaultLoggerFinder</p>
+<p>jdk/internal/math/DoubleToDecimal</p>
+<p>jdk/internal/math/FDBigInteger</p>
+<p>jdk/internal/math/FloatToDecimal</p>
+<p>jdk/internal/math/MathUtils</p>
+<p>jdk/internal/math/ToDecimal</p>
+<p>jdk/internal/misc/Blocker</p>
+<p>jdk/internal/misc/CDS</p>
+<p>jdk/internal/misc/CarrierThreadLocal</p>
+<p>jdk/internal/misc/InnocuousThread</p>
+<p>jdk/internal/misc/MethodFinder</p>
+<p>jdk/internal/misc/OSEnvironment</p>
+<p>jdk/internal/misc/PreviewFeatures</p>
+<p>jdk/internal/misc/ScopedMemoryAccess</p>
+<p>jdk/internal/misc/Signal</p>
+<p>jdk/internal/misc/Signal$Handler</p>
+<p>jdk/internal/misc/Signal$NativeHandler</p>
+<p>jdk/internal/misc/TerminatingThreadLocal</p>
+<p>jdk/internal/misc/TerminatingThreadLocal$1</p>
+<p>jdk/internal/misc/Unsafe</p>
+<p>jdk/internal/misc/UnsafeConstants</p>
+<p>jdk/internal/misc/VM</p>
+<p>jdk/internal/misc/VM$BufferPool</p>
+<p>jdk/internal/module/ArchivedBootLayer</p>
+<p>jdk/internal/module/ArchivedModuleGraph</p>
+<p>jdk/internal/module/Builder</p>
+<p>jdk/internal/module/Checks</p>
+<p>jdk/internal/module/DefaultRoots</p>
+<p>jdk/internal/module/ModuleBootstrap</p>
+<p>jdk/internal/module/ModuleBootstrap$Counters</p>
+<p>jdk/internal/module/ModuleBootstrap$IllegalNativeAccess</p>
+<p>jdk/internal/module/ModuleBootstrap$SafeModuleFinder</p>
+<p>jdk/internal/module/ModuleHashes</p>
+<p>jdk/internal/module/ModuleHashes$HashSupplier</p>
+<p>jdk/internal/module/ModuleInfo$Attributes</p>
+<p>jdk/internal/module/ModuleLoaderMap</p>
+<p>jdk/internal/module/ModuleLoaderMap$Mapper</p>
+<p>jdk/internal/module/ModuleLoaderMap$Modules</p>
+<p>jdk/internal/module/ModulePatcher</p>
+<p>jdk/internal/module/ModulePath</p>
+<p>jdk/internal/module/ModulePath$Patterns</p>
+<p>jdk/internal/module/ModuleReferenceImpl</p>
+<p>jdk/internal/module/ModuleReferences</p>
+<p>jdk/internal/module/ModuleReferences$1</p>
+<p>jdk/internal/module/ModuleReferences$2</p>
+<p>jdk/internal/module/ModuleResolution</p>
+<p>jdk/internal/module/ModuleTarget</p>
+<p>jdk/internal/module/Modules</p>
+<p>jdk/internal/module/Resources</p>
+<p>jdk/internal/module/ServicesCatalog</p>
+<p>jdk/internal/module/ServicesCatalog$ServiceProvider</p>
+<p>jdk/internal/module/SystemModuleFinders</p>
+<p>jdk/internal/module/SystemModuleFinders$1</p>
+<p>jdk/internal/module/SystemModuleFinders$SystemImage</p>
+<p>jdk/internal/module/SystemModuleFinders$SystemModuleFinder</p>
+<p>jdk/internal/module/SystemModuleFinders$SystemModuleReader</p>
+<p>jdk/internal/module/SystemModules</p>
+<p>jdk/internal/module/SystemModules$all</p>
+<p>jdk/internal/module/SystemModulesMap</p>
+<p>jdk/internal/perf/Perf</p>
+<p>jdk/internal/perf/PerfCounter</p>
+<p>jdk/internal/perf/PerfCounter$CoreCounters</p>
+<p>jdk/internal/ref/Cleaner</p>
+<p>jdk/internal/ref/CleanerFactory</p>
+<p>jdk/internal/ref/CleanerFactory$1</p>
+<p>jdk/internal/ref/CleanerImpl</p>
+<p>jdk/internal/ref/CleanerImpl$CleanableList</p>
+<p>jdk/internal/ref/CleanerImpl$CleanableList$Node</p>
+<p>jdk/internal/ref/CleanerImpl$CleanerCleanable</p>
+<p>jdk/internal/ref/CleanerImpl$PhantomCleanableRef</p>
+<p>jdk/internal/ref/PhantomCleanable</p>
+<p>jdk/internal/reflect/CallerSensitive</p>
+<p>jdk/internal/reflect/ConstantPool</p>
+<p>jdk/internal/reflect/ConstructorAccessor</p>
+<p>jdk/internal/reflect/ConstructorAccessorImpl</p>
+<p>jdk/internal/reflect/DirectConstructorHandleAccessor</p>
+<p>jdk/internal/reflect/DirectConstructorHandleAccessor$NativeAccessor</p>
+<p>jdk/internal/reflect/DirectMethodHandleAccessor</p>
+<p>jdk/internal/reflect/FieldAccessor</p>
+<p>jdk/internal/reflect/FieldAccessorImpl</p>
+<p>jdk/internal/reflect/MethodAccessor</p>
+<p>jdk/internal/reflect/MethodAccessorImpl</p>
+<p>jdk/internal/reflect/MethodHandleAccessorFactory</p>
+<p>jdk/internal/reflect/MethodHandleAccessorFactory$LazyStaticHolder</p>
+<p>jdk/internal/reflect/MethodHandleFieldAccessorImpl</p>
+<p>jdk/internal/reflect/MethodHandleObjectFieldAccessorImpl</p>
+<p>jdk/internal/reflect/Reflection</p>
+<p>jdk/internal/reflect/Reflection$1Holder</p>
+<p>jdk/internal/reflect/ReflectionFactory</p>
+<p>jdk/internal/reflect/ReflectionFactory$Config</p>
+<p>jdk/internal/util/ArraysSupport</p>
+<p>jdk/internal/util/ByteArray</p>
+<p>jdk/internal/util/ClassFileDumper</p>
+<p>jdk/internal/util/DecimalDigits</p>
+<p>jdk/internal/util/Exceptions</p>
+<p>jdk/internal/util/ModifiedUtf</p>
+<p>jdk/internal/util/Preconditions</p>
+<p>jdk/internal/util/Preconditions$1</p>
+<p>jdk/internal/util/Preconditions$2</p>
+<p>jdk/internal/util/Preconditions$3</p>
+<p>jdk/internal/util/Preconditions$4</p>
+<p>jdk/internal/util/ReferenceKey</p>
+<p>jdk/internal/util/ReferencedKeyMap</p>
+<p>jdk/internal/util/ReferencedKeyMap$1</p>
+<p>jdk/internal/util/ReferencedKeySet</p>
+<p>jdk/internal/util/SoftReferenceKey</p>
+<p>jdk/internal/util/StaticProperty</p>
+<p>jdk/internal/util/StrongReferenceKey</p>
+<p>jdk/internal/util/SystemProps</p>
+<p>jdk/internal/util/SystemProps$Raw</p>
+<p>jdk/internal/util/WeakReferenceKey</p>
+<p>jdk/internal/util/random/RandomSupport</p>
+<p>jdk/internal/vm/Continuation</p>
+<p>jdk/internal/vm/Continuation$Pinned</p>
+<p>jdk/internal/vm/ContinuationScope</p>
+<p>jdk/internal/vm/ContinuationSupport</p>
+<p>jdk/internal/vm/FillerObject</p>
+<p>jdk/internal/vm/SharedThreadContainer</p>
+<p>jdk/internal/vm/StackChunk</p>
+<p>jdk/internal/vm/StackableScope</p>
+<p>jdk/internal/vm/ThreadContainer</p>
+<p>jdk/internal/vm/ThreadContainers</p>
+<p>jdk/internal/vm/ThreadContainers$RootContainer</p>
+<p>jdk/internal/vm/ThreadContainers$RootContainer$TrackingRootContainer</p>
+<p>jdk/internal/vm/annotation/Stable</p>
+<p>jdk/internal/vm/vector/VectorSupport</p>
+<p>jdk/internal/vm/vector/VectorSupport$Vector</p>
+<p>jdk/internal/vm/vector/VectorSupport$VectorMask</p>
+<p>jdk/internal/vm/vector/VectorSupport$VectorPayload</p>
+<p>jdk/internal/vm/vector/VectorSupport$VectorShuffle</p>
+<p>sun/invoke/empty/Empty</p>
+<p>sun/invoke/util/ValueConversions</p>
+<p>sun/invoke/util/ValueConversions$WrapperCache</p>
+<p>sun/invoke/util/VerifyAccess</p>
+<p>sun/invoke/util/VerifyType</p>
+<p>sun/invoke/util/Wrapper</p>
+<p>sun/invoke/util/Wrapper$Format</p>
+<p>sun/io/Win32ErrorMode</p>
+<p>sun/launcher/LauncherHelper</p>
+<p>sun/net/util/IPAddressUtil</p>
+<p>sun/net/util/IPAddressUtil$MASKS</p>
+<p>sun/net/util/URLUtil</p>
+<p>sun/net/www/ParseUtil</p>
+<p>sun/net/www/protocol/file/Handler</p>
+<p>sun/net/www/protocol/jar/Handler</p>
+<p>sun/nio/ByteBuffered</p>
+<p>sun/nio/ch/ChannelInputStream</p>
+<p>sun/nio/ch/DirectBuffer</p>
+<p>sun/nio/ch/FileChannelImpl</p>
+<p>sun/nio/ch/FileChannelImpl$Closer</p>
+<p>sun/nio/ch/FileDispatcher</p>
+<p>sun/nio/ch/FileDispatcherImpl</p>
+<p>sun/nio/ch/IOStatus</p>
+<p>sun/nio/ch/IOUtil</p>
+<p>sun/nio/ch/Interruptible</p>
+<p>sun/nio/ch/NativeDispatcher</p>
+<p>sun/nio/ch/NativeThread</p>
+<p>sun/nio/ch/NativeThreadSet</p>
+<p>sun/nio/ch/SelChImpl</p>
+<p>sun/nio/ch/SocketChannelImpl</p>
+<p>sun/nio/ch/Streams</p>
+<p>sun/nio/ch/Util</p>
+<p>sun/nio/ch/Util$1</p>
+<p>sun/nio/ch/Util$BufferCache</p>
+<p>sun/nio/cs/ArrayDecoder</p>
+<p>sun/nio/cs/ArrayEncoder</p>
+<p>sun/nio/cs/HistoricallyNamedCharset</p>
+<p>sun/nio/cs/ISO_8859_1</p>
+<p>sun/nio/cs/MS1252</p>
+<p>sun/nio/cs/MS1252$Holder</p>
+<p>sun/nio/cs/SingleByte</p>
+<p>sun/nio/cs/SingleByte$Decoder</p>
+<p>sun/nio/cs/SingleByte$Encoder</p>
+<p>sun/nio/cs/StandardCharsets</p>
+<p>sun/nio/cs/StandardCharsets$Aliases</p>
+<p>sun/nio/cs/StandardCharsets$Cache</p>
+<p>sun/nio/cs/StandardCharsets$Classes</p>
+<p>sun/nio/cs/StreamEncoder</p>
+<p>sun/nio/cs/Surrogate</p>
+<p>sun/nio/cs/Surrogate$Parser</p>
+<p>sun/nio/cs/ThreadLocalCoders</p>
+<p>sun/nio/cs/ThreadLocalCoders$1</p>
+<p>sun/nio/cs/ThreadLocalCoders$2</p>
+<p>sun/nio/cs/ThreadLocalCoders$Cache</p>
+<p>sun/nio/cs/US_ASCII</p>
+<p>sun/nio/cs/US_ASCII$Encoder</p>
+<p>sun/nio/cs/UTF_16</p>
+<p>sun/nio/cs/UTF_16BE</p>
+<p>sun/nio/cs/UTF_16LE</p>
+<p>sun/nio/cs/UTF_32</p>
+<p>sun/nio/cs/UTF_32BE</p>
+<p>sun/nio/cs/UTF_32LE</p>
+<p>sun/nio/cs/UTF_8</p>
+<p>sun/nio/cs/UTF_8$Encoder</p>
+<p>sun/nio/cs/Unicode</p>
+<p>sun/nio/fs/AbstractBasicFileAttributeView</p>
+<p>sun/nio/fs/AbstractFileSystemProvider</p>
+<p>sun/nio/fs/DefaultFileSystemProvider</p>
+<p>sun/nio/fs/DynamicFileAttributeView</p>
+<p>sun/nio/fs/NativeBuffer</p>
+<p>sun/nio/fs/NativeBuffer$Deallocator</p>
+<p>sun/nio/fs/NativeBuffers</p>
+<p>sun/nio/fs/NativeBuffers$1</p>
+<p>sun/nio/fs/Util</p>
+<p>sun/nio/fs/WindowsChannelFactory</p>
+<p>sun/nio/fs/WindowsChannelFactory$1</p>
+<p>sun/nio/fs/WindowsChannelFactory$Flags</p>
+<p>sun/nio/fs/WindowsFileAttributeViews</p>
+<p>sun/nio/fs/WindowsFileAttributeViews$Basic</p>
+<p>sun/nio/fs/WindowsFileAttributes</p>
+<p>sun/nio/fs/WindowsFileSystem</p>
+<p>sun/nio/fs/WindowsFileSystemProvider</p>
+<p>sun/nio/fs/WindowsLinkSupport</p>
+<p>sun/nio/fs/WindowsNativeDispatcher</p>
+<p>sun/nio/fs/WindowsNativeDispatcher$Account</p>
+<p>sun/nio/fs/WindowsNativeDispatcher$AclInformation</p>
+<p>sun/nio/fs/WindowsNativeDispatcher$CompletionStatus</p>
+<p>sun/nio/fs/WindowsNativeDispatcher$DiskFreeSpace</p>
+<p>sun/nio/fs/WindowsNativeDispatcher$FirstFile</p>
+<p>sun/nio/fs/WindowsNativeDispatcher$FirstStream</p>
+<p>sun/nio/fs/WindowsNativeDispatcher$VolumeInformation</p>
+<p>sun/nio/fs/WindowsPath</p>
+<p>sun/nio/fs/WindowsPathParser</p>
+<p>sun/nio/fs/WindowsPathParser$Result</p>
+<p>sun/nio/fs/WindowsPathType</p>
+<p>sun/nio/fs/WindowsSecurityDescriptor</p>
+<p>sun/nio/fs/WindowsUriSupport</p>
+<p>sun/reflect/annotation/AnnotationParser</p>
+<p>sun/security/util/Debug</p>
+<p>sun/security/util/SecurityProperties</p>
+<p>sun/security/util/SignatureFileVerifier</p>
+<p>sun/text/resources/cldr/FormatData</p>
+<p>sun/util/PreHashedMap</p>
+<p>sun/util/calendar/AbstractCalendar</p>
+<p>sun/util/calendar/BaseCalendar</p>
+<p>sun/util/calendar/BaseCalendar$Date</p>
+<p>sun/util/calendar/CalendarDate</p>
+<p>sun/util/calendar/CalendarSystem</p>
+<p>sun/util/calendar/CalendarSystem$GregorianHolder</p>
+<p>sun/util/calendar/CalendarUtils</p>
+<p>sun/util/calendar/Gregorian</p>
+<p>sun/util/calendar/Gregorian$Date</p>
+<p>sun/util/calendar/ZoneInfo</p>
+<p>sun/util/calendar/ZoneInfoFile</p>
+<p>sun/util/calendar/ZoneInfoFile$ZoneOffsetTransitionRule</p>
+<p>sun/util/cldr/CLDRBaseLocaleDataMetaInfo</p>
+<p>sun/util/cldr/CLDRCalendarDataProviderImpl</p>
+<p>sun/util/cldr/CLDRLocaleProviderAdapter</p>
+<p>sun/util/locale/BaseLocale</p>
+<p>sun/util/locale/BaseLocale$1InterningCache</p>
+<p>sun/util/locale/InternalLocaleBuilder</p>
+<p>sun/util/locale/InternalLocaleBuilder$CaseInsensitiveChar</p>
+<p>sun/util/locale/LanguageTag</p>
+<p>sun/util/locale/LocaleUtils</p>
+<p>sun/util/locale/StringTokenIterator</p>
+<p>sun/util/locale/provider/AvailableLanguageTags</p>
+<p>sun/util/locale/provider/CalendarDataProviderImpl</p>
+<p>sun/util/locale/provider/CalendarDataUtility</p>
+<p>sun/util/locale/provider/CalendarDataUtility$CalendarWeekParameterGetter</p>
+<p>sun/util/locale/provider/CalendarProviderImpl</p>
+<p>sun/util/locale/provider/DateFormatProviderImpl</p>
+<p>sun/util/locale/provider/DateFormatSymbolsProviderImpl</p>
+<p>sun/util/locale/provider/DecimalFormatSymbolsProviderImpl</p>
+<p>sun/util/locale/provider/JRELocaleProviderAdapter</p>
+<p>sun/util/locale/provider/LocaleDataMetaInfo</p>
+<p>sun/util/locale/provider/LocaleProviderAdapter</p>
+<p>sun/util/locale/provider/LocaleProviderAdapter$Type</p>
+<p>sun/util/locale/provider/LocaleResources</p>
+<p>sun/util/locale/provider/LocaleResources$ResourceReference</p>
+<p>sun/util/locale/provider/LocaleServiceProviderPool</p>
+<p>sun/util/locale/provider/LocaleServiceProviderPool$LocalizedObjectGetter</p>
+<p>sun/util/locale/provider/NumberFormatProviderImpl</p>
+<p>sun/util/locale/provider/ResourceBundleBasedAdapter</p>
+<p>sun/util/logging/PlatformLogger$Bridge</p>
+<p>sun/util/logging/PlatformLogger$ConfigurableBridge</p>
+<p>sun/util/logging/internal/LoggingProviderImpl</p>
+<p>sun/util/logging/internal/LoggingProviderImpl$LogManagerAccess</p>
+<p>sun/util/resources/Bundles</p>
+<p>sun/util/resources/Bundles$1</p>
+<p>sun/util/resources/Bundles$BundleReference</p>
+<p>sun/util/resources/Bundles$CacheKey</p>
+<p>sun/util/resources/Bundles$CacheKeyReference</p>
+<p>sun/util/resources/Bundles$Strategy</p>
+<p>sun/util/resources/LocaleData</p>
+<p>sun/util/resources/LocaleData$LocaleDataStrategy</p>
+<p>sun/util/resources/cldr/CalendarData</p>
+<p>sun/util/spi/CalendarProvider</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder delegate L5_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder delegate L6_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder delegate L7_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder delegate LILL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L10_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L11_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L12_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L3D_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L3F_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L3I_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L3_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L3_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L3_V</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L4_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L5_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L6_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L7_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L8_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L9_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L LII_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L LI_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L LLDL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L LLD_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L LLFL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L LLF_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L LLII_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L LLIL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L LLI_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L LLJJ_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L LLJ_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L LL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DelegatingMethodHandle$Holder reinvoke_L L_V</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder fieldAccess LL_D</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder fieldAccess LL_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder fieldAccess LL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder fieldAccessCast L3_V</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder fieldAccessCast LL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeInterface L3_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L10_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L11_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L12_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L13_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3DL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3D_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3FL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3F_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3IILLILLI_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3II_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3IL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3I_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3I_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3JJ_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3J_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L3_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L4D_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L4F_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L4I_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L4_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L4_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L4_V</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L5_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L6_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L7_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L8_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial L9_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLDL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLD_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLFL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLF_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLII_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLII_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLIL4_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLILL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLIL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLI_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLI_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLJJ_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LLJ_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LL_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeSpecial LL_V</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L3DL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L3D_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L3IL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L3I_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L3I_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L3_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L3_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L4_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L5_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L5_V</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L6_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L7_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L8_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LDD_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LD_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LD_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LFF_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LF_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LF_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LI3_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LII_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LIL5_V</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LILL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LI_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LI_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LJJ_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LJ_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LJ_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LLIILLILLIL_V</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LLI_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LL_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic LL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStatic L_V</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStaticInit L3_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStaticInit L5_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStaticInit L7_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStaticInit LDD_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStaticInit LFF_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStaticInit LII_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStaticInit LJJ_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeStaticInit LL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeVirtual L3_V</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder invokeVirtual LL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder newInvokeSpecial L3_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder newInvokeSpecial L4_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder newInvokeSpecial LII_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder newInvokeSpecial LIL4_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder newInvokeSpecial LI_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder newInvokeSpecial LLIILLILLI_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder newInvokeSpecial LL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.DirectMethodHandle$Holder newInvokeSpecial L_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder invokeExact_MT L3_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder invokeExact_MT L4_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder invokeExact_MT LL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder invoke_MT LL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod DLL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod DL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod FLL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod FL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod IIL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod IL5_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod ILL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod IL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod JJL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod JL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod L10_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod L11_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod L3_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod L3_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod L4_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod L5_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod L6_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod L7_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod L8_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod L9_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod LDL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod LFL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod LIILLILLIL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod LIL_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod LIL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod LL_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod LL_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.Invokers$Holder linkToTargetMethod L_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.LambdaForm$Holder constant_I L_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.LambdaForm$Holder constant_L L_L</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.LambdaForm$Holder identity_D LD_D</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.LambdaForm$Holder identity_I LI_I</p>
+<p>@lambda-form-invoker [LF_RESOLVE] java.lang.invoke.LambdaForm$Holder identity_L LL_L</p>
+<p>@lambda-form-invoker [SPECIES_RESOLVE] java.lang.invoke.BoundMethodHandle$Species_D</p>
+<p>@lambda-form-invoker [SPECIES_RESOLVE] java.lang.invoke.BoundMethodHandle$Species_DL</p>
+<p>@lambda-form-invoker [SPECIES_RESOLVE] java.lang.invoke.BoundMethodHandle$Species_I</p>
+<p>@lambda-form-invoker [SPECIES_RESOLVE] java.lang.invoke.BoundMethodHandle$Species_IL</p>
+<p>@lambda-form-invoker [SPECIES_RESOLVE] java.lang.invoke.BoundMethodHandle$Species_L</p>
+<p>@lambda-form-invoker [SPECIES_RESOLVE] java.lang.invoke.BoundMethodHandle$Species_LL</p>
+<p>@lambda-form-invoker [SPECIES_RESOLVE] java.lang.invoke.BoundMethodHandle$Species_LLL</p>
+<p>@lambda-form-invoker [SPECIES_RESOLVE] java.lang.invoke.BoundMethodHandle$Species_LLLL</p>
+<p>@lambda-form-invoker [SPECIES_RESOLVE] java.lang.invoke.BoundMethodHandle$Species_LLLLL</p>
+<p>@lambda-form-invoker [SPECIES_RESOLVE] java.lang.invoke.SimpleMethodHandle</p>
+<p>@lambda-proxy java/lang/module/ModuleDescriptor$Builder accept ()Ljava/util/function/Consumer; (Ljava/lang/Object;)V REF_invokeStatic jdk/internal/module/Checks requirePackageName (Ljava/lang/String;)Ljava/lang/String; (Ljava/lang/String;)V</p>
+<p>@lambda-proxy java/lang/module/ModuleFinder$2 accept (Ljava/lang/module/ModuleFinder$2;Ljava/lang/String;)Ljava/util/function/Consumer; (Ljava/lang/Object;)V REF_invokeVirtual java/lang/module/ModuleFinder$2 lambda$find$1 (Ljava/lang/String;Ljava/lang/module/ModuleReference;)V (Ljava/lang/module/ModuleReference;)V</p>
+<p>@lambda-proxy java/lang/module/ModuleFinder$2 accept (Ljava/lang/module/ModuleFinder$2;Ljava/util/Set;)Ljava/util/function/Consumer; (Ljava/lang/Object;)V REF_invokeVirtual java/lang/module/ModuleFinder$2 lambda$findAll$1 (Ljava/util/Set;Ljava/lang/module/ModuleReference;)V (Ljava/lang/module/ModuleReference;)V</p>
+<p>@lambda-proxy java/lang/module/ModuleFinder$2 apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeStatic java/lang/module/ModuleFinder$2 lambda$findAll$0 (Ljava/lang/module/ModuleFinder;)Ljava/util/stream/Stream; (Ljava/lang/module/ModuleFinder;)Ljava/util/stream/Stream;</p>
+<p>@lambda-proxy java/lang/module/ModuleFinder$2 apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual java/util/Optional stream ()Ljava/util/stream/Stream; (Ljava/util/Optional;)Ljava/util/stream/Stream;</p>
+<p>@lambda-proxy java/lang/module/ModuleFinder$2 apply (Ljava/lang/String;)Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeStatic java/lang/module/ModuleFinder$2 lambda$find$0 (Ljava/lang/String;Ljava/lang/module/ModuleFinder;)Ljava/util/Optional; (Ljava/lang/module/ModuleFinder;)Ljava/util/Optional;</p>
+<p>@lambda-proxy java/lang/runtime/ObjectMethods accept ()Ljava/util/function/Consumer; (Ljava/lang/Object;)V REF_invokeStatic java/util/Objects requireNonNull (Ljava/lang/Object;)Ljava/lang/Object; (Ljava/lang/invoke/MethodHandle;)V</p>
+<p>@lambda-proxy java/lang/runtime/SwitchBootstraps accept (ZLjava/lang/Class;[Ljava/lang/Object;Ljava/util/List;Ljava/util/List;)Ljava/util/function/Consumer; (Ljava/lang/Object;)V REF_invokeStatic java/lang/runtime/SwitchBootstraps lambda$generateTypeSwitch$0 (ZLjava/lang/Class;[Ljava/lang/Object;Ljava/util/List;Ljava/util/List;Ljava/lang/classfile/ClassBuilder;)V (Ljava/lang/classfile/ClassBuilder;)V</p>
+<p>@lambda-proxy java/lang/runtime/SwitchBootstraps accept ([Ljava/lang/Object;IILjava/util/List;Ljava/lang/Class;ILjava/util/List;Ljava/util/List;I)Ljava/util/function/Consumer; (Ljava/lang/Object;)V REF_invokeStatic java/lang/runtime/SwitchBootstraps lambda$generateTypeSwitchSkeleton$0 ([Ljava/lang/Object;IILjava/util/List;Ljava/lang/Class;ILjava/util/List;Ljava/util/List;ILjava/lang/classfile/CodeBuilder;)V (Ljava/lang/classfile/CodeBuilder;)V</p>
+<p>@lambda-proxy java/time/format/DateTimeFormatter queryFrom ()Ljava/time/temporal/TemporalQuery; (Ljava/time/temporal/TemporalAccessor;)Ljava/lang/Object; REF_invokeStatic java/time/format/DateTimeFormatter lambda$static$0 (Ljava/time/temporal/TemporalAccessor;)Ljava/time/Period; (Ljava/time/temporal/TemporalAccessor;)Ljava/time/Period;</p>
+<p>@lambda-proxy java/time/format/DateTimeFormatter queryFrom ()Ljava/time/temporal/TemporalQuery; (Ljava/time/temporal/TemporalAccessor;)Ljava/lang/Object; REF_invokeStatic java/time/format/DateTimeFormatter lambda$static$1 (Ljava/time/temporal/TemporalAccessor;)Ljava/lang/Boolean; (Ljava/time/temporal/TemporalAccessor;)Ljava/lang/Boolean;</p>
+<p>@lambda-proxy java/time/format/DateTimeFormatterBuilder queryFrom ()Ljava/time/temporal/TemporalQuery; (Ljava/time/temporal/TemporalAccessor;)Ljava/lang/Object; REF_invokeStatic java/time/format/DateTimeFormatterBuilder lambda$static$0 (Ljava/time/temporal/TemporalAccessor;)Ljava/time/ZoneId; (Ljava/time/temporal/TemporalAccessor;)Ljava/time/ZoneId;</p>
+<p>@lambda-proxy java/util/ResourceBundle$Control apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeStatic java/util/ResourceBundle$Control createCandidateList (Lsun/util/locale/BaseLocale;)Ljava/util/List; (Lsun/util/locale/BaseLocale;)Ljava/util/List;</p>
+<p>@lambda-proxy java/util/ResourceBundle$Control get ()Ljava/util/function/Supplier; ()Ljava/lang/Object; REF_newInvokeSpecial java/util/concurrent/ConcurrentHashMap ()V ()Ljava/util/Map;</p>
+<p>@lambda-proxy java/util/logging/Level apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual java/util/logging/Level$KnownLevel mirrored ()Ljava/util/Optional; (Ljava/util/logging/Level$KnownLevel;)Ljava/util/Optional;</p>
+<p>@lambda-proxy java/util/logging/Level$KnownLevel apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeStatic java/util/logging/Level$KnownLevel lambda$add$0 (Ljava/lang/String;)Ljava/util/List; (Ljava/lang/String;)Ljava/util/List;</p>
+<p>@lambda-proxy java/util/logging/Level$KnownLevel apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeStatic java/util/logging/Level$KnownLevel lambda$add$1 (Ljava/lang/Integer;)Ljava/util/List; (Ljava/lang/Integer;)Ljava/util/List;</p>
+<p>@lambda-proxy java/util/logging/Level$KnownLevel apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual java/util/Optional stream ()Ljava/util/stream/Stream; (Ljava/util/Optional;)Ljava/util/stream/Stream;</p>
+<p>@lambda-proxy java/util/regex/CharPredicates is ()Ljava/util/regex/Pattern$BmpCharPredicate; (I)Z REF_invokeStatic java/util/regex/CharPredicates lambda$ASCII_DIGIT$0 (I)Z (I)Z</p>
+<p>@lambda-proxy java/util/regex/CharPredicates is ()Ljava/util/regex/Pattern$BmpCharPredicate; (I)Z REF_invokeStatic java/util/regex/CharPredicates lambda$ASCII_SPACE$0 (I)Z (I)Z</p>
+<p>@lambda-proxy java/util/regex/Pattern is (I)Ljava/util/regex/Pattern$BmpCharPredicate; (I)Z REF_invokeStatic java/util/regex/Pattern lambda$Single$0 (II)Z (I)Z</p>
+<p>@lambda-proxy java/util/regex/Pattern is (II)Ljava/util/regex/Pattern$BmpCharPredicate; (I)Z REF_invokeStatic java/util/regex/Pattern lambda$Range$0 (III)Z (I)Z</p>
+<p>@lambda-proxy java/util/regex/Pattern is (Ljava/util/regex/Pattern$CharPredicate;)Ljava/util/regex/Pattern$CharPredicate; (I)Z REF_invokeStatic java/util/regex/Pattern lambda$negate$0 (Ljava/util/regex/Pattern$CharPredicate;I)Z (I)Z</p>
+<p>@lambda-proxy java/util/regex/Pattern is (Ljava/util/regex/Pattern$CharPredicate;Ljava/util/regex/Pattern$CharPredicate;)Ljava/util/regex/Pattern$BmpCharPredicate; (I)Z REF_invokeStatic java/util/regex/Pattern lambda$union$0 (Ljava/util/regex/Pattern$CharPredicate;Ljava/util/regex/Pattern$CharPredicate;I)Z (I)Z</p>
+<p>@lambda-proxy java/util/stream/Collectors accept ()Ljava/util/function/BiConsumer; (Ljava/lang/Object;Ljava/lang/Object;)V REF_invokeInterface java/util/Set add (Ljava/lang/Object;)Z (Ljava/util/HashSet;Ljava/lang/Object;)V</p>
+<p>@lambda-proxy java/util/stream/Collectors accept ()Ljava/util/function/BiConsumer; (Ljava/lang/Object;Ljava/lang/Object;)V REF_invokeVirtual java/util/StringJoiner add (Ljava/lang/CharSequence;)Ljava/util/StringJoiner; (Ljava/util/StringJoiner;Ljava/lang/CharSequence;)V</p>
+<p>@lambda-proxy java/util/stream/Collectors accept (Ljava/util/function/BiConsumer;Ljava/util/function/Predicate;)Ljava/util/function/BiConsumer; (Ljava/lang/Object;Ljava/lang/Object;)V REF_invokeStatic java/util/stream/Collectors lambda$partitioningBy$0 (Ljava/util/function/BiConsumer;Ljava/util/function/Predicate;Ljava/util/stream/Collectors$Partition;Ljava/lang/Object;)V (Ljava/util/stream/Collectors$Partition;Ljava/lang/Object;)V</p>
+<p>@lambda-proxy java/util/stream/Collectors apply ()Ljava/util/function/BinaryOperator; (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; REF_invokeStatic java/util/stream/Collectors lambda$toSet$0 (Ljava/util/HashSet;Ljava/util/HashSet;)Ljava/util/HashSet; (Ljava/util/HashSet;Ljava/util/HashSet;)Ljava/util/HashSet;</p>
+<p>@lambda-proxy java/util/stream/Collectors apply ()Ljava/util/function/BinaryOperator; (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual java/util/StringJoiner merge (Ljava/util/StringJoiner;)Ljava/util/StringJoiner; (Ljava/util/StringJoiner;Ljava/util/StringJoiner;)Ljava/util/StringJoiner;</p>
+<p>@lambda-proxy java/util/stream/Collectors apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeStatic java/util/stream/Collectors lambda$castingIdentity$0 (Ljava/lang/Object;)Ljava/lang/Object; (Ljava/lang/Object;)Ljava/lang/Object;</p>
+<p>@lambda-proxy java/util/stream/Collectors apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual java/util/StringJoiner toString ()Ljava/lang/String; (Ljava/util/StringJoiner;)Ljava/lang/String;</p>
+<p>@lambda-proxy java/util/stream/Collectors apply (Ljava/util/function/BinaryOperator;)Ljava/util/function/BinaryOperator; (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; REF_invokeStatic java/util/stream/Collectors lambda$partitioningBy$1 (Ljava/util/function/BinaryOperator;Ljava/util/stream/Collectors$Partition;Ljava/util/stream/Collectors$Partition;)Ljava/util/stream/Collectors$Partition; (Ljava/util/stream/Collectors$Partition;Ljava/util/stream/Collectors$Partition;)Ljava/util/stream/Collectors$Partition;</p>
+<p>@lambda-proxy java/util/stream/Collectors get ()Ljava/util/function/Supplier; ()Ljava/lang/Object; REF_newInvokeSpecial java/util/HashSet ()V ()Ljava/util/HashSet;</p>
+<p>@lambda-proxy java/util/stream/Collectors get (Ljava/lang/CharSequence;Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/util/function/Supplier; ()Ljava/lang/Object; REF_invokeStatic java/util/stream/Collectors lambda$joining$1 (Ljava/lang/CharSequence;Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/util/StringJoiner; ()Ljava/util/StringJoiner;</p>
+<p>@lambda-proxy java/util/stream/Collectors get (Ljava/util/stream/Collector;)Ljava/util/function/Supplier; ()Ljava/lang/Object; REF_invokeStatic java/util/stream/Collectors lambda$partitioningBy$2 (Ljava/util/stream/Collector;)Ljava/util/stream/Collectors$Partition; ()Ljava/util/stream/Collectors$Partition;</p>
+<p>@lambda-proxy java/util/stream/FindOps$FindSink$OfRef get ()Ljava/util/function/Supplier; ()Ljava/lang/Object; REF_newInvokeSpecial java/util/stream/FindOps$FindSink$OfRef ()V ()Ljava/util/stream/TerminalSink;</p>
+<p>@lambda-proxy java/util/stream/FindOps$FindSink$OfRef test ()Ljava/util/function/Predicate; (Ljava/lang/Object;)Z REF_invokeVirtual java/util/Optional isPresent ()Z (Ljava/util/Optional;)Z</p>
+<p>@lambda-proxy java/util/stream/MatchOps get (Ljava/util/stream/MatchOps$MatchKind;Ljava/util/function/Predicate;)Ljava/util/function/Supplier; ()Ljava/lang/Object; REF_invokeStatic java/util/stream/MatchOps lambda$makeRef$0 (Ljava/util/stream/MatchOps$MatchKind;Ljava/util/function/Predicate;)Ljava/util/stream/MatchOps$BooleanTerminalSink; ()Ljava/util/stream/MatchOps$BooleanTerminalSink;</p>
+<p>@lambda-proxy java/util/zip/ZipFile apply (Ljava/util/zip/ZipFile;)Ljava/util/function/IntFunction; (I)Ljava/lang/Object; REF_invokeVirtual java/util/zip/ZipFile lambda$jarStream$0 (I)Ljava/util/jar/JarEntry; (I)Ljava/util/jar/JarEntry;</p>
+<p>@lambda-proxy jdk/internal/classfile/impl/ClassFileImpl apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeStatic jdk/internal/classfile/impl/ClassFileImpl lambda$attributeMapper$0 (Ljava/lang/classfile/constantpool/Utf8Entry;)Ljava/lang/classfile/AttributeMapper; (Ljava/lang/classfile/constantpool/Utf8Entry;)Ljava/lang/classfile/AttributeMapper;</p>
+<p>@lambda-proxy jdk/internal/module/DefaultRoots apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual java/lang/module/ModuleDescriptor name ()Ljava/lang/String; (Ljava/lang/module/ModuleDescriptor;)Ljava/lang/String;</p>
+<p>@lambda-proxy jdk/internal/module/DefaultRoots apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual java/lang/module/ModuleReference descriptor ()Ljava/lang/module/ModuleDescriptor; (Ljava/lang/module/ModuleReference;)Ljava/lang/module/ModuleDescriptor;</p>
+<p>@lambda-proxy jdk/internal/module/DefaultRoots test ()Ljava/util/function/Predicate; (Ljava/lang/Object;)Z REF_invokeStatic jdk/internal/module/DefaultRoots lambda$compute$0 (Ljava/lang/module/ModuleReference;)Z (Ljava/lang/module/ModuleReference;)Z</p>
+<p>@lambda-proxy jdk/internal/module/DefaultRoots test ()Ljava/util/function/Predicate; (Ljava/lang/Object;)Z REF_invokeStatic jdk/internal/module/DefaultRoots lambda$exportsAPI$0 (Ljava/lang/module/ModuleDescriptor$Exports;)Z (Ljava/lang/module/ModuleDescriptor$Exports;)Z</p>
+<p>@lambda-proxy jdk/internal/module/DefaultRoots test (Ljava/lang/module/ModuleFinder;)Ljava/util/function/Predicate; (Ljava/lang/Object;)Z REF_invokeStatic jdk/internal/module/DefaultRoots lambda$compute$1 (Ljava/lang/module/ModuleFinder;Ljava/lang/module/ModuleDescriptor;)Z (Ljava/lang/module/ModuleDescriptor;)Z</p>
+<p>@lambda-proxy jdk/internal/module/ModulePath apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual java/util/Optional stream ()Ljava/util/stream/Stream; (Ljava/util/Optional;)Ljava/util/stream/Stream;</p>
+<p>@lambda-proxy jdk/internal/module/ModulePath apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual java/util/Optional stream ()Ljava/util/stream/Stream; (Ljava/util/Optional;)Ljava/util/stream/Stream;</p>
+<p>@lambda-proxy jdk/internal/module/ModulePath apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual java/util/zip/ZipEntry getName ()Ljava/lang/String; (Ljava/util/jar/JarEntry;)Ljava/lang/String;</p>
+<p>@lambda-proxy jdk/internal/module/ModulePath apply (Ljdk/internal/module/ModulePath;)Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual jdk/internal/module/ModulePath toPackageName (Ljava/lang/String;)Ljava/util/Optional; (Ljava/lang/String;)Ljava/util/Optional;</p>
+<p>@lambda-proxy jdk/internal/module/ModulePath apply (Ljdk/internal/module/ModulePath;)Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeVirtual jdk/internal/module/ModulePath toServiceName (Ljava/lang/String;)Ljava/util/Optional; (Ljava/lang/String;)Ljava/util/Optional;</p>
+<p>@lambda-proxy jdk/internal/module/ModulePath test ()Ljava/util/function/Predicate; (Ljava/lang/Object;)Z REF_invokeStatic jdk/internal/module/ModulePath lambda$deriveModuleDescriptor$0 (Ljava/util/jar/JarEntry;)Z (Ljava/util/jar/JarEntry;)Z</p>
+<p>@lambda-proxy jdk/internal/module/ModulePath test ()Ljava/util/function/Predicate; (Ljava/lang/Object;)Z REF_invokeStatic jdk/internal/module/ModulePath lambda$deriveModuleDescriptor$1 (Ljava/lang/String;)Z (Ljava/lang/String;)Z</p>
+<p>@lambda-proxy jdk/internal/module/ModulePath test ()Ljava/util/function/Predicate; (Ljava/lang/Object;)Z REF_invokeStatic jdk/internal/module/ModulePath lambda$deriveModuleDescriptor$2 (Ljava/lang/String;)Z (Ljava/lang/String;)Z</p>
+<p>@lambda-proxy sun/util/cldr/CLDRLocaleProviderAdapter apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeStatic sun/util/cldr/CLDRLocaleProviderAdapter lambda$applyAliases$0 (Ljava/util/Locale;)Ljava/util/Locale; (Ljava/util/Locale;)Ljava/util/Locale;</p>
+<p>@lambda-proxy sun/util/locale/provider/LocaleProviderAdapter apply ()Ljava/util/function/Function; (Ljava/lang/Object;)Ljava/lang/Object; REF_invokeStatic sun/util/locale/provider/LocaleProviderAdapter lambda$toLocaleArray$0 (Ljava/lang/String;)Ljava/util/Locale; (Ljava/lang/String;)Ljava/util/Locale;</p>
+<p>@lambda-proxy sun/util/locale/provider/LocaleProviderAdapter apply ()Ljava/util/function/IntFunction; (I)Ljava/lang/Object; REF_invokeStatic sun/util/locale/provider/LocaleProviderAdapter lambda$toLocaleArray$1 (I)[Ljava/util/Locale; (I)[Ljava/util/Locale;</p>

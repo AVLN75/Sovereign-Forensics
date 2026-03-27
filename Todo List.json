@@ -1,0 +1,39 @@
+﻿{
+    "color":  "DEFAULT",
+    "isTrashed":  false,
+    "isPinned":  false,
+    "isArchived":  false,
+    "annotations":  [
+                        {
+                            "description":  "",
+                            "source":  "WEBLINK",
+                            "title":  "",
+                            "url":  "https://gemini.google.com/app/8408f347aface5db?source=keep"
+                        }
+                    ],
+    "listContent":  [
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eEnsure \u0027DISK_SYS\u0027 sheet exists for OS build\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Ensure \u0027DISK_SYS\u0027 sheet exists for OS build",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eCreate \u0027CPU\u0027 sheet\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Create \u0027CPU\u0027 sheet",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eCreate \u0027PROC_TABLE\u0027 sheet\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Create \u0027PROC_TABLE\u0027 sheet",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eAdd Sidebar.html and Terminal.html to Apps Script project\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Add Sidebar.html and Terminal.html to Apps Script project",
+                            "isChecked":  false
+                        }
+                    ],
+    "title":  "Todo List",
+    "userEditedTimestampUsec":  1772153137578000,
+    "createdTimestampUsec":  1772153137578000
+}

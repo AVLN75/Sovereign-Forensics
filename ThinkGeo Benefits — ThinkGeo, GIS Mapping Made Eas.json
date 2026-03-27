@@ -1,0 +1,19 @@
+﻿{
+    "color":  "DEFAULT",
+    "isTrashed":  false,
+    "isPinned":  false,
+    "isArchived":  false,
+    "annotations":  [
+                        {
+                            "description":  "We are a GIS software company founded in 2004 and located in Frisco, TX. Our clients are in more than 40 industries including agriculture, energy, transportation, government, engineering, IT, and defense.",
+                            "source":  "WEBLINK",
+                            "title":  "ThinkGeo Benefits — ThinkGeo, GIS Mapping Made Easy",
+                            "url":  "https://thinkgeo.com/benefits"
+                        }
+                    ],
+    "textContent":  "https://thinkgeo.com/benefits?leadsource=Google\u0026adgroup=151018113307\u0026adid=654768099053\u0026adtype=g\u0026keyword=gis%20license\u0026gad_source=1",
+    "title":  "ThinkGeo Benefits — ThinkGeo, GIS Mapping Made Easy",
+    "userEditedTimestampUsec":  1733318147043000,
+    "createdTimestampUsec":  1733318147043000,
+    "textContentHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003ehttps://thinkgeo.com/benefits?leadsource=Google\u0026amp;adgroup=151018113307\u0026amp;adid=654768099053\u0026amp;adtype=g\u0026amp;keyword=gis%20license\u0026amp;gad_source=1\u003c/span\u003e\u003c/p\u003e"
+}

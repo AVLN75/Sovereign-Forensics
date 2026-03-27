@@ -1,0 +1,17 @@
+﻿{
+    "title":  "Google Authentication and Navigation Page Metadata",
+    "type":  "ARTIFACT_TYPE_TABLE",
+    "sources":  [
+                    {
+                        "sourceId":  {
+                                         "id":  "fceba996-49eb-473b-b4e5-657df5b82959"
+                                     }
+                    }
+                ],
+    "status":  "ARTIFACT_STATUS_READY",
+    "table":  {
+                  "generationOptions":  {
+                                            "languageCode":  "en"
+                                        }
+              }
+}

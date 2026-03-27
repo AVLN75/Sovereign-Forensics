@@ -1,158 +1,95 @@
-<p>#include &#34;esp_camera.h&#34;</p>
-<p>#include</p>
-<p>#include</p>
-<p>/* Wifi Crdentials */</p>
-<p>String sta_ssid = &#34;&#34;; // set Wifi network you want to connect to</p>
-<p>String sta_password = &#34;&#34;; // set password for Wifi network</p>
-<p>/* define CAMERA_MODEL_AI_THINKER */</p>
-<p>#define PWDN_GPIO_NUM 32</p>
-<p>#define RESET_GPIO_NUM -1</p>
-<p>#define XCLK_GPIO_NUM 0</p>
-<p>#define SIOD_GPIO_NUM 26</p>
-<p>#define SIOC_GPIO_NUM 27</p>
-<p>#define Y9_GPIO_NUM 35</p>
-<p>#define Y8_GPIO_NUM 34</p>
-<p>#define Y7_GPIO_NUM 39</p>
-<p>#define Y6_GPIO_NUM 36</p>
-<p>#define Y5_GPIO_NUM 21</p>
-<p>#define Y4_GPIO_NUM 19</p>
-<p>#define Y3_GPIO_NUM 18</p>
-<p>#define Y2_GPIO_NUM 5</p>
-<p>#define VSYNC_GPIO_NUM 25</p>
-<p>#define HREF_GPIO_NUM 23</p>
-<p>#define PCLK_GPIO_NUM 22</p>
-<p>/* Defining motor and servo pins */</p>
-<p>extern int DRV_A = 12;</p>
-<p>extern int DRV_B = 13;</p>
-<p>extern int DIR_A = 14;</p>
-<p>extern int DIR_B = 15;</p>
-<p>extern int ledVal = 20; // setting bright of flash LED 0-255</p>
-<p>extern int ledPin = 4; // set digital pin GPIO4 as LED pin (use biult-in LED)</p>
-<p>extern int servoPin = 2; // set digital pin GPIO2 as servo pin (use SG90)</p>
-<p>unsigned long previousMillis = 0;</p>
-<p>void startCameraServer();</p>
-<p>void initServo() {</p>
-<p>ledcSetup(8, 50, 16); /*50 hz PWM, 16-bit resolution and range from 3250 to 6500 */</p>
-<p>ledcAttachPin(servoPin, 8);</p>
-<p>}</p>
-<p>void initLed() {</p>
-<p>ledcSetup(7, 5000, 8); /* 5000 hz PWM, 8-bit resolution and range from 0 to 255 */</p>
-<p>ledcAttachPin(ledPin, 7);</p>
-<p>}</p>
-<p>void setup() {</p>
-<p>Serial.begin(115200); // set up seriamonitor at 115200 bps</p>
-<p>Serial.setDebugOutput(true);</p>
-<p>Serial.println();</p>
-<p>Serial.println(&#34;<em>ESP32 Camera Remote Control - L293D Bluino Shield</em>&#34;);</p>
-<p>Serial.println(&#34;--------------------------------------------------------&#34;);</p>
-<p>// Set all the motor control pin to Output</p>
-<p>pinMode(DRV_A, OUTPUT);</p>
-<p>pinMode(DRV_B, OUTPUT);</p>
-<p>pinMode(DIR_A, OUTPUT);</p>
-<p>pinMode(DIR_B, OUTPUT);</p>
-<p>pinMode(ledPin, OUTPUT); // set the LED pin as an Output</p>
-<p>pinMode(servoPin, OUTPUT); // set the servo pin as an Output</p>
-<p>// Initial state - turn off motors, LED &amp; buzzer</p>
-<p>digitalWrite(DRV_A, LOW);</p>
-<p>digitalWrite(DRV_B, LOW);</p>
-<p>digitalWrite(DIR_A, LOW);</p>
-<p>digitalWrite(DIR_B, LOW);</p>
-<p>digitalWrite(ledPin, LOW);</p>
-<p>digitalWrite(servoPin, LOW);</p>
-<p>/* Initializing Servo and LED */</p>
-<p>initServo();</p>
-<p>initLed();</p>
-<p>camera_config_t config;</p>
-<p>config.ledc_channel = LEDC_CHANNEL_0;</p>
-<p>config.ledc_timer = LEDC_TIMER_0;</p>
-<p>config.pin_d0 = Y2_GPIO_NUM;</p>
-<p>config.pin_d1 = Y3_GPIO_NUM;</p>
-<p>config.pin_d2 = Y4_GPIO_NUM;</p>
-<p>config.pin_d3 = Y5_GPIO_NUM;</p>
-<p>config.pin_d4 = Y6_GPIO_NUM;</p>
-<p>config.pin_d5 = Y7_GPIO_NUM;</p>
-<p>config.pin_d6 = Y8_GPIO_NUM;</p>
-<p>config.pin_d7 = Y9_GPIO_NUM;</p>
-<p>config.pin_xclk = XCLK_GPIO_NUM;</p>
-<p>config.pin_pclk = PCLK_GPIO_NUM;</p>
-<p>config.pin_vsync = VSYNC_GPIO_NUM;</p>
-<p>config.pin_href = HREF_GPIO_NUM;</p>
-<p>config.pin_sscb_sda = SIOD_GPIO_NUM;</p>
-<p>config.pin_sscb_scl = SIOC_GPIO_NUM;</p>
-<p>config.pin_pwdn = PWDN_GPIO_NUM;</p>
-<p>config.pin_reset = RESET_GPIO_NUM;</p>
-<p>config.xclk_freq_hz = 20000000;</p>
-<p>config.pixel_format = PIXFORMAT_JPEG;</p>
-<p>//init with high specs to pre-allocate larger buffers</p>
-<p>if(psramFound()){</p>
-<p>config.frame_size = FRAMESIZE_UXGA;</p>
-<p>config.jpeg_quality = 10;</p>
-<p>config.fb_count = 2;</p>
-<p>} else {</p>
-<p>config.frame_size = FRAMESIZE_SVGA;</p>
-<p>config.jpeg_quality = 12;</p>
-<p>config.fb_count = 1;</p>
-<p>}</p>
-<p>// camera init</p>
-<p>esp_err_t err = esp_camera_init(&amp;config);</p>
-<p>if (err != ESP_OK) {</p>
-<p>Serial.printf(&#34;Camera init failed with error 0x%x&#34;, err);</p>
-<p>return;</p>
-<p>}</p>
-<p>//drop down frame size for higher initial frame rate</p>
-<p>sensor_t * s = esp_camera_sensor_get();</p>
-<p>s-&gt;set_framesize(s, FRAMESIZE_CIF);</p>
-<p>// Set NodeMCU Wifi hostname based on chip mac address</p>
-<p>char chip_id[15];</p>
-<p>snprintf(chip_id, 15, &#34;%04X&#34;, (uint16_t)(ESP.getEfuseMac()&gt;&gt;32));</p>
-<p>String hostname = &#34;esp32cam-&#34; + String(chip_id);</p>
-<p>Serial.println();</p>
-<p>Serial.println(&#34;Hostname: &#34;+hostname);</p>
-<p>// first, set NodeMCU as STA mode to connect with a Wifi network</p>
-<p>WiFi.mode(WIFI_STA);</p>
-<p>WiFi.begin(sta_ssid.c_str(), sta_password.c_str());</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.print(&#34;Connecting to: &#34;);</p>
-<p>Serial.println(sta_ssid);</p>
-<p>Serial.print(&#34;Password: &#34;);</p>
-<p>Serial.println(sta_password);</p>
-<p>// try to connect with Wifi network about 10 seconds</p>
-<p>unsigned long currentMillis = millis();</p>
-<p>previousMillis = currentMillis;</p>
-<p>while (WiFi.status() != WL_CONNECTED &amp;&amp; currentMillis - previousMillis &lt;= 10000) {</p>
-<p>delay(500);</p>
-<p>Serial.print(&#34;.&#34;);</p>
-<p>currentMillis = millis();</p>
-<p>}</p>
-<p>// if failed to connect with Wifi network set NodeMCU as AP mode</p>
-<p>IPAddress myIP;</p>
-<p>if (WiFi.status() == WL_CONNECTED) {</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.println(&#34;<em>WiFi-STA-Mode</em>&#34;);</p>
-<p>Serial.print(&#34;IP: &#34;);</p>
-<p>myIP=WiFi.localIP();</p>
-<p>Serial.println(myIP);</p>
-<p>delay(2000);</p>
-<p>} else {</p>
-<p>WiFi.mode(WIFI_AP);</p>
-<p>WiFi.softAP(hostname.c_str());</p>
-<p>myIP = WiFi.softAPIP();</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.println(&#34;WiFi failed connected to &#34; + sta_ssid);</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.println(&#34;<em>WiFi-AP-Mode</em>&#34;);</p>
-<p>Serial.print(&#34;AP IP address: &#34;);</p>
-<p>Serial.println(myIP);</p>
-<p>delay(2000);</p>
-<p>}</p>
-<p>// Start camera server to get realtime view</p>
-<p>startCameraServer();</p>
-<p>Serial.print(&#34;Camera Ready! Use &#39;http://&#34;);</p>
-<p>Serial.print(myIP);</p>
-<p>Serial.println(&#34;&#39; to connect &#34;);</p>
-<p>ArduinoOTA.begin(); // enable to receive update/upload firmware via Wifi OTA</p>
-<p>}</p>
-<p>void loop() {</p>
-<p>// put your main code here, to run repeatedly:</p>
-<p>ArduinoOTA.handle();</p>
-<p>}</p>
+<p>#!/usr/bin/env python3</p>
+<p>import re</p>
+<p>import sys</p>
+<p>from datetime import datetime</p>
+<p>import yaml # python3 -m pip install pyyaml --user</p>
+<p>&#34;OUTPUT_FILE = &#34;&#34;./devices.md&#34;&#34;&#34;</p>
+<p>&#34;INPUT_FILE = &#34;&#34;./devices.yml&#34;&#34;&#34;</p>
+<p>&#34;repo_msg = f&#34;&#34;&#34;&#34;&#34;&#34;&#34;</p>
+<p><em>This table was <a href="https://gitlab.com/kalilinux/build-scripts/kali-arm/-/blob/master/devices.yml">generated automatically</a> on {datetime.now().strftime(&#39;%Y-%B-%d %H:%M:%S&#39;)} from the <a href="https://gitlab.com/kalilinux/build-scripts/kali-arm">Kali ARM GitLab repository</a></em></p>
+<p>&#34;&#34;&#34;&#34;&#34;&#34;&#34;&#34;</p>
+<p>qty_devices = 00</p>
+<h1 id="input">Input:</h1>
+<h1 id="-">------------------------------------------------------------</h1>
+<h1 id="see-devices-yml">See: ./devices.yml</h1>
+<h1 id="https-gitlab-com-kalilinux-build-scripts-kali-arm-blob-master-devices-yml"><a href="https://gitlab.com/kalilinux/build-scripts/kali-arm/-/blob/master/devices.yml">https://gitlab.com/kalilinux/build-scripts/kali-arm/-/blob/master/devices.yml</a></h1>
+<p>def yaml_parse(content):</p>
+<p>&#34;result = &#34;&#34;&#34;&#34;&#34;</p>
+<p>lines = content.split(&#39;\n&#39;)</p>
+<p>for line in lines:</p>
+<p>if line.strip() and not line.strip().startswith(&#39;#&#39;):</p>
+<p>&#34;result += line + &#34;&#34;\n&#34;&#34;&#34;</p>
+<p>return yaml.safe_load(result)</p>
+<h1 id="https-stackoverflow-com-a-11150413"><a href="https://stackoverflow.com/a/11150413">https://stackoverflow.com/a/11150413</a></h1>
+<p>def natural_sort(l):</p>
+<p>def convert(text): return int(text) if text.isdigit() else text.lower()</p>
+<p>def alphanum_key(key): return [convert(c)</p>
+<p>for c in re.split(&#39;([0-9]+)&#39;, key)]</p>
+<p>return sorted(l, key=alphanum_key)</p>
+<p>def generate_table(data):</p>
+<p>global qty_devices</p>
+<p>&#34;default = &#34;&#34;&#34;&#34;&#34;</p>
+<p>&#34;table = &#34;&#34;| Vendor | Board | CPU | CPU Cores | GPU | RAM | RAM Size (MB) | Ethernet | Ethernet Speed (MB) | Wi-Fi | Bluetooth | USB2 | USB3 | Storage | Notes |\n&#34;&#34;&#34;</p>
+<p>&#34;table += &#34;&#34;|--------|-------|-----|-----------|-----|-----|---------------|----------|---------------------|-------|-----------|------|------|---------|---------------------|\n&#34;&#34;&#34;</p>
+<h1 id="iterate-over-per-input-depth-1">Iterate over per input (depth 1)</h1>
+<p>&#34;for yaml in data[&#34;&#34;devices&#34;&#34;]:&#34;</p>
+<h1 id="iterate-over-vendors">Iterate over vendors</h1>
+<p>for vendor in yaml.keys():</p>
+<h1 id="iterate-over-board-depth-2">Iterate over board (depth 2)</h1>
+<p>for board in yaml[vendor]:</p>
+<p>qty_devices += 1</p>
+<p>&#34;ram_size = &#34;&#34;&#34;&#34;&#34;</p>
+<p>&#34;storage = &#34;&#34;&#34;&#34;&#34;</p>
+<p>i = 0</p>
+<p>&#34;for f in natural_sort(board.get(&#34;&#34;ram-size&#34;&#34;, default)):&#34;</p>
+<p>if i &gt; 0:</p>
+<p>&#34;ram_size += &#34;&#34;, &#34;&#34;&#34;</p>
+<p>ram_size += f</p>
+<p>i += 1</p>
+<p>i = 0</p>
+<p>&#34;for f in natural_sort(board.get(&#34;&#34;storage&#34;&#34;, default)):&#34;</p>
+<p>if i &gt; 0:</p>
+<p>&#34;storage += &#34;&#34;, &#34;&#34;&#34;</p>
+<p>storage += f</p>
+<p>i += 1</p>
+<p>&#34;table += f&#34;&#34;| {vendor} | {board.get(&#39;name&#39;, default)} | {board.get(&#39;cpu&#39;, default)} | {board.get(&#39;cpu-cores&#39;, default)} | {board.get(&#39;gpu&#39;, default)} | {board.get(&#39;ram&#39;, default)} | {ram_size} | {board.get(&#39;ethernet&#39;, default)} | {board.get(&#39;ethernet-speed&#39;, default)} | {board.get(&#39;wifi&#39;, default)} | {board.get(&#39;bluetooth&#39;, default)} | {board.get(&#39;usb2&#39;, default)} | {board.get(&#39;usb3&#39;, default)} | {storage} | {board.get(&#39;notes&#39;, default)} |\n&#34;&#34;&#34;</p>
+<p>return table</p>
+<p>def read_file(file):</p>
+<p>try:</p>
+<p>with open(file) as f:</p>
+<p>data = f.read()</p>
+<p>except Exception as e:</p>
+<p>&#34;print(f&#34;&#34;[-] Cannot open input file: {file} - {e}&#34;&#34;)&#34;</p>
+<p>return data</p>
+<p>def write_file(data, file):</p>
+<p>try:</p>
+<p>&#34;with open(file, &#34;&#34;w&#34;&#34;) as f:&#34;</p>
+<p>&#34;meta = &#34;&#34;---\n&#34;&#34;&#34;</p>
+<p>&#34;meta += &#34;&#34;title: Kali ARM Devices\n&#34;&#34;&#34;</p>
+<p>&#34;meta += &#34;&#34;---\n\n&#34;&#34;&#34;</p>
+<p>&#34;stats = f&#34;&#34;- The official <a href="https://gitlab.com/kalilinux/build-scripts/kali-arm">Kali ARM repository</a> contains build-scripts to support <a href="device-stats.html"><strong>{qty_devices}</strong> Kali ARM devices</a>\n&#34;&#34;&#34;</p>
+<p>&#34;stats += &#34;&#34;- <a href="index.html">Kali ARM Statistics</a>\n\n&#34;&#34;&#34;</p>
+<p>f.write(str(meta))</p>
+<p>f.write(str(stats))</p>
+<p>f.write(str(data))</p>
+<p>f.write(str(repo_msg))</p>
+<p>&#34;print(f&#34;&#34;[+] File: {OUTPUT_FILE} successfully written&#34;&#34;)&#34;</p>
+<p>except Exception as e:</p>
+<p>&#34;print(f&#34;&#34;[-] Cannot write to output file: {file} - {e}&#34;&#34;)&#34;</p>
+<p>return 0</p>
+<p>def print_summary():</p>
+<p>&#34;print(f&#34;&#34;Devices: {qty_devices}&#34;&#34;)&#34;</p>
+<p>def main(argv):</p>
+<h1 id="assign-variables">Assign variables</h1>
+<p>data = read_file(INPUT_FILE)</p>
+<h1 id="get-data">Get data</h1>
+<p>res = yaml_parse(data)</p>
+<p>generated_markdown = generate_table(res)</p>
+<h1 id="create-markdown-file">Create markdown file</h1>
+<p>write_file(generated_markdown, OUTPUT_FILE)</p>
+<h1 id="print-result">Print result</h1>
+<p>print_summary()</p>
+<h1 id="exit">Exit</h1>
+<p>exit(0)</p>
+<p>&#34;if <strong>name</strong> == &#34;&#34;<strong>main</strong>&#34;&#34;:&#34;</p>
+<p>main(sys.argv[1:])</p>

@@ -1,206 +1,236 @@
-<p>/******************* WiFi Robot Remote Control Mode ********************/</p>
-<p>#include</p>
-<p>#include</p>
-<p>#include</p>
-<p>// connections for drive Motors</p>
-<p>int PWM_A = D1;</p>
-<p>int PWM_B = D2;</p>
-<p>int DIR_A = D3;</p>
-<p>int DIR_B = D4;</p>
-<p>const int buzPin = D5; // set digital pin D5 as buzzer pin (use active buzzer)</p>
-<p>const int ledPin = D8; // set digital pin D8 as LED pin (use super bright LED)</p>
-<p>const int wifiLedPin = D0; // set digital pin D0 as indication, the LED turn on if NodeMCU connected to WiFi as STA mode</p>
-<p>String command; // String to store app command state.</p>
-<p>int SPEED = 1023; // 330 - 1023.</p>
-<p>int speed_Coeff = 3;</p>
-<p>ESP8266WebServer server(80); // Create a webserver object that listens for HTTP request on port 80</p>
-<p>unsigned long previousMillis = 0;</p>
-<p>String sta_ssid = &#34;&#34;; // set Wifi networks you want to connect to</p>
-<p>String sta_password = &#34;&#34;; // set password for Wifi networks</p>
-<p>void setup(){</p>
-<p>Serial.begin(115200); // set up Serial library at 115200 bps</p>
-<p>Serial.println();</p>
-<p>Serial.println(&#34;<em>WiFi Robot Remote Control Mode</em>&#34;);</p>
-<p>Serial.println(&#34;--------------------------------------&#34;);</p>
-<p>pinMode(buzPin, OUTPUT); // sets the buzzer pin as an Output</p>
-<p>pinMode(ledPin, OUTPUT); // sets the LED pin as an Output</p>
-<p>pinMode(wifiLedPin, OUTPUT); // sets the Wifi LED pin as an Output</p>
-<p>digitalWrite(buzPin, LOW);</p>
-<p>digitalWrite(ledPin, LOW);</p>
-<p>digitalWrite(wifiLedPin, HIGH);</p>
-<p>// Set all the motor control pins to outputs</p>
-<p>pinMode(PWM_A, OUTPUT);</p>
-<p>pinMode(PWM_B, OUTPUT);</p>
-<p>pinMode(DIR_A, OUTPUT);</p>
-<p>pinMode(DIR_B, OUTPUT);</p>
-<p>// Turn off motors - Initial state</p>
-<p>digitalWrite(DIR_A, LOW);</p>
-<p>digitalWrite(DIR_B, LOW);</p>
-<p>analogWrite(PWM_A, 0);</p>
-<p>analogWrite(PWM_B, 0);</p>
-<p>// set NodeMCU Wifi hostname based on chip mac address</p>
-<p>String chip_id = String(ESP.getChipId(), HEX);</p>
-<p>int i = chip_id.length()-4;</p>
-<p>chip_id = chip_id.substring(i);</p>
-<p>chip_id = &#34;wificar-&#34; + chip_id;</p>
-<p>String hostname(chip_id);</p>
-<p>Serial.println();</p>
-<p>Serial.println(&#34;Hostname: &#34;+hostname);</p>
-<p>// first, set NodeMCU as STA mode to connect with a Wifi network</p>
-<p>WiFi.mode(WIFI_STA);</p>
-<p>WiFi.begin(sta_ssid.c_str(), sta_password.c_str());</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.print(&#34;Connecting to: &#34;);</p>
-<p>Serial.println(sta_ssid);</p>
-<p>Serial.print(&#34;Password: &#34;);</p>
-<p>Serial.println(sta_password);</p>
-<p>// try to connect with Wifi network about 10 seconds</p>
-<p>unsigned long currentMillis = millis();</p>
-<p>previousMillis = currentMillis;</p>
-<p>while (WiFi.status() != WL_CONNECTED &amp;&amp; currentMillis - previousMillis &lt;= 10000) {</p>
-<p>delay(500);</p>
-<p>Serial.print(&#34;.&#34;);</p>
-<p>currentMillis = millis();</p>
-<p>}</p>
-<p>// if failed to connect with Wifi network set NodeMCU as AP mode</p>
-<p>if (WiFi.status() == WL_CONNECTED) {</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.println(&#34;<em>WiFi-STA-Mode</em>&#34;);</p>
-<p>Serial.print(&#34;IP: &#34;);</p>
-<p>Serial.println(WiFi.localIP());</p>
-<p>digitalWrite(wifiLedPin, LOW); // Wifi LED on when connected to Wifi as STA mode</p>
-<p>delay(3000);</p>
-<p>} else {</p>
-<p>WiFi.mode(WIFI_AP);</p>
-<p>WiFi.softAP(hostname.c_str());</p>
-<p>IPAddress myIP = WiFi.softAPIP();</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.println(&#34;WiFi failed connected to &#34; + sta_ssid);</p>
-<p>Serial.println(&#34;&#34;);</p>
-<p>Serial.println(&#34;<em>WiFi-AP-Mode</em>&#34;);</p>
-<p>Serial.print(&#34;AP IP address: &#34;);</p>
-<p>Serial.println(myIP);</p>
-<p>digitalWrite(wifiLedPin, HIGH); // Wifi LED off when status as AP mode</p>
-<p>delay(3000);</p>
-<p>}</p>
-<p>server.on ( &#34;/&#34;, HTTP_handleRoot ); // call the &#39;handleRoot&#39; function when a client requests URI &#34;/&#34;</p>
-<p>server.onNotFound ( HTTP_handleRoot ); // when a client requests an unknown URI (i.e. something other than &#34;/&#34;), call function &#34;handleNotFound&#34;</p>
-<p>server.begin(); // actually start the server</p>
-<p>ArduinoOTA.begin(); // enable to receive update/uploade firmware via Wifi OTA</p>
-<p>}</p>
-<p>void loop() {</p>
-<p>ArduinoOTA.handle(); // listen for update OTA request from clients</p>
-<p>server.handleClient(); // listen for HTTP requests from clients</p>
-<p>command = server.arg(&#34;State&#34;); // check HTPP request, if has arguments &#34;State&#34; then saved the value</p>
-<p>if (command == &#34;F&#34;) Forward(); // check string then call a function or set a value</p>
-<p>else if (command == &#34;B&#34;) Backward();</p>
-<p>else if (command == &#34;R&#34;) TurnRight();</p>
-<p>else if (command == &#34;L&#34;) TurnLeft();</p>
-<p>else if (command == &#34;G&#34;) ForwardLeft();</p>
-<p>else if (command == &#34;H&#34;) BackwardLeft();</p>
-<p>else if (command == &#34;I&#34;) ForwardRight();</p>
-<p>else if (command == &#34;J&#34;) BackwardRight();</p>
-<p>else if (command == &#34;S&#34;) Stop();</p>
-<p>else if (command == &#34;V&#34;) BeepHorn();</p>
-<p>else if (command == &#34;W&#34;) TurnLightOn();</p>
-<p>else if (command == &#34;w&#34;) TurnLightOff();</p>
-<p>else if (command == &#34;0&#34;) SPEED = 330;</p>
-<p>else if (command == &#34;1&#34;) SPEED = 400;</p>
-<p>else if (command == &#34;2&#34;) SPEED = 470;</p>
-<p>else if (command == &#34;3&#34;) SPEED = 540;</p>
-<p>else if (command == &#34;4&#34;) SPEED = 610;</p>
-<p>else if (command == &#34;5&#34;) SPEED = 680;</p>
-<p>else if (command == &#34;6&#34;) SPEED = 750;</p>
-<p>else if (command == &#34;7&#34;) SPEED = 820;</p>
-<p>else if (command == &#34;8&#34;) SPEED = 890;</p>
-<p>else if (command == &#34;9&#34;) SPEED = 960;</p>
-<p>else if (command == &#34;q&#34;) SPEED = 1023;</p>
-<p>}</p>
-<p>// function prototypes for HTTP handlers</p>
-<p>void HTTP_handleRoot(void){</p>
-<p>server.send ( 200, &#34;text/html&#34;, &#34;&#34; ); // Send HTTP status 200 (Ok) and send some text to the browser/client</p>
-<p>if( server.hasArg(&#34;State&#34;) ){</p>
-<p>Serial.println(server.arg(&#34;State&#34;));</p>
-<p>}</p>
-<p>}</p>
-<p>void handleNotFound(){</p>
-<p>server.send(404, &#34;text/plain&#34;, &#34;404: Not found&#34;); // Send HTTP status 404 (Not Found) when there&#39;s no handler for the URI in the request</p>
-<p>}</p>
-<p>// function to move forward</p>
-<p>void Forward(){</p>
-<p>digitalWrite(DIR_A, HIGH);</p>
-<p>digitalWrite(DIR_B, HIGH);</p>
-<p>analogWrite(PWM_A, SPEED);</p>
-<p>analogWrite(PWM_B, SPEED);</p>
-<p>}</p>
-<p>// function to move backward</p>
-<p>void Backward(){</p>
-<p>digitalWrite(DIR_A, LOW);</p>
-<p>digitalWrite(DIR_B, LOW);</p>
-<p>analogWrite(PWM_A, SPEED);</p>
-<p>analogWrite(PWM_B, SPEED);</p>
-<p>}</p>
-<p>// function to turn right</p>
-<p>void TurnRight(){</p>
-<p>digitalWrite(DIR_A, LOW);</p>
-<p>digitalWrite(DIR_B, HIGH);</p>
-<p>analogWrite(PWM_A, SPEED);</p>
-<p>analogWrite(PWM_B, SPEED);</p>
-<p>}</p>
-<p>// function to turn left</p>
-<p>void TurnLeft(){</p>
-<p>digitalWrite(DIR_A, HIGH);</p>
-<p>digitalWrite(DIR_B, LOW);</p>
-<p>analogWrite(PWM_A, SPEED);</p>
-<p>analogWrite(PWM_B, SPEED);</p>
-<p>}</p>
-<p>// function to move forward left</p>
-<p>void ForwardLeft(){</p>
-<p>digitalWrite(DIR_A, HIGH);</p>
-<p>digitalWrite(DIR_B, HIGH);</p>
-<p>analogWrite(PWM_A, SPEED);</p>
-<p>analogWrite(PWM_B, SPEED/speed_Coeff);</p>
-<p>}</p>
-<p>// function to move backward left</p>
-<p>void BackwardLeft(){</p>
-<p>digitalWrite(DIR_A, LOW);</p>
-<p>digitalWrite(DIR_B, LOW);</p>
-<p>analogWrite(PWM_A, SPEED);</p>
-<p>analogWrite(PWM_B, SPEED/speed_Coeff);</p>
-<p>}</p>
-<p>// function to move forward right</p>
-<p>void ForwardRight(){</p>
-<p>digitalWrite(DIR_A, HIGH);</p>
-<p>digitalWrite(DIR_B, HIGH);</p>
-<p>analogWrite(PWM_A, SPEED/speed_Coeff);</p>
-<p>analogWrite(PWM_B, SPEED);</p>
-<p>}</p>
-<p>// function to move backward left</p>
-<p>void BackwardRight(){</p>
-<p>digitalWrite(DIR_A, LOW);</p>
-<p>digitalWrite(DIR_B, LOW);</p>
-<p>analogWrite(PWM_A, SPEED/speed_Coeff);</p>
-<p>analogWrite(PWM_B, SPEED);</p>
-<p>}</p>
-<p>// function to stop motors</p>
-<p>void Stop(){</p>
-<p>digitalWrite(DIR_A, LOW);</p>
-<p>digitalWrite(DIR_B, LOW);</p>
-<p>analogWrite(PWM_A, 0);</p>
-<p>analogWrite(PWM_B, 0);</p>
-<p>}</p>
-<p>// function to beep a buzzer</p>
-<p>void BeepHorn(){</p>
-<p>digitalWrite(buzPin, HIGH);</p>
-<p>delay(150);</p>
-<p>digitalWrite(buzPin, LOW);</p>
-<p>delay(80);</p>
-<p>}</p>
-<p>// function to turn on LED</p>
-<p>void TurnLightOn(){</p>
-<p>digitalWrite(ledPin, HIGH);</p>
-<p>}</p>
-<p>// function to turn off LED</p>
-<p>void TurnLightOff(){</p>
-<p>digitalWrite(ledPin, LOW);</p>
-<p>}</p>
+<p>File Name File URL Created Time</p>
+<p>eq.png 1YEPiqCNqhBjhhluiWs_PBLW0Snym5gEE eq.png</p>
+<p>le.png 1NJ2TGq_jkxPHUB18hotOp4y88fQOTyj8 le.png</p>
+<p>SPLICE CASEpng.png 1mftxfWZx6kHCxeRpAQ1RrBJ0UgnJLTUG SPLICE CASEpng.png</p>
+<p>4_port.png 18ju5WaE75R8En0RkZ0IpCdTF46TqHjFq 4_port.png</p>
+<p>8_port.png 1foZW3VeTRW3a8G5UB6V_bxZqZ45oLuDS 8_port.png</p>
+<p>32-2_TEMP.png 1-IrkQs5GdqE23RzOcZlGxfanuDOEuQvV 32-2_TEMP.png</p>
+<p>29-2_TEMP.png 1jK_cPGl4BXJiqhJr-O_04-fNnUOdOsJK 29-2_TEMP.png</p>
+<p>26-2_TEMP.png 1ZMMpTqRQ2bu6-lJyZTvwGAiOFOQ-wTSW 26-2_TEMP.png</p>
+<p>23-2_TEMP.png 1OhpXURr-9hZ83O5bsIwZXZke6IPckOai 23-2_TEMP.png</p>
+<p>20-2_TEMP.png 1h6R1B52nP1g59Wt-xPQqdPrXokRE0itl 20-2_TEMP.png</p>
+<p>17-2_TEMP.png 1r3cLo98n-nLSLvGCrFPTEqahKN0Ck3cb 17-2_TEMP.png</p>
+<p>15-2_TEMP.png 1V3o9DmBGfrQK0q4nU9mwciN2qiXmR8Vt 15-2_TEMP.png</p>
+<p>14-2_TEMP.png 1V_FNVhWnM_5iRnedzx6KrY-JMxnrgKbm 14-2_TEMP.png</p>
+<p>12-2_TEMP.png 1ELvoa-UUE8-y0NaBhl0aiobf3_9dqFzb 12-2_TEMP.png</p>
+<p>11-2_TEMP.png 18tRh3TL7I4vS5XDU5gYNgTrgBqxVH0XM 11-2_TEMP.png</p>
+<p>10-2_TEMP.png 1TpPzuOWBMypx5egAOrQO7wNrLSB0icSK 10-2_TEMP.png</p>
+<p>8-2_TEMP.png 19H3gQ21J5zPcU3EM-cT7S1Zxgie-BWMW 8-2_TEMP.png</p>
+<p>7-2_TEMP.png 1Rae4bfSIv7ZcSjrxNDjPsX2zePJRvkC8 7-2_TEMP.png</p>
+<p>4-2_TEMP.png 1cwrWC8ofzP9d3cxkpDyLek0CfKt9MBlb 4-2_TEMP.png</p>
+<p>dc(1).png 1bLxEEN8K_vR7zQnXXlCrW1RQ6tGN2FU0 dc(1).png</p>
+<p>dc (1).png 1vz0aF23bPnZsmTyf-Z08nB23cvlXQlHe dc (1).png</p>
+<p>amp (1).png 16pgJmjg8vz-iGMt6HDSMiDkCbJfkHmqb amp (1).png</p>
+<p>amp(1).png 1M78yH_k47LPDO8KXLSl8e5cKdRHLWhm9 amp(1).png</p>
+<p>dc(2).png 1oWjQhXFL1OJiXXxPYK_QEM9rToUREJ-t dc(2).png</p>
+<p>20-2_GI_tap.png 1RcdKSCYOT0apW5t8EVg0DUMmLAOKm6k6 20-2_GI_tap.png</p>
+<p>7K-2_GI_tap.png 1Raq4iZirL1tqYPB7sWASLesRgapY70qR 7K-2_GI_tap.png</p>
+<p>17K-2_GI_tap.png 1RZJBXVXCaMz__VOTqvvF3CG9ulXl4hrj 17K-2_GI_tap.png</p>
+<p>23-2_GI_tap.png 1RTC2Nog3_PX4B5Nxm6cEXvtblTyYTQ2t 23-2_GI_tap.png</p>
+<p>12K-2_GI_tap.png 1RSwHftgPCmlm8oXXqUDyTKxjqZ_nzb2m 12K-2_GI_tap.png</p>
+<p>17-2_GI_tap.png 1RQQ50lYaAqJYhv0EKvAcy3If6advMIin 17-2_GI_tap.png</p>
+<p>23-2_MOT_tap.png 1RMfv9BTbck7htk79MDDaZsGPik8omMO2 23-2_MOT_tap.png</p>
+<p>15-4_MOT_tap.png 1RGvYlxKbDS-ykGFIUwNEB38amoLRqp69 15-4_MOT_tap.png</p>
+<p>32-4_NEXT_LEVEL_tap.png 1RCmSGFtpChFnMj7KFV0ECJA3Ja2k74UF 32-4_NEXT_LEVEL_tap.png</p>
+<p>20-2_MOT_tap.png 1RBQQSH2n7E_czTj9H8YKA1D3PJ2yBEPy 20-2_MOT_tap.png</p>
+<p>23-8_MOT_tap.png 1R4KALzFhU-Jy7OuHmu6USZVTDpkahcLX 23-8_MOT_tap.png</p>
+<p>23_26-2_MOT_tap.png 1R3GTwI5njftGbzLCSd0CC0qrSS-k4F8Z 23_26-2_MOT_tap.png</p>
+<p>10-8_ATA_tap.png 1R-Y3wZ24Q62fa0O_bygpf7vdZBtAXrqS 10-8_ATA_tap.png</p>
+<p>17-2_ARS_tap.png 1R-42Vbz9rQMp3xiIT6ACDSsiApBmNnNQ 17-2_ARS_tap.png</p>
+<p>7-2B_ARS_tap.png 1QxwLte-y_WNFrjLuaC5s-QvSAd3CgVY8 7-2B_ARS_tap.png</p>
+<p>7-2_ARS_tap.png 1QsmwjvTygtW3ZSdo9fGcgogKM3Pt1734 7-2_ARS_tap.png</p>
+<p>10-2_ARS_tap.png 1QsVuGNfceZriyYdaJjLRPx87w7uYbSgg 10-2_ARS_tap.png</p>
+<p>12-2 GI.jpg 1Dm1ONkqgh3BZbo0rE3shoGvCRUIEQhlz 12-2 GI.jpg</p>
+<p>11-2 csc.webp 1Dklghn0X2QxyKF9GQBdIrdhoDptAleU4 11-2 csc.webp</p>
+<p>14-2 GI.jpg 1DuG0WjLLw0NyrJYaHf8CwDrQRGRcXYz6 14-2 GI.jpg</p>
+<p>23-2 R.jpg 1EHOc7yIe-GYwQ5r4ys_dehc-OBY_9zA_ 23-2 R.jpg</p>
+<p>26-2 CSC.jpg 1EVwhryr3o3tEaAolCIulBsfmLh4edlXZ 26-2 CSC.jpg</p>
+<p>17P-2 MOT.webp 1EBanq0lyPFzkePext0aRBos46t0Q36P- 17P-2 MOT.webp</p>
+<p>17-2 GI.jpg 1DzpRfYfg6ObGX0ZXVsLRRTwxgx_7n0YD 17-2 GI.jpg</p>
+<p>14Q-2 ARS.jpg 19lU0HMtycL7HUoVZodHIA7yt2I8r7vlk 14Q-2 ARS.jpg</p>
+<p>26-2 GI.jpg 1EbiccgZcBTYTAqtM-l-7IsXBPzgDO8Un 26-2 GI.jpg</p>
+<p>14N-2 MOT.jpg 1DyI6TYCfSclbrG-2NjNUjNLnAUkTB3fB 14N-2 MOT.jpg</p>
+<p>10-2 GI.jpg 1DUa0wT3JILGzef2u594G63WXA-ZysnXO 10-2 GI.jpg</p>
+<p>7Q-2 ARS.jpg 1DTLHVdcggS1fPVOcmGQrIaTmAfWhLdLA 7Q-2 ARS.jpg</p>
+<p>7P-2 MOT.webp 1DSa7AAVbRhw_CwXBjfm9rYWVF4VB1EHr 7P-2 MOT.webp</p>
+<p>7-2_ARRIS 1DTLHVdcggS1fPVOcmGQrIaTmAfWhLdLA BTTF.jpg</p>
+<p>10-2 GI.jpg 1DUa0wT3JILGzef2u594G63WXA-ZysnXO 10-2 GI.jpg</p>
+<p>10-2_ARS_tap (1).png 11R7hwfRvsi4wXfZY3vOA-nZKVQtgiGPE 10-2_ARS_tap (1).png</p>
+<p>10-2_ARS_tap.png 1QsVuGNfceZriyYdaJjLRPx87w7uYbSgg 10-2_ARS_tap.png</p>
+<p>10-2_ARS_tap.png 1DW7uvoinB4MmLH8pFhAv4KPAFMrhvMPN 10-2_ARS_tap.png</p>
+<p>10-2_GI_tap (1).png 1K4_Dq_tuG1bbREXTi2MbxCazLPY-QEtd 10-2_GI_tap (1).png</p>
+<p>10-2_TEMP.png 1TpPzuOWBMypx5egAOrQO7wNrLSB0icSK 10-2_TEMP.png</p>
+<p>10-8_ATA_tap (1).png 1IxYfut3tRj_JaUjq4Uln2sjiNw6or0eg 10-8_ATA_tap (1).png</p>
+<p>10-8_ATA_tap.png 1R-Y3wZ24Q62fa0O_bygpf7vdZBtAXrqS 10-8_ATA_tap.png</p>
+<p>10-8_ATA_tap.png 1D_d3KQmxK4AIo-lvqpKR6RqEWELzTAqp 10-8_ATA_tap.png</p>
+<p>10-8_MOT_tap (1).png 101Jl97dhWM7KL2AdEC_YooujkIfOqroD 10-8_MOT_tap (1).png</p>
+<p>17K-2_GI_tap (1).png 1kI8Z0ZSEH5jDXVOqdAZMGNDrgI8i80yM 17K-2_GI_tap (1).png</p>
+<p>17K-2_GI_tap.png 1RZJBXVXCaMz__VOTqvvF3CG9ulXl4hrj 17K-2_GI_tap.png</p>
+<p>17K-2_GI_tap.png 1E9Dd0JkoWBb0RioMnt4kPskIbPfWoVq6 17K-2_GI_tap.png</p>
+<p>17P-2 MOT.webp 1EBanq0lyPFzkePext0aRBos46t0Q36P- 17P-2 MOT.webp</p>
+<p>2 &amp; 3 WAY SPLITTERS 1kI8Z0ZSEH5jDXVOqdAZMGNDrgI8i80yM needs class</p>
+<p>DCs 1RZJBXVXCaMz__VOTqvvF3CG9ulXl4hrj DCs</p>
+<p>LE 1E9Dd0JkoWBb0RioMnt4kPskIbPfWoVq7 LE</p>
+<p>AMP 1EBanq0lyPFzkePext0aRBos46t0Q36P- AMP</p>
+<p>NODE 1kI8Z0ZSEH5jDXVOqdAZMGNDrgI8i80yM NODE</p>
+<p>32 VALUE 1RZJBXVXCaMz__VOTqvvF3CG9ulXl4hrj 32 VALUE</p>
+<p>29 VALUE 1E9Dd0JkoWBb0RioMnt4kPskIbPfWoVq8 29 VALUE</p>
+<p>26 VALUE 1EBanq0lyPFzkePext0aRBos46t0Q36P- 26 VALUE</p>
+<p>23 VALUE 1kI8Z0ZSEH5jDXVOqdAZMGNDrgI8i80yM 23 VALUE</p>
+<p>20 VALUE 1RZJBXVXCaMz__VOTqvvF3CG9ulXl4hrj 20 VALUE</p>
+<p>18 VALUE 1E9Dd0JkoWBb0RioMnt4kPskIbPfWoVq9 18 VALUE</p>
+<p>17 VALUE 1EBanq0lyPFzkePext0aRBos46t0Q36P- 17 VALUE</p>
+<p>15 VALUE 1kI8Z0ZSEH5jDXVOqdAZMGNDrgI8i80yM 15 VALUE</p>
+<p>14 VALUE 1RZJBXVXCaMz__VOTqvvF3CG9ulXl4hrj 14 VALUE</p>
+<p>12 VALUE 1E9Dd0JkoWBb0RioMnt4kPskIbPfWoVq10 12 VALUE</p>
+<p>11 VALUE 1EBanq0lyPFzkePext0aRBos46t0Q36P- 11 VALUE</p>
+<p>10 VALUE 1kI8Z0ZSEH5jDXVOqdAZMGNDrgI8i80yM 10 VALUE</p>
+<p>8 VALUE 1RZJBXVXCaMz__VOTqvvF3CG9ulXl4hrj 8 VALUE</p>
+<p>7 VALUE 1E9Dd0JkoWBb0RioMnt4kPskIbPfWoVq11 7 VALUE</p>
+<p>4 VALUE 1EBanq0lyPFzkePext0aRBos46t0Q36P- 4 VALUE</p>
+<p>4-2 MI <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkaUsvDAxAZzqOtkn-A?e=4Yuq56">https://1drv.ms/i/s!AgZwGZc-IOBfkaUsvDAxAZzqOtkn-A?e=4Yuq56</a></p>
+<p>4-2 SA 4-2_SA.bmp,</p>
+<p>4-2 GI</p>
+<p>4-2 SA-B <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkaoJs0tvgk3pthhLsg?e=H1yxgm">https://1drv.ms/i/s!AgZwGZc-IOBfkaoJs0tvgk3pthhLsg?e=H1yxgm</a></p>
+<p>7-2 ARS <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkasKR5CCEUfeonjBXg?e=e6uyPU">https://1drv.ms/i/s!AgZwGZc-IOBfkasKR5CCEUfeonjBXg?e=e6uyPU</a></p>
+<p>7-2 GI <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkapp5fwyiVtwYlBINQ?e=OM7IsK">https://1drv.ms/i/s!AgZwGZc-IOBfkapp5fwyiVtwYlBINQ?e=OM7IsK</a></p>
+<p>10-2 ARS 10-2 ARS_Home.bmp</p>
+<p>12-2 GI</p>
+<p>7-2 ARS <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkapH3-VO8aKqqHZZcw?e=8HDJnw">https://1drv.ms/i/s!AgZwGZc-IOBfkapH3-VO8aKqqHZZcw?e=8HDJnw</a></p>
+<p>7-2 GI 7-2 GI_Home.bmp</p>
+<p>7-2B ARS <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkasKR5CCEUfeonjBXg?e=pMAebR">https://1drv.ms/i/s!AgZwGZc-IOBfkasKR5CCEUfeonjBXg?e=pMAebR</a></p>
+<p>7K-2 GI 7K-2 GI_Home.bmp</p>
+<p>8-2 SA <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkaw1INH5EVC_B2yCuA?e=4aFShi">https://1drv.ms/i/s!AgZwGZc-IOBfkaw1INH5EVC_B2yCuA?e=4aFShi</a></p>
+<p>8-4 SA <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkawzTF-uZPy1sYp_4Q?e=RNOXpF">https://1drv.ms/i/s!AgZwGZc-IOBfkawzTF-uZPy1sYp_4Q?e=RNOXpF</a></p>
+<p>8-2 SA OLDER</p>
+<p>10-2 GI 10-2 GI_Home.bmp</p>
+<p>10-2 ARS 10-2 ARS_Home.bmp</p>
+<p>10-4 MOT <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkaxarrKTJRVL_zPvaw?e=byKnvX">https://1drv.ms/i/s!AgZwGZc-IOBfkaxarrKTJRVL_zPvaw?e=byKnvX</a></p>
+<p>10-8 ARS <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkaxGNFFX836Vu9kzDg?e=NDfBm6">https://1drv.ms/i/s!AgZwGZc-IOBfkaxGNFFX836Vu9kzDg?e=NDfBm6</a></p>
+<p>10-8 MOT</p>
+<p>10TK-8 GI 10K-8 GI_Home.bmp</p>
+<p>10TP-8 MOT <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkaxF9U33OqUNHX3Ozg?e=B1MUgN">https://1drv.ms/i/s!AgZwGZc-IOBfkaxF9U33OqUNHX3Ozg?e=B1MUgN</a></p>
+<p>11-2 SA 11-2 SA_Home.bmp</p>
+<p>11-2 SA1 <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkaxCqLgFHqR_fhOG5w?e=cmZ25x">https://1drv.ms/i/s!AgZwGZc-IOBfkaxCqLgFHqR_fhOG5w?e=cmZ25x</a></p>
+<p>12-2 MOT <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkaxB7BkaMZnJERzNYw?e=icrJZQ">https://1drv.ms/i/s!AgZwGZc-IOBfkaxB7BkaMZnJERzNYw?e=icrJZQ</a></p>
+<p>12K-2 GI <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkaw4v1j7-rZZeS6LCA?e=bNSTH2">https://1drv.ms/i/s!AgZwGZc-IOBfkaw4v1j7-rZZeS6LCA?e=bNSTH2</a></p>
+<p>14-4 SA</p>
+<p>14-8 MOT</p>
+<p>14-8 SA-ST</p>
+<p>14-4 GI</p>
+<p>14-8 NEXT LEVEL</p>
+<p>14PE-2 MOT</p>
+<p>14S-8 SA</p>
+<p>15-4 MOT</p>
+<p>15-4 GI</p>
+<p>17-2 ARS</p>
+<p>17-2 MOT</p>
+<p>17-4 GI <a href="https://1drv.ms/i/s!AgZwGZc-IOBfkass-uywe7KnMSmV4w?e=9aJ70r">https://1drv.ms/i/s!AgZwGZc-IOBfkass-uywe7KnMSmV4w?e=9aJ70r</a></p>
+<p>17-4 SA</p>
+<p>17J-4 GI</p>
+<p>14-2 ARS</p>
+<p>20-2 ARS</p>
+<p>10-2 GI.jpg 1DUa0wT3JILGzef2u594G63WXA-ZysnXO 10-2 GI.jpg</p>
+<p>10-2_ARS_tap (1).png 11R7hwfRvsi4wXfZY3vOA-nZKVQtgiGPE 10-2_ARS_tap (1).png</p>
+<p>10-2_ARS_tap.png 1QsVuGNfceZriyYdaJjLRPx87w7uYbSgg 10-2_ARS_tap.png</p>
+<p>10-2_ARS_tap.png 1DW7uvoinB4MmLH8pFhAv4KPAFMrhvMPN 10-2_ARS_tap.png</p>
+<p>10-2_GI_tap (1).png 1K4_Dq_tuG1bbREXTi2MbxCazLPY-QEtd 10-2_GI_tap (1).png</p>
+<p>10-8_ATA_tap (1).png 1IxYfut3tRj_JaUjq4Uln2sjiNw6or0eg 10-8_ATA_tap (1).png</p>
+<p>10-8_ATA_tap.png 1R-Y3wZ24Q62fa0O_bygpf7vdZBtAXrqS 10-8_ATA_tap.png</p>
+<p>10-8_ATA_tap.png 1D_d3KQmxK4AIo-lvqpKR6RqEWELzTAqp 10-8_ATA_tap.png</p>
+<p>10-8_MOT_tap (1).png 101Jl97dhWM7KL2AdEC_YooujkIfOqroD 10-8_MOT_tap (1).png</p>
+<p>14-2 GI.jpg 1DuG0WjLLw0NyrJYaHf8CwDrQRGRcXYz6 14-2 GI.jpg</p>
+<p>14-8_MOT_tap (1).png 11NfD29wtd-S5bBPi8Xm5h5PaMc_gRVhE 14-8_MOT_tap (1).png</p>
+<p>1488-2_remastered.jpg 1yjnSOl8T1STK09Gm_dU_l0cRRSr-7dm4 1488-2_remastered.jpg</p>
+<p>14N-2 MOT.jpg 1DyI6TYCfSclbrG-2NjNUjNLnAUkTB3fB 14N-2 MOT.jpg</p>
+<p>14Q-2 ARS.jpg 19lU0HMtycL7HUoVZodHIA7yt2I8r7vlk 14Q-2 ARS.jpg</p>
+<p>15-4_MOT_tap (1).png 1l3s-JTdCbd1z_HICSrE2DyDSUkfe7sUb 15-4_MOT_tap (1).png</p>
+<p>15-4_MOT_tap.png 1RGvYlxKbDS-ykGFIUwNEB38amoLRqp69 15-4_MOT_tap.png</p>
+<p>15-4_MOT_tap.png 1DyaQtivh7pP-ImFtLSAhJHzoWluzViIk 15-4_MOT_tap.png</p>
+<p>26-2 CSC.jpg 1EVwhryr3o3tEaAolCIulBsfmLh4edlXZ 26-2 CSC.jpg</p>
+<p>26-2 GI.jpg 1EbiccgZcBTYTAqtM-l-7IsXBPzgDO8Un 26-2 GI.jpg</p>
+<p>32-4_NEXT_LEVEL_tap (1).png 1GEO7A0gPg-J9g5o9pd1qrn1PK_EiEd6S 32-4_NEXT_LEVEL_tap (1).png</p>
+<p>32-4_NEXT_LEVEL_tap.png 1RCmSGFtpChFnMj7KFV0ECJA3Ja2k74UF 32-4_NEXT_LEVEL_tap.png</p>
+<p>32-4_NEXT_LEVEL_tap.png 1EdY__iFCMNAqz_5wLlf4LaEKl_wwuIu_ 32-4_NEXT_LEVEL_tap.png</p>
+<p>320 14_2.jpg 1OGY3KxmcliFzF2lzNxIgTvRN6T4NBHRb 320 14_2.jpg</p>
+<p>322 8_2 end of line.jpg 1hrTfwNxkLVP5wX98I2-8-CY_oSzBM_Tl 322 8_2 end of line.jpg</p>
+<p>amp 14_8.jpg 1f1CFDuJZzWmRYe3r-Q5iN0b0UG9_eju6 347 amp 14_8.jpg</p>
+<p>20_4.jpg 1-jJuIbTaLYzh4k1BZcON7aCpju_ygioW 347-400 20_4.jpg</p>
+<p>7-2_ARS_tap (1).png 18IA02bdRTk9oZzSbp8Y3YgQTV0lVe5PK 7-2_ARS_tap (1).png</p>
+<p>7-2_ARS_tap.png 1QsmwjvTygtW3ZSdo9fGcgogKM3Pt1734 7-2_ARS_tap.png</p>
+<p>7-2_ARS_tap.png 1DKcrhi9owHMfsafGx9qKHc3KuIZiXMwk 7-2_ARS_tap.png</p>
+<p>7-2B_ARS_tap (1).png 1-i0CmHSTmUMM3o-oKZD7m4Ncl-w7pXxl 7-2B_ARS_tap (1).png</p>
+<p>7-2B_ARS_tap.png 1QxwLte-y_WNFrjLuaC5s-QvSAd3CgVY8 7-2B_ARS_tap.png</p>
+<p>7-2B_ARS_tap.png 1DNbdf3rMYxSZc8HAnu-NXLzfiJwpzpvJ 7-2B_ARS_tap.png</p>
+<p>17-2 GI.jpg 1DzpRfYfg6ObGX0ZXVsLRRTwxgx_7n0YD 17-2 GI.jpg</p>
+<p>17-2_ARS_tap (1).png 1mz2Ac_cd87s0HocADVXGgCeky453XMGZ 17-2_ARS_tap (1).png</p>
+<p>17-2_ARS_tap.png 1R-42Vbz9rQMp3xiIT6ACDSsiApBmNnNQ 17-2_ARS_tap.png</p>
+<p>17-2_ARS_tap.png 1DzyjKbK7fT608JnTaRZqTy54gVAeRE-D 17-2_ARS_tap.png</p>
+<p>17-2_GI_tap (1).png 1K0ayjVisOKm-jaWoJcpuGl9QMz_TYChs 17-2_GI_tap (1).png</p>
+<p>17-2_GI_tap.png 1RQQ50lYaAqJYhv0EKvAcy3If6advMIin 17-2_GI_tap.png</p>
+<p>17-2_GI_tap.png 1E3QPFEzQzs1FhbLvzqXLO9L9CSTK8O2J 17-2_GI_tap.png</p>
+<p>17-2_MOT_tap (1).png 1tUuYFW3tj2pr82B8ahg7e9dIa1VTeS6Q 17-2_MOT_tap (1).png</p>
+<p>23_26-2_MOT_tap (1).png 1e8PNS-rp4BhohaDM_FwSBwps4ICxEoop 23_26-2_MOT_tap (1).png</p>
+<p>23_26-2_MOT_tap.png 1R3GTwI5njftGbzLCSd0CC0qrSS-k4F8Z 23_26-2_MOT_tap.png</p>
+<p>23_26-2_MOT_tap.png 1EGOAxGtpRnnhv9L4M5bBRlh5MG_ZowhZ 23_26-2_MOT_tap.png</p>
+<p>23-2 R.jpg 1EHOc7yIe-GYwQ5r4ys_dehc-OBY_9zA_ 23-2 R.jpg</p>
+<p>23-2_GI_tap (1).png 1Q6txu6UQbqoaa6lKjFuwhwSXEMhF0hmc 23-2_GI_tap (1).png</p>
+<p>23-2_GI_tap.png 1RTC2Nog3_PX4B5Nxm6cEXvtblTyYTQ2t 23-2_GI_tap.png</p>
+<p>23-2_GI_tap.png 1EMamCKIS7WbeU-Mm4aGHgftlcYaJy8a2 23-2_GI_tap.png</p>
+<p>23-2_MOT_tap (1).png 1BEDQIrQF87JRiPG1TfjSTBMr1u9F_o6h 23-2_MOT_tap (1).png</p>
+<p>23-2_MOT_tap.png 1RMfv9BTbck7htk79MDDaZsGPik8omMO2 23-2_MOT_tap.png</p>
+<p>23-2_MOT_tap.png 1ENTwi4y0GiIimDY4X-Mww8nb03pU3Jg2 23-2_MOT_tap.png</p>
+<p>23-4_MOT_tap (1).png 1uYG4LfObfZWf-xqKgKlPWiUgpkqIQvXE 23-4_MOT_tap (1).png</p>
+<p>23-8_MOT_tap (1).png 1u1Ih0eeWwwW_G90iTtgQ6kSmE99GsNaq 23-8_MOT_tap (1).png</p>
+<p>23-8_MOT_tap.png 1R4KALzFhU-Jy7OuHmu6USZVTDpkahcLX 23-8_MOT_tap.png</p>
+<p>23-8_MOT_tap.png 1EUfmsZIXbznZA9m1cRAaO9Q88YJiIdbK 23-8_MOT_tap.png</p>
+<p>17-2 GI.jpg 1DzpRfYfg6ObGX0ZXVsLRRTwxgx_7n0YD 17-2 GI.jpg</p>
+<p>17-2_ARS_tap (1).png 1mz2Ac_cd87s0HocADVXGgCeky453XMGZ 17-2_ARS_tap (1).png</p>
+<p>17-2_ARS_tap.png 1R-42Vbz9rQMp3xiIT6ACDSsiApBmNnNQ 17-2_ARS_tap.png</p>
+<p>17-2_ARS_tap.png 1DzyjKbK7fT608JnTaRZqTy54gVAeRE-D 17-2_ARS_tap.png</p>
+<p>17-2_GI_tap (1).png 1K0ayjVisOKm-jaWoJcpuGl9QMz_TYChs 17-2_GI_tap (1).png</p>
+<p>17-2_GI_tap.png 1RQQ50lYaAqJYhv0EKvAcy3If6advMIin 17-2_GI_tap.png</p>
+<p>17-2_GI_tap.png 1E3QPFEzQzs1FhbLvzqXLO9L9CSTK8O2J 17-2_GI_tap.png</p>
+<p>17-2_MOT_tap (1).png 1tUuYFW3tj2pr82B8ahg7e9dIa1VTeS6Q 17-2_MOT_tap (1).png</p>
+<p>11-2 csc.webp 1Dklghn0X2QxyKF9GQBdIrdhoDptAleU4 11-2 csc.webp</p>
+<p>17K-2_GI_tap (1).png 1kI8Z0ZSEH5jDXVOqdAZMGNDrgI8i80yM 17K-2_GI_tap (1).png</p>
+<p>17K-2_GI_tap.png 1RZJBXVXCaMz__VOTqvvF3CG9ulXl4hrj 17K-2_GI_tap.png</p>
+<p>17K-2_GI_tap.png 1E9Dd0JkoWBb0RioMnt4kPskIbPfWoVq6 17K-2_GI_tap.png</p>
+<p>17P-2 MOT.webp 1EBanq0lyPFzkePext0aRBos46t0Q36P- 17P-2 MOT.webp</p>
+<p>12K-2_GI_tap (1).png 1qdxHiFgaASx1A41lgB-8W8ap04jOyU0- 12K-2_GI_tap (1).png</p>
+<p>12K-2_GI_tap.png 1RSwHftgPCmlm8oXXqUDyTKxjqZ_nzb2m 12K-2_GI_tap.png</p>
+<p>12K-2_GI_tap.png 1Dqp-67Sw24hApaHh-ACjzow6eEUKYgCo 12K-2_GI_tap.png</p>
+<p>12-2 GI.jpg 1Dm1ONkqgh3BZbo0rE3shoGvCRUIEQhlz 12-2 GI.jpg</p>
+<p>12-2_MOT_tap (1).png 1ds-pwPd9XqaE6SXuAwLajCXBhNKspjaP 12-2_MOT_tap (1).png</p>
+<p>14-2 GI.jpg 1DuG0WjLLw0NyrJYaHf8CwDrQRGRcXYz6 14-2 GI.jpg</p>
+<p>14-8_MOT_tap (1).png 11NfD29wtd-S5bBPi8Xm5h5PaMc_gRVhE 14-8_MOT_tap (1).png</p>
+<p>1488-2_remastered.jpg 1yjnSOl8T1STK09Gm_dU_l0cRRSr-7dm4 1488-2_remastered.jpg</p>
+<p>14N-2 MOT.jpg 1DyI6TYCfSclbrG-2NjNUjNLnAUkTB3fB 14N-2 MOT.jpg</p>
+<p>14Q-2 ARS.jpg 19lU0HMtycL7HUoVZodHIA7yt2I8r7vlk 14Q-2 ARS.jpg</p>
+<p>15-4_MOT_tap (1).png 1l3s-JTdCbd1z_HICSrE2DyDSUkfe7sUb 15-4_MOT_tap (1).png</p>
+<p>15-4_MOT_tap.png 1RGvYlxKbDS-ykGFIUwNEB38amoLRqp69 15-4_MOT_tap.png</p>
+<p>15-4_MOT_tap.png 1DyaQtivh7pP-ImFtLSAhJHzoWluzViIk 15-4_MOT_tap.png</p>
+<p>11NfD29wtd-S5bBPi8Xm5h5PaMc_gRVhE 4-2 MI.csv</p>
+<p>1yjnSOl8T1STK09Gm_dU_l0cRRSr-7dm5 4-2 SA.csv</p>
+<p>1DyI6TYCfSclbrG-2NjNUjNLnAUkTB3fB 4-2GI.csv</p>
+<p>19lU0HMtycL7HUoVZodHIA7yt2I8r7vlk 4-2 SA.csv</p>
+<p>2 &amp; 3 WAY SPLITTERS 1l3s-JTdCbd1z_HICSrE2DyDSUkfe7sUb <a href="https://drive.google.com/drive/folders/10ZukuNmsFHo8oXbaCECSCeRU1F9JnKm8">https://drive.google.com/drive/folders/10ZukuNmsFHo8oXbaCECSCeRU1F9JnKm8</a></p>
+<p>DCs 1RGvYlxKbDS-ykGFIUwNEB38amoLRqp70 <a href="https://drive.google.com/drive/folders/10K-EesBgJ-dPZy0LJAvMkuX-sYt7QE8G">https://drive.google.com/drive/folders/10K-EesBgJ-dPZy0LJAvMkuX-sYt7QE8G</a></p>
+<p>LE 1DyaQtivh7pP-ImFtLSAhJHzoWluzViIk <a href="https://drive.google.com/drive/folders/10JrolvQm_B_ko436CVb4hoPXWawzH0_J">https://drive.google.com/drive/folders/10JrolvQm_B_ko436CVb4hoPXWawzH0_J</a></p>
+<p>AMP 11NfD29wtd-S5bBPi8Xm5h5PaMc_gRVhE <a href="https://drive.google.com/drive/folders/10EdhCsgMULOvSZRYLt_kehOsl7d3C5HJ">https://drive.google.com/drive/folders/10EdhCsgMULOvSZRYLt_kehOsl7d3C5HJ</a></p>
+<p>NODE 1yjnSOl8T1STK09Gm_dU_l0cRRSr-7dm6 <a href="https://drive.google.com/drive/folders/106w_Y9o-9BHx93RWQXcdHqc1AXZnWhRI">https://drive.google.com/drive/folders/106w_Y9o-9BHx93RWQXcdHqc1AXZnWhRI</a></p>
+<p>32 VALUE 1DyI6TYCfSclbrG-2NjNUjNLnAUkTB3fB <a href="https://drive.google.com/drive/folders/1059TQu44R7x18pj9Pse8FdTegV2tqmu3">https://drive.google.com/drive/folders/1059TQu44R7x18pj9Pse8FdTegV2tqmu3</a></p>
+<p>29 VALUE 19lU0HMtycL7HUoVZodHIA7yt2I8r7vlk <a href="https://drive.google.com/drive/folders/101ERIvLmGKSp3suPsWZfAEDcBMsKFu7c">https://drive.google.com/drive/folders/101ERIvLmGKSp3suPsWZfAEDcBMsKFu7c</a></p>
+<p>26 VALUE 1l3s-JTdCbd1z_HICSrE2DyDSUkfe7sUb <a href="https://drive.google.com/drive/folders/1-w1tlVA76ZKx4ImFoZOk5u2SycCCmuLW">https://drive.google.com/drive/folders/1-w1tlVA76ZKx4ImFoZOk5u2SycCCmuLW</a></p>
+<p>23 VALUE 1RGvYlxKbDS-ykGFIUwNEB38amoLRqp71 <a href="https://drive.google.com/drive/folders/1-txQQxe2jpOYCXa0QF7qPfT6ZxPF2-aA">https://drive.google.com/drive/folders/1-txQQxe2jpOYCXa0QF7qPfT6ZxPF2-aA</a></p>
+<p>20 VALUE 1DyaQtivh7pP-ImFtLSAhJHzoWluzViIk <a href="https://drive.google.com/drive/folders/1-qltqlTww0ZxMPCIh84a15K6bq1vI5o2">https://drive.google.com/drive/folders/1-qltqlTww0ZxMPCIh84a15K6bq1vI5o2</a></p>
+<p>18 VALUE 11NfD29wtd-S5bBPi8Xm5h5PaMc_gRVhE <a href="https://drive.google.com/drive/folders/1-dt7IZfEu_jDBGUPnzslAtCUXX49bm9V">https://drive.google.com/drive/folders/1-dt7IZfEu_jDBGUPnzslAtCUXX49bm9V</a></p>
+<p>17 VALUE 1yjnSOl8T1STK09Gm_dU_l0cRRSr-7dm7 <a href="https://drive.google.com/drive/folders/1-aTPyQcHPlvDYe7edZbFsjSx_M0hRQJ2">https://drive.google.com/drive/folders/1-aTPyQcHPlvDYe7edZbFsjSx_M0hRQJ2</a></p>
+<p>15 VALUE 1DyI6TYCfSclbrG-2NjNUjNLnAUkTB3fB <a href="https://drive.google.com/drive/folders/1-UGKINRIzHNFXgza4pIFFRHoWCJUpbbJ">https://drive.google.com/drive/folders/1-UGKINRIzHNFXgza4pIFFRHoWCJUpbbJ</a></p>
+<p>14 VALUE 19lU0HMtycL7HUoVZodHIA7yt2I8r7vlk <a href="https://drive.google.com/drive/folders/1-TBF9ByYmvmUKuhEK_WLGjSW8iMW8-Mu">https://drive.google.com/drive/folders/1-TBF9ByYmvmUKuhEK_WLGjSW8iMW8-Mu</a></p>
+<p>12 VALUE 1l3s-JTdCbd1z_HICSrE2DyDSUkfe7sUb <a href="https://drive.google.com/drive/folders/1-RDhB-7HyG7pxo9ANH0c8QMuqV7qjevZ">https://drive.google.com/drive/folders/1-RDhB-7HyG7pxo9ANH0c8QMuqV7qjevZ</a></p>
+<p>11 VALUE 1RGvYlxKbDS-ykGFIUwNEB38amoLRqp72 <a href="https://drive.google.com/drive/folders/1-QnSKK-f5pXaFJ_nlnHh4dyrLlk4Y2hd">https://drive.google.com/drive/folders/1-QnSKK-f5pXaFJ_nlnHh4dyrLlk4Y2hd</a></p>
+<p>10 VALUE 1DyaQtivh7pP-ImFtLSAhJHzoWluzViIk <a href="https://drive.google.com/drive/folders/1-PNOcjBzlep9u0hKG0JtizJmlaMJRyxY">https://drive.google.com/drive/folders/1-PNOcjBzlep9u0hKG0JtizJmlaMJRyxY</a></p>
+<p>8 VALUE 11NfD29wtd-S5bBPi8Xm5h5PaMc_gRVhE <a href="https://drive.google.com/drive/folders/1-MQBasXr2KjX-Sl_sSeR762J4PSoehjo">https://drive.google.com/drive/folders/1-MQBasXr2KjX-Sl_sSeR762J4PSoehjo</a></p>
+<p>7 VALUE 1yjnSOl8T1STK09Gm_dU_l0cRRSr-7dm8 <a href="https://drive.google.com/drive/folders/1--ckpdjpLFwvp0qcc8IE7DP2euSQCCvk">https://drive.google.com/drive/folders/1--ckpdjpLFwvp0qcc8IE7DP2euSQCCvk</a></p>
+<p>4 VALUE 1DyI6TYCfSclbrG-2NjNUjNLnAUkTB3fB <a href="https://drive.google.com/drive/folders/1zu9PGKgW88SYCx_AVJCkEecVrfrpFnyK">https://drive.google.com/drive/folders/1zu9PGKgW88SYCx_AVJCkEecVrfrpFnyK</a></p>

@@ -1,0 +1,79 @@
+﻿{
+    "color":  "DEFAULT",
+    "isTrashed":  false,
+    "isPinned":  false,
+    "isArchived":  false,
+    "annotations":  [
+                        {
+                            "description":  "",
+                            "source":  "WEBLINK",
+                            "title":  "",
+                            "url":  "https://gemini.google.com/app/b2d0513b239f331a?source=keep"
+                        }
+                    ],
+    "listContent":  [
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003ePerform full spectrum scan setup and integration once ready\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Perform full spectrum scan setup and integration once ready",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003ePerform Laptop-side \u0027Inhale\u0027 to verify ArcGIS License (27000@127.0.0.1) via Cloudflared tunnel.\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Perform Laptop-side \u0027Inhale\u0027 to verify ArcGIS License (27000@127.0.0.1) via Cloudflared tunnel.",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eVerify Workbook Hex data integrity on Laptop RAM drive before final Tablet purge.\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Verify Workbook Hex data integrity on Laptop RAM drive before final Tablet purge.",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eConfigure MotherShip laptop-side tunnel for 27000@127.0.0.1\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Configure MotherShip laptop-side tunnel for 27000@127.0.0.1",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eVerify ArcGIS license bridge via cloudflared on laptop\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Verify ArcGIS license bridge via cloudflared on laptop",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eEstablish Zero-Footprint RAM drive for hex-to-blade reconstruction\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Establish Zero-Footprint RAM drive for hex-to-blade reconstruction",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003e--- SOVEREIGN WORKSPACE CHECKPOINT --- DATE: 2026-02-09 NODE: T4_Tablet (Ghost State) STATE: Fresh Snapshot (OverlayFS Simulation) OSI_LINK: Rooted at ~/OSI PENDING: - Mount ISO on Laptop at E:\\ - Link USBIP from Laptop to T4 (192.168.100.1) - Deploy Ghost_Bridge.vbs on Laptop ---------------------------------------\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "--- SOVEREIGN WORKSPACE CHECKPOINT --- DATE: 2026-02-09 NODE: T4_Tablet (Ghost State) STATE: Fresh Snapshot (OverlayFS Simulation) OSI_LINK: Rooted at ~/OSI PENDING: - Mount ISO on Laptop at E:\\ - Link USBIP from Laptop to T4 (192.168.100.1) - Deploy Ghost_Bridge.vbs on Laptop ---------------------------------------",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eVerify Drive F: stability and MFT integrity\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Verify Drive F: stability and MFT integrity",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eBreak zombie file handles (wslhost/rclone) in PowerShell\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Break zombie file handles (wslhost/rclone) in PowerShell",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eRestore Low-Pressure Rclone Mount to ~/thin_air\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Restore Low-Pressure Rclone Mount to ~/thin_air",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eBundle StealthSystem and kali-arm64 folders into .tar/.vhdx containers\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Bundle StealthSystem and kali-arm64 folders into .tar/.vhdx containers",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eResume ArcGIS SovereignMaps build using RAM drive for temp files\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Resume ArcGIS SovereignMaps build using RAM drive for temp files",
+                            "isChecked":  false
+                        }
+                    ],
+    "title":  "Sovereign Build Recovery Tasks",
+    "userEditedTimestampUsec":  1771820274862000,
+    "createdTimestampUsec":  1769508519438000
+}
