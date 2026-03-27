@@ -1,0 +1,211 @@
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td>openExample(&#39;matlab/CreateAndUseImportOptionsForTextFilesExample&#39;)</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>example ran set</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>lbs = labeledSignalSet({randn(100,2) randn(200,3)},&#39;SampleRate&#39;,400);</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>setMemberNames(lbs,[&#34;Water&#34; &#34;Earth&#34;]);</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>addMembers(lbs,{randn(120,1) randn(300,2)},100,[&#34;Air&#34; &#34;Fire&#34;]);</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Fs = 200e3;</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Fc = [1 10 20]&#39;*1e3;</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>Ns = 0.1*Fs;</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>t = (0:Ns-1)/Fs;</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>x = [1 1/10 10]<em>sin(2</em>pi<em>Fc</em>t)+[1/200 1/2000 1/20]*randn(3,Ns);</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>x = x+chirp(t,20e3,t(end),30e3);</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>[pxx,f] = pwelch(x,[],[],[],Fs);</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>pmax = pwelch(x,[],[],[],Fs,&#39;maxhold&#39;);</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>pmin = pwelch(x,[],[],[],Fs,&#39;minhold&#39;);</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>plot(f/1000,pow2db(pxx))</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>hold on</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>plot(f/1000,pow2db([pmax pmin]),&#39;:&#39;)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>hold off</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>xlabel(&#39;Frequency (kHz)&#39;)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>ylabel(&#39;PSD (dB/Hz)&#39;)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>legend(&#39;pwelch&#39;,&#39;maxhold&#39;,&#39;minhold&#39;)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>grid</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>[pxx,f] = pwelch(x,[],[],[],Fs,&#39;centered&#39;,&#39;power&#39;);</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>pmax = pwelch(x,[],[],[],Fs,&#39;maxhold&#39;,&#39;centered&#39;,&#39;power&#39;);</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>pmin = pwelch(x,[],[],[],Fs,&#39;minhold&#39;,&#39;centered&#39;,&#39;power&#39;);</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>plot(f/1000,pow2db(pxx))</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>hold on</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>plot(f/1000,pow2db([pmax pmin]),&#39;:&#39;)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>hold off</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>xlabel(&#39;Frequency (kHz)&#39;)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>ylabel(&#39;Power (dB)&#39;)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>legend(&#39;pwelch&#39;,&#39;maxhold&#39;,&#39;minhold&#39;)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>title(&#39;Centered Power Spectrum Estimates&#39;)</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>grid</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td><a href="https://drive.mathworks.com/files/New%20Folder">https://drive.mathworks.com/files/New%20Folder</a></td>
+</tr>
+</tbody>
+</table>

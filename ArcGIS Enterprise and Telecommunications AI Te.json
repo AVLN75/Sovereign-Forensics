@@ -1,0 +1,57 @@
+﻿{
+    "title":  "ArcGIS Enterprise and Telecommunications AI Technology Data",
+    "type":  "ARTIFACT_TYPE_TABLE",
+    "sources":  [
+                    {
+                        "sourceId":  {
+                                         "id":  "69d12ea2-c1aa-467d-9f7c-4484bb969c33"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "77a299f4-435a-4238-b57e-03653595630c"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "ae0777c8-b77d-4ed6-8587-e14c418ca5c6"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "b94adcfc-94fb-4856-9ce1-ec1881beecd3"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "c6293b38-d75c-44fc-8af2-4e9d3411a3ab"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "d434bdad-13f7-4740-b6bc-e8ebbcbe98ae"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "2b0a44d9-c179-48ec-8de4-f888362b3fcf"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "6794648e-a650-4f18-9734-bd86ddf67930"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "7ae53fad-b223-4046-8504-5d6281e287b0"
+                                     }
+                    }
+                ],
+    "status":  "ARTIFACT_STATUS_READY",
+    "table":  {
+                  "generationOptions":  {
+                                            "languageCode":  "en"
+                                        }
+              }
+}

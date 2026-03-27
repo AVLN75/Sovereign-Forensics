@@ -1,0 +1,22 @@
+﻿{
+    "title":  "NetWorthView Modular Design for Compliance",
+    "type":  "ARTIFACT_TYPE_AUDIO_OVERVIEW",
+    "sources":  [
+                    {
+                        "sourceId":  {
+                                         "id":  "10413be8-f433-4a28-9245-d0136b1ad4d8"
+                                     }
+                    }
+                ],
+    "status":  "ARTIFACT_STATUS_READY",
+    "audioOverview":  {
+                          "generationOptions":  {
+                                                    "episodeFocus":  "This podcast should feature a conversation between a senior software architect and a lead mobile developer discussing the structure of the \u0027NetWorthView\u0027 class within an Android financial application. The discussion should focus on the technical implementation of the UI, specifically how the class extends \u0027NetWorthBaseView\u0027 and utilizes brand-specific string resources for bottom sheets. Key points to cover include the logic for visibility of the \u0027H5Button\u0027 link, the mapping of accessibility descriptions (ADA), and the use of de-compiled Java code to understand UI initialization. The tone should be technical, analytical, and professional, explaining how developers manage specific UI states like \u0027canShowLinkBtn\u0027 and resource mapping in a modular Android environment.",
+                                                    "episodeLength":  "EPISODE_LENGTH_SHORT",
+                                                    "targetAudience":  "TARGET_AUDIENCE_UNSPECIFIED",
+                                                    "languageCode":  "en",
+                                                    "showFormat":  "SHOW_FORMAT_UNSPECIFIED"
+                                                },
+                          "isInteractive":  true
+                      }
+}

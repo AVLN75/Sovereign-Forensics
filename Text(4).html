@@ -1,0 +1,158 @@
+<p>#include &#34;esp_camera.h&#34;</p>
+<p>#include</p>
+<p>#include</p>
+<p>/* Wifi Crdentials */</p>
+<p>String sta_ssid = &#34;&#34;; // set Wifi network you want to connect to</p>
+<p>String sta_password = &#34;&#34;; // set password for Wifi network</p>
+<p>/* define CAMERA_MODEL_AI_THINKER */</p>
+<p>#define PWDN_GPIO_NUM 32</p>
+<p>#define RESET_GPIO_NUM -1</p>
+<p>#define XCLK_GPIO_NUM 0</p>
+<p>#define SIOD_GPIO_NUM 26</p>
+<p>#define SIOC_GPIO_NUM 27</p>
+<p>#define Y9_GPIO_NUM 35</p>
+<p>#define Y8_GPIO_NUM 34</p>
+<p>#define Y7_GPIO_NUM 39</p>
+<p>#define Y6_GPIO_NUM 36</p>
+<p>#define Y5_GPIO_NUM 21</p>
+<p>#define Y4_GPIO_NUM 19</p>
+<p>#define Y3_GPIO_NUM 18</p>
+<p>#define Y2_GPIO_NUM 5</p>
+<p>#define VSYNC_GPIO_NUM 25</p>
+<p>#define HREF_GPIO_NUM 23</p>
+<p>#define PCLK_GPIO_NUM 22</p>
+<p>/* Defining motor and servo pins */</p>
+<p>extern int DRV_A = 12;</p>
+<p>extern int DRV_B = 13;</p>
+<p>extern int DIR_A = 14;</p>
+<p>extern int DIR_B = 15;</p>
+<p>extern int ledVal = 20; // setting bright of flash LED 0-255</p>
+<p>extern int ledPin = 4; // set digital pin GPIO4 as LED pin (use biult-in LED)</p>
+<p>extern int servoPin = 2; // set digital pin GPIO2 as servo pin (use SG90)</p>
+<p>unsigned long previousMillis = 0;</p>
+<p>void startCameraServer();</p>
+<p>void initServo() {</p>
+<p>ledcSetup(8, 50, 16); /*50 hz PWM, 16-bit resolution and range from 3250 to 6500 */</p>
+<p>ledcAttachPin(servoPin, 8);</p>
+<p>}</p>
+<p>void initLed() {</p>
+<p>ledcSetup(7, 5000, 8); /* 5000 hz PWM, 8-bit resolution and range from 0 to 255 */</p>
+<p>ledcAttachPin(ledPin, 7);</p>
+<p>}</p>
+<p>void setup() {</p>
+<p>Serial.begin(115200); // set up seriamonitor at 115200 bps</p>
+<p>Serial.setDebugOutput(true);</p>
+<p>Serial.println();</p>
+<p>Serial.println(&#34;<em>ESP32 Camera Remote Control - L293D Bluino Shield</em>&#34;);</p>
+<p>Serial.println(&#34;--------------------------------------------------------&#34;);</p>
+<p>// Set all the motor control pin to Output</p>
+<p>pinMode(DRV_A, OUTPUT);</p>
+<p>pinMode(DRV_B, OUTPUT);</p>
+<p>pinMode(DIR_A, OUTPUT);</p>
+<p>pinMode(DIR_B, OUTPUT);</p>
+<p>pinMode(ledPin, OUTPUT); // set the LED pin as an Output</p>
+<p>pinMode(servoPin, OUTPUT); // set the servo pin as an Output</p>
+<p>// Initial state - turn off motors, LED &amp; buzzer</p>
+<p>digitalWrite(DRV_A, LOW);</p>
+<p>digitalWrite(DRV_B, LOW);</p>
+<p>digitalWrite(DIR_A, LOW);</p>
+<p>digitalWrite(DIR_B, LOW);</p>
+<p>digitalWrite(ledPin, LOW);</p>
+<p>digitalWrite(servoPin, LOW);</p>
+<p>/* Initializing Servo and LED */</p>
+<p>initServo();</p>
+<p>initLed();</p>
+<p>camera_config_t config;</p>
+<p>config.ledc_channel = LEDC_CHANNEL_0;</p>
+<p>config.ledc_timer = LEDC_TIMER_0;</p>
+<p>config.pin_d0 = Y2_GPIO_NUM;</p>
+<p>config.pin_d1 = Y3_GPIO_NUM;</p>
+<p>config.pin_d2 = Y4_GPIO_NUM;</p>
+<p>config.pin_d3 = Y5_GPIO_NUM;</p>
+<p>config.pin_d4 = Y6_GPIO_NUM;</p>
+<p>config.pin_d5 = Y7_GPIO_NUM;</p>
+<p>config.pin_d6 = Y8_GPIO_NUM;</p>
+<p>config.pin_d7 = Y9_GPIO_NUM;</p>
+<p>config.pin_xclk = XCLK_GPIO_NUM;</p>
+<p>config.pin_pclk = PCLK_GPIO_NUM;</p>
+<p>config.pin_vsync = VSYNC_GPIO_NUM;</p>
+<p>config.pin_href = HREF_GPIO_NUM;</p>
+<p>config.pin_sscb_sda = SIOD_GPIO_NUM;</p>
+<p>config.pin_sscb_scl = SIOC_GPIO_NUM;</p>
+<p>config.pin_pwdn = PWDN_GPIO_NUM;</p>
+<p>config.pin_reset = RESET_GPIO_NUM;</p>
+<p>config.xclk_freq_hz = 20000000;</p>
+<p>config.pixel_format = PIXFORMAT_JPEG;</p>
+<p>//init with high specs to pre-allocate larger buffers</p>
+<p>if(psramFound()){</p>
+<p>config.frame_size = FRAMESIZE_UXGA;</p>
+<p>config.jpeg_quality = 10;</p>
+<p>config.fb_count = 2;</p>
+<p>} else {</p>
+<p>config.frame_size = FRAMESIZE_SVGA;</p>
+<p>config.jpeg_quality = 12;</p>
+<p>config.fb_count = 1;</p>
+<p>}</p>
+<p>// camera init</p>
+<p>esp_err_t err = esp_camera_init(&amp;config);</p>
+<p>if (err != ESP_OK) {</p>
+<p>Serial.printf(&#34;Camera init failed with error 0x%x&#34;, err);</p>
+<p>return;</p>
+<p>}</p>
+<p>//drop down frame size for higher initial frame rate</p>
+<p>sensor_t * s = esp_camera_sensor_get();</p>
+<p>s-&gt;set_framesize(s, FRAMESIZE_CIF);</p>
+<p>// Set NodeMCU Wifi hostname based on chip mac address</p>
+<p>char chip_id[15];</p>
+<p>snprintf(chip_id, 15, &#34;%04X&#34;, (uint16_t)(ESP.getEfuseMac()&gt;&gt;32));</p>
+<p>String hostname = &#34;esp32cam-&#34; + String(chip_id);</p>
+<p>Serial.println();</p>
+<p>Serial.println(&#34;Hostname: &#34;+hostname);</p>
+<p>// first, set NodeMCU as STA mode to connect with a Wifi network</p>
+<p>WiFi.mode(WIFI_STA);</p>
+<p>WiFi.begin(sta_ssid.c_str(), sta_password.c_str());</p>
+<p>Serial.println(&#34;&#34;);</p>
+<p>Serial.print(&#34;Connecting to: &#34;);</p>
+<p>Serial.println(sta_ssid);</p>
+<p>Serial.print(&#34;Password: &#34;);</p>
+<p>Serial.println(sta_password);</p>
+<p>// try to connect with Wifi network about 10 seconds</p>
+<p>unsigned long currentMillis = millis();</p>
+<p>previousMillis = currentMillis;</p>
+<p>while (WiFi.status() != WL_CONNECTED &amp;&amp; currentMillis - previousMillis &lt;= 10000) {</p>
+<p>delay(500);</p>
+<p>Serial.print(&#34;.&#34;);</p>
+<p>currentMillis = millis();</p>
+<p>}</p>
+<p>// if failed to connect with Wifi network set NodeMCU as AP mode</p>
+<p>IPAddress myIP;</p>
+<p>if (WiFi.status() == WL_CONNECTED) {</p>
+<p>Serial.println(&#34;&#34;);</p>
+<p>Serial.println(&#34;<em>WiFi-STA-Mode</em>&#34;);</p>
+<p>Serial.print(&#34;IP: &#34;);</p>
+<p>myIP=WiFi.localIP();</p>
+<p>Serial.println(myIP);</p>
+<p>delay(2000);</p>
+<p>} else {</p>
+<p>WiFi.mode(WIFI_AP);</p>
+<p>WiFi.softAP(hostname.c_str());</p>
+<p>myIP = WiFi.softAPIP();</p>
+<p>Serial.println(&#34;&#34;);</p>
+<p>Serial.println(&#34;WiFi failed connected to &#34; + sta_ssid);</p>
+<p>Serial.println(&#34;&#34;);</p>
+<p>Serial.println(&#34;<em>WiFi-AP-Mode</em>&#34;);</p>
+<p>Serial.print(&#34;AP IP address: &#34;);</p>
+<p>Serial.println(myIP);</p>
+<p>delay(2000);</p>
+<p>}</p>
+<p>// Start camera server to get realtime view</p>
+<p>startCameraServer();</p>
+<p>Serial.print(&#34;Camera Ready! Use &#39;http://&#34;);</p>
+<p>Serial.print(myIP);</p>
+<p>Serial.println(&#34;&#39; to connect &#34;);</p>
+<p>ArduinoOTA.begin(); // enable to receive update/upload firmware via Wifi OTA</p>
+<p>}</p>
+<p>void loop() {</p>
+<p>// put your main code here, to run repeatedly:</p>
+<p>ArduinoOTA.handle();</p>
+<p>}</p>

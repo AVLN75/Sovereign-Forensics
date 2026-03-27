@@ -1,0 +1,135 @@
+<p>/******************* WiFi Robot Object Follower Mode ********************/</p>
+<p>#include</p>
+<p>#include</p>
+<p>// connections for drive Motors</p>
+<p>int PWM_A = D1;</p>
+<p>int PWM_B = D2;</p>
+<p>int DIR_A = D3;</p>
+<p>int DIR_B = D4;</p>
+<p>// ultrasonic setup:</p>
+<p>const int trigPin = D6; // trig pin connected to Arduino&#39;s pin D6</p>
+<p>const int echoPin = D7; // echo pin connected to Arduino&#39;s pin D7</p>
+<p>const int wifiLedPin = D0; // set digital pin D0 as indication, the LED turn on if NodeMCU connected to WiFi as STA mode</p>
+<p>// defines variables</p>
+<p>int distanceCm = 0;</p>
+<p>int distanceKeep = 10;</p>
+<p>int SPEED = 800; // set 1023 to max speed motor</p>
+<p>unsigned long previousMillis = 0;</p>
+<p>String sta_ssid = &#34;&#34;; // set Wifi networks you want to connect to</p>
+<p>String sta_password = &#34;&#34;; // set password for Wifi networks</p>
+<p>void setup() {</p>
+<p>Serial.begin(115200); // set up Serial library at 115200 bps</p>
+<p>Serial.println();</p>
+<p>Serial.println(&#34;<em>WiFi Robot Object Follower Mode</em>&#34;);</p>
+<p>Serial.println(&#34;--------------------------------------&#34;);</p>
+<p>pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output</p>
+<p>pinMode(echoPin, INPUT); // Sets the echoPin as an Input</p>
+<p>pinMode(wifiLedPin, OUTPUT); // sets the Wifi LED pin as an Output</p>
+<p>digitalWrite(wifiLedPin, HIGH);</p>
+<p>// Set all the motor control pins to outputs</p>
+<p>pinMode(PWM_A, OUTPUT);</p>
+<p>pinMode(PWM_B, OUTPUT);</p>
+<p>pinMode(DIR_A, OUTPUT);</p>
+<p>pinMode(DIR_B, OUTPUT);</p>
+<p>// set NodeMCU Wifi hostname based on chip mac address</p>
+<p>String chip_id = String(ESP.getChipId(), HEX);</p>
+<p>int i = chip_id.length()-4;</p>
+<p>chip_id = chip_id.substring(i);</p>
+<p>chip_id = &#34;wificar-&#34; + chip_id;</p>
+<p>String hostname(chip_id);</p>
+<p>Serial.println();</p>
+<p>Serial.println(&#34;Hostname: &#34;+hostname);</p>
+<p>// first, set NodeMCU as STA mode to connect with a Wifi network</p>
+<p>WiFi.mode(WIFI_STA);</p>
+<p>WiFi.begin(sta_ssid.c_str(), sta_password.c_str());</p>
+<p>Serial.println(&#34;&#34;);</p>
+<p>Serial.print(&#34;Connecting to: &#34;);</p>
+<p>Serial.println(sta_ssid);</p>
+<p>Serial.print(&#34;Password: &#34;);</p>
+<p>Serial.println(sta_password);</p>
+<p>// try to connect with Wifi network about 10 seconds</p>
+<p>unsigned long currentMillis = millis();</p>
+<p>previousMillis = currentMillis;</p>
+<p>while (WiFi.status() != WL_CONNECTED &amp;&amp; currentMillis - previousMillis &lt;= 10000) {</p>
+<p>delay(500);</p>
+<p>Serial.print(&#34;.&#34;);</p>
+<p>currentMillis = millis();</p>
+<p>}</p>
+<p>// if failed to connect with Wifi network set NodeMCU as AP mode</p>
+<p>if (WiFi.status() == WL_CONNECTED) {</p>
+<p>Serial.println(&#34;&#34;);</p>
+<p>Serial.println(&#34;<em>WiFi-STA-Mode</em>&#34;);</p>
+<p>Serial.print(&#34;IP: &#34;);</p>
+<p>Serial.println(WiFi.localIP());</p>
+<p>digitalWrite(wifiLedPin, LOW); // Wifi LED on when connected to Wifi as STA mode</p>
+<p>delay(3000);</p>
+<p>} else {</p>
+<p>WiFi.mode(WIFI_AP);</p>
+<p>WiFi.softAP(hostname.c_str());</p>
+<p>IPAddress myIP = WiFi.softAPIP();</p>
+<p>Serial.println(&#34;&#34;);</p>
+<p>Serial.println(&#34;WiFi failed connected to &#34; + sta_ssid);</p>
+<p>Serial.println(&#34;&#34;);</p>
+<p>Serial.println(&#34;<em>WiFi-AP-Mode</em>&#34;);</p>
+<p>Serial.print(&#34;AP IP address: &#34;);</p>
+<p>Serial.println(myIP);</p>
+<p>digitalWrite(wifiLedPin, HIGH); // Wifi LED off when status as AP mode</p>
+<p>delay(3000);</p>
+<p>}</p>
+<p>ArduinoOTA.begin(); // enable to receive update/uploade firmware via Wifi OTA</p>
+<p>// set the speed to start, from 0 (off) to 1023 (max speed)</p>
+<p>analogWrite(PWM_A, SPEED);</p>
+<p>analogWrite(PWM_B, SPEED);</p>
+<p>// move forward - Initial state</p>
+<p>digitalWrite(DIR_A, HIGH);</p>
+<p>digitalWrite(DIR_B, HIGH);</p>
+<p>}</p>
+<p>// main program loop</p>
+<p>void loop() {</p>
+<p>ArduinoOTA.handle(); // listen for update OTA request from clients</p>
+<p>distanceCm = getDistance(); // variable to store the distance measured by the sensor</p>
+<p>Serial.println(distanceCm); // print the distance that was measured</p>
+<p>// if the distance object is too close then move backward</p>
+<p>if(distanceCm &lt; distanceKeep &amp;&amp; distanceCm &gt;= 0){</p>
+<p>// move backward</p>
+<p>analogWrite(PWM_A, SPEED);</p>
+<p>analogWrite(PWM_B, SPEED);</p>
+<p>digitalWrite(DIR_A, LOW);</p>
+<p>digitalWrite(DIR_B, LOW);</p>
+<p>}</p>
+<p>// if the distance object is too far then move forward</p>
+<p>if(distanceCm &gt; (distanceKeep+3) &amp;&amp; distanceCm &lt; (distanceKeep+20)){</p>
+<p>// move forward</p>
+<p>analogWrite(PWM_A, SPEED);</p>
+<p>analogWrite(PWM_B, SPEED);</p>
+<p>digitalWrite(DIR_A, HIGH);</p>
+<p>digitalWrite(DIR_B, HIGH);</p>
+<p>}</p>
+<p>// if no object is detected continues turn right to searching</p>
+<p>if(distanceCm &gt; (distanceKeep+20)){</p>
+<p>// turn right</p>
+<p>analogWrite(PWM_A, SPEED);</p>
+<p>analogWrite(PWM_B, SPEED);</p>
+<p>digitalWrite(DIR_A, LOW);</p>
+<p>digitalWrite(DIR_B, HIGH);</p>
+<p>}</p>
+<p>// if the distance object is fitted then keep stop</p>
+<p>if(distanceCm &gt;= distanceKeep &amp;&amp; distanceCm &lt;= (distanceKeep+3)){</p>
+<p>// stop motor</p>
+<p>analogWrite(PWM_A, 0);</p>
+<p>analogWrite(PWM_B, 0);</p>
+<p>}</p>
+<p>}</p>
+<p>// returns the distance measured by the HC-SR04 distance sensor</p>
+<p>int getDistance() {</p>
+<p>int echoTime; //variable to store the time it takes for a ping to bounce off an object</p>
+<p>int calcualtedDistance; //variable to store the distance calculated from the echo time</p>
+<p>//send out an ultrasonic pulse that&#39;s 10ms long</p>
+<p>digitalWrite(trigPin, HIGH);</p>
+<p>delayMicroseconds(10);</p>
+<p>digitalWrite(trigPin, LOW);</p>
+<p>echoTime = pulseIn(echoPin, HIGH); //use the pulsein command to see how long it takes for the</p>
+<p>//pulse to bounce back to the sensor</p>
+<p>calcualtedDistance = echoTime / 58.26; //calculate the distance of the object that reflected the pulse (half the bounce time multiplied by the speed of sound)</p>
+<p>return calcualtedDistance; //send back the distance that was calculated</p>
+<p>}</p>

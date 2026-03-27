@@ -1,0 +1,259 @@
+<p>TestScripts_SmartEditor - SmartEditor-Setting pages
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| TEST CASE SCENARIOS |  | p | pass |  |  | f | fail |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| MAP SERVICES |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| TODO: Need to also add test cases for &#39;Allow Delete&#39; option where a layer does not provide delete capability. | Feature Layer | Chrome | Firefox | Safari | IE | Edge | iPad | iPhone | Android | Win Phone | iPad(WAB) | iPhone(WAB) | Android (WAB) | Win Phone (WAB) |  | MapServer Layer | C | FF | S | IE |  | Tile Layer | C | FF | S | IE |  | Feature Collection | C | FF | S | IE |  | Notes |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| ACTIONS - SMART EDITOR SETTINGS |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Make sure settings dialog shows up |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| There should be the following checkbox options: Display Prompt (on Save / on Delete), Remove Feature from Selection on Save, and a table of layer setting. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Ensurce that the table of settings for layers has the following columns: Editable, Layer, Update Only, Allow Delete, Disable Geometry Editing, and Fields |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| For columns with checkbox, check/uncheck the checkbox in the title row should automatically check/uncheck the checkboxes for all layers. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| With the checkbox on the title row checked, uncheck the checkbox for one of the layers should automatically uncheck the checkbox on the title row. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Check then uncheck the editable checkbox on the title row to disable editing on all layers, click on the OK button to dismiss the configuration dialog.  The configuration dialog remains open. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Hover the mouse over the Fields column on a layer row, an edit icon should appear. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Click on the edit icon (under the Fields column) of a layer row with editable checkbox unchecked.  Nothing happens. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Now check the editable checkbox for the same layer, click on the editable icon, the Configure Layer Fields page should appear. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| ACTION - LAYER FIELDS SETTINGS |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Make sure settings for layer fields shows up. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| The following columns should appear in the table: Editable, Preset, Name, Alias, and Actions |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Hover the mouse over the Actions column on a field row, three icons for up, down and edit should appear. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Click on the down icon under Actions column for a field row that is not the last row, the row should move down. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Click on the up icon under Actions column for the same row, the row should move up. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Uncheck the editable checkbox for a field row if it&#39;s currently checked, then click on the edit icon under Actions column, nothing happens. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Now check the editable checkbox for the same field row, then click on the edit icon under Actions column, the smart actions page for that field should appear. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| ACTION - SMART ACTIONS SETTINGS |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Make sure settings for smart actions shows up. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| The following columns should appear in the table: Rule, Expression, and Actions. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| </p>
+<p>TestScripts_SmartEditor - UI at-a-glance
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+|  | TEST CASE SCENARIOS |  | p | pass |  |  |  | f | fail |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  | WEB BROWSER/SMART DEVICE |  |  |  |  |  |  |  |  |  |  |  |  |  | MAP SERVICE |  |  |  |  |
+|  |  |  | Chrome | Firefox | Safari | IE v.11 | Edge | iPad | iPhone | Android | Win Phone | iPad(WAB) | iPhone(WAB) | Android (WAB) | Win Phone (WAB) |  | Feature Layer | MapServer Layer | Tile Layer | Feature Collection | NOTES |
+| SETTINGS for WIDGET&#39;S MAIN COMPONENTS |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  | Prepare test layers with fields of type text, number, datetime, coded value domain, range domain. Also test layers with some required fields will be needed. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Create an app with a few layers. In the Smart Editor widget settings, set these layers to be editable and uncheck all other options like &#39;Update Only&#39;, &#39;Allow Delete&#39;, and &#39;Disable Geometry Editing&#39;. |  | p | P |  | P |  | N/A |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 2 | For each layer, click on the edit fields icon.  Check the Preset checkboxes for some of the fields of different types. Make notes of the Alias for these fields. Click OK to save and dismiss the field setting page. |  | p | P |  | P |  | N/A |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 3 | Uncheck other checkboxes like Display Prompt on Save and on Delete, and Remove Feature from Selection on Save.  Click OK to save and dismiss the widget setting page. |  | p | P |  | P |  | N/A |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| A. Template picker |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Click on a feature and confirm that a popup windows appears.  Repeat this step on a feature from an non-editable layer to make sure a popup window displays as well. Close the popup. |  | p | P |  | P |  | P |  |  |  | P | P | P |  |  |  |  |  |  |  |
+| 2 | Click on Smart Editor widget to open it. Ensure that templates for all the layers are displayed in the top section of the widget. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 3 | Scroll down to the bottom if needed, a preset value table leading by a &#39;Use Preset Values (New feature only)&#39; checkbox appears with those fields that were set in the widget configuration. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 4 | Select a template in the template picker; the selected template is highlighted. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 5 | With the selected template highlighted, draw a feature on the map.  A new feature is drawn, highlighted and the content of the widget pane is replaced with an attribute list (called Attribute Inspector). |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 6 | Scroll down to the bottom if needed, click the Close button. The widget pane switches to display the template picker and the preset value table. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 7 | Select a template from a different layer and draw a feature on the map.  A different set of attributes for the newly drawn feature should appear in the attribute inspector.  Close the attribute inspector. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 8 | Close the widget then select an existing feature, a popup window appears. |  | f |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | The feature is highlighted instead. |
+| 9 | Resize the widget, the templates inside the template picker should be adjusted to fit in the template picker nicely. A verical scrollbar may appear. |  | p | p |  | p |  | f |  |  |  | p | f | f |  |  |  |  |  |  | Can&#39;t resize or move the the widget on WAB iPhone or Android.  Can&#39;t pan the map on iPad? |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| B. Preset values |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Resize the widget, the preset value table should be adjusted accordingly. |  | p | p |  | p |  | f |  |  |  | p | f | f |  |  |  |  |  |  |  |
+| 2 | Ensure that all of the fields with preset turned on appear in the preset value table. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 3 | Identify number fields, enter some text in their associated input controls. They should be highlighted in red. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 4 | Identify fields with coded value domain, the coded values should appear once the dropdown arrow on the control is clicked. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 5 | Identify a field with range domain, an input control with up/down arrows should be in place and only values between the range are acceptable. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | Need to find test layers with range domain. |
+| 6 | Identify a datetime field, date and time controls should be available to pick the date and time. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 7 | Provide values for some or all of the preset value fields. Check the &#39;Use Preset Value&#39; checkbox.  Select a template for the layer containings fields with preset values and draw a feature on the map.  Ensure that the attribute inspector is populated with the values provided in the preset value table correctly. Click the Close button to dismiss the attribute inspector. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 8 | Make notes of what currently displays in the widget (the &#39;Use Preset Value&#39; checkbox, the values of the preset table). Minimize the widget by clicking on the close icon on the top right of the widget. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  | smart device work with both close and mininize |
+| 9 | Open the widget again. The widget opens with the same content/state as before it&#39;s closed. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 10 | Keep all the preset values from previous step intact. Uncheck the &#39;Use Preset Values&#39; checkbox, select the same template in previous step and draw a new feature.  The attribute inspector should appear. Ensure that none of the preset values is populated in the attribute inspector of the newly drawn feature. (Default values from the layer template will still present, if any). |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 11 | Click the Close button on the widget. The template picker reappears and the selected template is no longer selected. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 12 | Make some changes to the preset values, check the &#39;Use Preset Value&#39; checkbox, pick the same template then draw a new feature on the map. Inspect and make sure that the new preset values are populated in the attribute inspector correctly. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 13 | Confirm that step 12 works for text fields. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 14 | Confirm that step 12 works for number fields. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 15 | Confirm that step 12 works for datetime fields. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 16 | Confirm that step 12 works for field with coded value domain. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 17 | Confirm that step 12 works for field with range domains. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | need to find test layers with range domain |
+| 18 | *** Need test cases for fields displayed in order *** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 19 | *** Need test case for fields with same name appear once *** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| C. Attribute Inspector |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Continue with the previous test. Browse to the top and verify that a layer name suffixed with &#39; - Editor Cache&#39; (indicating that it&#39;s a local layer) displays above the attribute list. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 2 | Scroll down and verify that the Close and Save buttons are at the bottom of the widget.  The Close button is always enabled. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 3 | Verify that there is no Delete button on the widget. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 4 | Verify that a &#39;Edit Geometry&#39; checkbox option appears above the Close and Save buttons. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 5 | For features with required field(s), labels for these fields are suffixed with a red asterisk. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 6 | If all of the required fields have a value, the Save button will be enabled. If any of the required fields does not have a value, the Save button is disabled. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 7 | Make sure that one or more of the required fields has no value. The Save button becomes disabled. Those controls associated with required fields with no value should have a red border with a red exclamation mark. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 8 | Fill in values for those required fields and the Save button becomes enabled again. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 9 | Leave the attribute inspector as is. Click on another feature on the map.  A popup containing information about that feature appears. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 10 | Click the Close button on the widget.  The newly drawn feature and the popup disappear, and the attribute inspector is replaced with the template picker. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 11 | Click on an existing feature on the map.  The attribute inspector reappears in the widget. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 12 | The Save button at the bottom of the widget is disabled. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 13 | Make changes to an attribute, the Save button becomes enabled again. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 14 | Click the Close button. The template picker appears in the widget. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 15 | Identify an area with many features close together (zoom out if needed). Click on one of those features.  The attribute inspector appears with a navigation toolbar on the top right corner of the widget. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 16 | Click the buttons on the navigation toolbar to browse through the selected features. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 17 | Click on the highlighted feature to display a popup window.  Verify that its attributes are exactly what displayed in the attribute inspector. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 18 | Verify that the feature of which attributes are displayed in the attribute inspector has a different symbol then the rest of the selected features. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 19 | Close the popup window. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| D. Other features |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Make notes of what currently display in the widget. Minimize the widget by clicking on the close icon on the top right of the widget.  The selected features remain selected. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  | Works on both minimize and close buttons for smart devices |
+| 2 | Open the widget again. The widget opens with the same content/state as before it&#39;s closed. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 3 | Click the Close button on the widget. All previously selected features are unselected and the template picker appears. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+| 4 | Close the widget. Select an existing feature on the map.  A popup window appears. |  | f |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | The feature is highlighted instead. *** Depending on how far the test goes, sometimes it works, but eventually you will encounter this bug; when that happens, you can&#39;t get back to the state before opening the widget for the first time, that is, a popup window will appear upon selecting an existing feature.  *** |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| CUSTOM SETTINGS: |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1. Editable option (and preset values) |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  | In the wiget settings: make sure all layers but one is set to be editable. Click OK to close the widget settings. |  | p | p |  | p |  | p |  |  |  | P | p | p |  |  |  |  |  |  |  |
+|  | Open Smart Editor widget. Ensure that templates for the layer that is not editable no longer display in the template picker. |  | p | p |  | p |  | p |  |  |  | P | p | p |  |  |  |  |  |  |  |
+|  | Verify that fields with preset value for this layer also no longer display in the preset value table. |  | p | p |  | p |  | p |  |  |  | P | p | p |  |  |  |  |  |  |  |
+|  | Select a feature belongs to the layer that is not editable.  Nothing happens. The attribute inspector will not display in the widget. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | A popup window will not appear either. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Select a feature belongs to a different layer that is editable.  The attribute inspector displays in the widget. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | With the attribute inspector opens, select a feature belongs to the layer that is not editable.  A popup window displays. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 2. Update Only option (and preset values) |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  | In the widget settings: make sure all layers are editable and each layer has some fields with preset option turned on. Check the &#39;Update Only&#39; for one of the layers. Click OK to close the widget settings. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Open Smart Editor widget. Ensure that templates for the layer that is &#39;Update Only&#39; no longer display in the template picker. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Verify that none of the preset fields associated with the layer that is &#39;Update Only&#39; appears in the preset value table. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Select a feature belongs to the layer that is &#39;Update Only&#39;. The attribute inspector appears on the widget. |  | p | p |  | p |  | f |  |  |  | p | p | p |  |  |  |  |  |  | popup appears instead |
+|  | Verify that the attributes can be modified and then click the Close button (do not save). |  | p | p |  | p |  | f |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  | In the widget settings: Make sure all layers are editable and all fields with preset option turned off. Check &#39;Update Only&#39; for one of the layers and turn on the preset option for all fields for this layer. Click OK to close the widget settings. |  | p | p |  | p |  |  |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Open Smart Editor widget. Verify that the &#39;Use preset values…&#39; option and the preset value table do not appear on the widget. |  | p | p |  | p |  |  |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  | In the widget settings: Make sure all layers are editable and &#39;Update Only&#39;. Click OK to close the widget settings. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Open Smart Editor widget. The template picker and preset value table no longer appear. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Instead the text &#39;Please select a feature to update, creation of new features has been disabled.&#39; is displayed. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Select an existing feature.  The attribute inspector appears on the widget. Click the Close button. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 3. Allow Delete option. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  | In the widget settings: make sure all layers are editable and support feature creation (by unchecking the &#39;Update Only&#39; checkbox on the header row). Check the &#39;Allow Delete&#39; checkbox for one of the layers. Click OK to close the widget settings. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Open Smart Editor widget. Select a temple belongs to the layer with &#39;Allow Delete&#39; option turned on and then draw a feature on the map.  The attribute inspector appears in the widget. Browse to the bottom and verify that the Delete button appears next to the Save button. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Click the Close button.  Select an existing feature belongs to the layer with &#39;Allow Delete&#39; option turned on to bring up the attribute inspector. Verify that the delete button appears next to the Save button. |  | p | p |  | p |  | p |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Click the Close button on the widget. Select a feature in an area with many features close together. When the attribute inspector appears, navigate through the selected features and ensure that the delete button appears for features belong to the layer that has &#39;Allow Delete&#39; option turned on in the widget settings, and is hidden for features belong to other layers. |  | p | p |  | p |  |  |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 4. Disable Geometry Editing option: |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  | In the widget settings: make sure all layers are editable and support feature creation.  Check the &#39;Disable Geometry Editing&#39; checkbox option for a layer. Click OK to close the widget settings. |  | p | p |  | p |  |  |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Open Smart Editor widget. Select a template from the layer that has the &#39;Disable Geometry Editing&#39; checked in the previous step. Draw a new feature.  The attribute inspector appears in the widget. Browser to the bottom and verify that no &#39;Edit Geometry&#39; checkbox is found above the Close button. |  | p | p |  | p |  |  |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Click the Close button on the widget.  Select an existing feature of the layer that has the &#39;Disable Geometry Editing&#39; option checked in the widget settings.  When the atribute inspector appears, verify that no &#39;Edit Geometry&#39; checkbox appears on the widget. |  | p | p |  | p |  |  |  |  |  | p | p | p |  |  |  |  |  |  |  |
+|  | Click the Close button on the widget. Select a feature in an area with many features close together. When the attribute inspector appears, navigate through the selected features and ensure that the Edit Geometry checkbox remains hidden for features belong to the layer that has &#39;Disable Geometry Editing&#39; option checked in the widget settings, and appears for features belong to other layers. |  | p | p |  | p |  |  |  |  |  | p | p | p |  |  |  |  |  |  |  |</p>
+<p>TestScripts_SmartEditor - Editing Workflows
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+|  | TEST CASE SCENARIOS |  | p | pass |  |  |  | f | fail |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  | WEB BROWSER/SMART DEVICE |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  | Chrome | Firefox | Safari | IE v.11 | Edge | iPad | iPhone | Android | Win Phone | iPad(WAB) | iPhone(WAB) | Android (WAB) | Win Phone (WAB) | NOTES |
+| A. ADDING NEW FEATURES |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| In widget settings, configure to use some preset values. Uncheck the &#39;Display Prompt on Delete&#39; checkbox. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Check the &#39;Display Prompt on Save&#39; checkbox. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Check the &#39;Remove Feature from Selection on Save&#39; checkbox. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Remove Feature from Selection on Save |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Open Smart Editor Widget. Provide some preset values and check the &#39;Use Preset Value…&#39; checkbox. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 2 | Pick a template and draw a new feature.  The attribute inspector appears. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 3 | If some of the required fields do not contain value, those fields will be highlighted in red and the Save button will be disabled. Otherwise, the Save button will be enabled. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 4 | Fill in the required fields with values if needed. The Save button should become enabled. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 5 | Click the Save button. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| a. &#34;Remove Feature from Selection on Save&#34; = YES |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 6a | After the save process is done. The newly drawn feature gets saved and has the same symbol as the rest. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 7a | The template picker reappears in the widget. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| b. &#34;Remove Fature from Selection on Save&#34; = NO |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  | Change the setting in the widget for this option. Click Ok to save the new settings and then repeat steps 1 - 5 |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 6b | The newly drawn feature gets saved and it should still be selected on the map. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 7b | The attribute inspector still displays in the widget but the Save button is disabled. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Display Prompt on Save |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Open Smart Editor Widget. Provide some preset values and check the &#39;Use Preset Value…&#39; checkbox. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 2 | Pick a template and draw a new feature. Attribute Inspector appears on the widget. Click the Close button. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| a. &#34;Display Prompt on Save&#34; = YES |  |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 3a | A &#39;Save feature&#39; dialog with message &#34;Would you like to save the current feature?&#34; appears. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 4a | If some of the required fields do not contain value, the Yes button on the dialog will be disabled. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 5a | Select &#39;Close&#39;. The dialog disappears and the attribute inspector remains intact. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 6a | Click the Close button again.  This time select &#39;No&#39; when prompted. The newly created feature gets deleted. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 7a | The template picker reappears in the widget. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 8a | Pick a template, draw a new feature and provide values for all required fields. Click the Close button. All three buttons on the dialog should be enabled. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 9a | Select &#39;Yes&#39; to save the feature. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 10a | A busy symbol appears while the feature is being saved. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 11a | Verify the feature is finally saved. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| b. &#34;Display Prompt on Save&#34; = NO |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  | Change the setting in the widget for this option. Click Ok to save the new settings and then repeat steps 1 -2. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 3b | The newly created feature gets deleted. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 4b | The template picker reappears in the widget. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| B: DELETING FEATURES |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| In widget settings: Check &#39;Allow Delete&#39; option for all available layers, if possible. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Check the &#34;Display Prompt on Delete&#34; option. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Display Prompt on Delete |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Open Smart Editor Widget. Select an existing feature belongs to layer that allows deleting operation. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 2 | Feature attributes display in the attribute inspector. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 3 | Click the Delete button at the bottom of the widget. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| a. &#34;Display Prompt on Delete&#34; = YES |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 4a | A &#39;Delete feature&#39; dialog appears with text &#34;Are you sure you want to delete the selected feature?&#34;. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 5a | Select &#39;Yes&#39;. The selected feature gets deleted. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 6a | The template picker reappears in the widget. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 7a | Repeat steps 1-3. This time select &#39;No&#39; when prompted.  The selected feature and the attribute inspector remain unchanged. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| b. &#34;Display Prompt on Delete&#34; = NO |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  | Change the setting in the widget for this option. Click Ok to save the new settings and then repeat steps 1 -3. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 4b | The selected feature gets deleted. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 5b | The template picker appears in the widget. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| C: UPDATING FEATURE ATTRIBUTES: |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| In widget settings: uncheck options for displaying prompts. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Check the &#34;Remove Feature from Selection on Save&#34; option. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Remove Feature from Selection on Save |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Open Smart Editor widget. Identify an area with a few features close together (zoom out if needed). Select an existing feature among them. The attribute inspector should appear with a navigation toolbar on top. Notice of the count of the features being selected. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 2 | Start debugger by hitting F12 to look at the network traffic. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 3 | Modify some existing attributes.  Take notes of these attributes. Click Save. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 4 | Inspect the network activities in the debugger (filtered by &#39;ApplyEdits&#39;). |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| a. &#34;Remove Feature from Selection on Save&#34; = YES |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 5a | Check the header of the request sent, the attributes object contains only the fields and values of the fields that were modified in step 3, plus OBJECTID. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 6a | Back to the web app.  The attribute inspector show values for a different feature. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 7a | The feature being edited in step 3 is no longer selected. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 8a | The navigation toolbar shows the feature count being reduced by one.  (If there is only one feature left being selected, the navigation toolbar no longer appears as in step 10b). |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 9a | If the navigation toolbar shows a count greater than 1, repeat step 3 until the navigation toolbar disappears.  There should be only one feature selected on the map. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 10a | Repeat step 3. No featuer on the map is selected and the template picker appears on the widget. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| b. &#34;Remove Feature from Selection on Save&#34; = NO |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 5b | Check the header of the request sent, the attributes object contains only the fields and values of the fields that were modified in step 3, plus OBJECTID. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 6b | Back to the web app. The attribute inspector contains those attribute values as before the Save button was pressed. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 7b | The feature being edited is still selected. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 8b | The navigation toolbar should show the same feature count as in step 1. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 9b | Click on the selected feature on the map. A popup window displays with the same attributes and values as seen in the attribute inspector. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 10b | Click the Close button to dismiss the attribute inspector. All selected features should no longer be selected on the map. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| D: UPDATING FEATURE GEOMETRY |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| In widget settings: make sure the &#39;Disable Geometry Editing&#39; option is unchecked for the layer(s) used in these tests. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Use point, line and polygon features for these tests. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Check the &#34;Remove Feature from Selection on Save&#34; option. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Uncheck other displaying prompts options. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Point features: |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Open Smart Editor widget. Select an existing point feature that belongs to the layer with &#39;Disable Geometry Editing&#39; option turned off in the widget setting. Verify that the Edit Geometry checkbox is unchecked. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 2 | Verify that geometry of the feature cannot be edited. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 3 | Check the &#39;Edit Geometry&#39; checkbox on the widget. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 4 | Verify that the feature can now be moved. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 5 | Click Save. Verify that the feature was moved to a new location. |  | P |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Line features: |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Open Smart Editor widget. Select an existing line feature that belongs to the layer with &#39;Disable Geometry Editing&#39; option turned off in the widget setting. Verify that the Edit Geometry checkbox is unchecked. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 2 | Verify that geometry of the feature cannot be edited. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 3 | Check the &#39;Edit Geometry&#39; checkbox on the widget. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 4 | Verify that the feature can now be moved. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 5 | Verify that the feature can now be rotated. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 6 | Verify that the feature can now be scaled. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 7 | Verify that vertices of the feature can now be added. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 8 | Verify that vertices of the feature can now be deleted. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 9 | Click Save and verify that the feature geometry has been modified. |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| Polygon features: |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 1 | Open Smart Editor widget. Select an existing polygon feature that belongs to the layer with &#39;Disable Geometry Editing&#39; option turned off in the widget setting. Verify that the Edit Geometry checkbox is unchecked. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 2 | Verify that geometry of the feature cannot be edited. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 3 | Check the &#39;Edit Geometry&#39; checkbox on the widget. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 4 | Verify that the feature can now be moved. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 5 | Verify that the feature can now be rotated. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 6 | Verify that the feature can now be scaled. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 7 | Verify that vertices of the feature can now be added. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 8 | Verify that vertices of the feature can now be deleted. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| 9 | Click Save and verify that the feature geometry has been modified. |  | p |  |  |  |  |  |  |  |  |  |  |  |  |  |</p>
+<p>TestScripts_SmartEditor - Smart Attributes</p>

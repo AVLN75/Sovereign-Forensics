@@ -1,0 +1,432 @@
+<p>/*</p>
+<ul>
+<li>
+<p>esp32_wifi_balancing_robot.ino</p>
+</li>
+<li></li>
+<li>
+<p>Created on: 23.02.2021</p>
+</li>
+<li>
+<p>Author: anonymous</p>
+</li>
+</ul>
+<p>*/</p>
+<p>#include</p>
+<p>#include</p>
+<p>#include</p>
+<p>#include</p>
+<p>#include</p>
+<p>#include</p>
+<p>#include &#34;Control.h&#34;</p>
+<p>#include &#34;MPU6050.h&#34;</p>
+<p>#include &#34;Motors.h&#34;</p>
+<p>#include &#34;defines.h&#34;</p>
+<p>#include &#34;globals.h&#34;</p>
+<p>#include</p>
+<p>#include &#34;esp_types.h&#34;</p>
+<p>#include &#34;soc/timer_group_struct.h&#34;</p>
+<p>#include &#34;driver/periph_ctrl.h&#34;</p>
+<p>#include &#34;driver/timer.h&#34;</p>
+<p>#include &#34;driver/ledc.h&#34;</p>
+<p>#include &#34;esp32-hal-ledc.h&#34;</p>
+<p>const char* PARAM_FADER1 = &#34;fader1&#34;;</p>
+<p>const char* PARAM_FADER2 = &#34;fader2&#34;;</p>
+<p>const char* PARAM_PUSH1 = &#34;push1&#34;;</p>
+<p>const char* PARAM_PUSH2 = &#34;push2&#34;;</p>
+<p>const char* PARAM_PUSH3 = &#34;push3&#34;;</p>
+<p>const char* PARAM_PUSH4 = &#34;push4&#34;;</p>
+<p>const char* PARAM_TOGGLE1 = &#34;toggle1&#34;;</p>
+<p>const char* PARAM_FADER3 = &#34;fader3&#34;;</p>
+<p>const char* PARAM_FADER4 = &#34;fader4&#34;;</p>
+<p>const char* PARAM_FADER5 = &#34;fader5&#34;;</p>
+<p>const char* PARAM_FADER6 = &#34;fader6&#34;;</p>
+<p>/* Wifi Crdentials */</p>
+<p>String sta_ssid = &#34;&#34;; // set Wifi network you want to connect to</p>
+<p>String sta_password = &#34;&#34;; // set password for Wifi network</p>
+<p>unsigned long previousMillis = 0;</p>
+<p>AsyncWebServer server(80);</p>
+<p>void initMPU6050() {</p>
+<p>MPU6050_setup();</p>
+<p>delay(500);</p>
+<p>MPU6050_calibrate();</p>
+<p>}</p>
+<p>void initTimers();</p>
+<p>void notFound(AsyncWebServerRequest *request) {</p>
+<p>request-&gt;send(404, &#34;text/plain&#34;, &#34;Not found&#34;);</p>
+<p>}</p>
+<p>void setup() {</p>
+<p>Serial.begin(115200); // set up seriamonitor at 115200 bps</p>
+<p>Serial.setDebugOutput(true);</p>
+<p>Serial.println();</p>
+<p>Serial.println(&#34;<em>ESP32 Wifi Balancing Robot</em>&#34;);</p>
+<p>Serial.println(&#34;--------------------------------------------------------&#34;);</p>
+<p>pinMode(PIN_ENABLE_MOTORS, OUTPUT);</p>
+<p>digitalWrite(PIN_ENABLE_MOTORS, HIGH);</p>
+<p>pinMode(PIN_MOTOR1_DIR, OUTPUT);</p>
+<p>pinMode(PIN_MOTOR1_STEP, OUTPUT);</p>
+<p>pinMode(PIN_MOTOR2_DIR, OUTPUT);</p>
+<p>pinMode(PIN_MOTOR2_STEP, OUTPUT);</p>
+<p>pinMode(PIN_SERVO, OUTPUT);</p>
+<p>pinMode(PIN_LED, OUTPUT);</p>
+<p>digitalWrite(PIN_LED, LOW);</p>
+<p>pinMode(PIN_WIFI_LED, OUTPUT);</p>
+<p>digitalWrite(PIN_WIFI_LED, LOW);</p>
+<p>pinMode(PIN_BUZZER, OUTPUT);</p>
+<p>digitalWrite(PIN_BUZZER, LOW);</p>
+<p>ledcSetup(6, 50, 16); // channel 6, 50 Hz, 16-bit width</p>
+<p>ledcAttachPin(PIN_SERVO, 6); // GPIO 22 assigned to channel 1</p>
+<p>delay(50);</p>
+<p>ledcWrite(6, SERVO_AUX_NEUTRO);</p>
+<p>Wire.begin();</p>
+<p>initMPU6050();</p>
+<p>// Set NodeMCU Wifi hostname based on chip mac address</p>
+<p>char chip_id[15];</p>
+<p>snprintf(chip_id, 15, &#34;%04X&#34;, (uint16_t)(ESP.getEfuseMac()&gt;&gt;32));</p>
+<p>String hostname = &#34;esp32brobot-&#34; + String(chip_id);</p>
+<p>Serial.println();</p>
+<p>Serial.println(&#34;Hostname: &#34;+hostname);</p>
+<p>// first, set NodeMCU as STA mode to connect with a Wifi network</p>
+<p>WiFi.mode(WIFI_STA);</p>
+<p>WiFi.begin(sta_ssid.c_str(), sta_password.c_str());</p>
+<p>Serial.println(&#34;&#34;);</p>
+<p>Serial.print(&#34;Connecting to: &#34;);</p>
+<p>Serial.println(sta_ssid);</p>
+<p>Serial.print(&#34;Password: &#34;);</p>
+<p>Serial.println(sta_password);</p>
+<p>// try to connect with Wifi network about 8 seconds</p>
+<p>unsigned long currentMillis = millis();</p>
+<p>previousMillis = currentMillis;</p>
+<p>while (WiFi.status() != WL_CONNECTED &amp;&amp; currentMillis - previousMillis &lt;= 8000) {</p>
+<p>delay(500);</p>
+<p>Serial.print(&#34;.&#34;);</p>
+<p>currentMillis = millis();</p>
+<p>}</p>
+<p>// if failed to connect with Wifi network set NodeMCU as AP mode</p>
+<p>IPAddress myIP;</p>
+<p>if (WiFi.status() == WL_CONNECTED) {</p>
+<p>Serial.println(&#34;&#34;);</p>
+<p>Serial.println(&#34;<em>WiFi-STA-Mode</em>&#34;);</p>
+<p>Serial.print(&#34;IP: &#34;);</p>
+<p>myIP=WiFi.localIP();</p>
+<p>Serial.println(myIP);</p>
+<p>digitalWrite(PIN_WIFI_LED, HIGH); // Wifi LED on when connected to Wifi as STA mode</p>
+<p>delay(2000);</p>
+<p>} else {</p>
+<p>WiFi.mode(WIFI_AP);</p>
+<p>WiFi.softAP(hostname.c_str());</p>
+<p>myIP = WiFi.softAPIP();</p>
+<p>Serial.println(&#34;&#34;);</p>
+<p>Serial.println(&#34;WiFi failed connected to &#34; + sta_ssid);</p>
+<p>Serial.println(&#34;&#34;);</p>
+<p>Serial.println(&#34;<em>WiFi-AP-Mode</em>&#34;);</p>
+<p>Serial.print(&#34;AP IP address: &#34;);</p>
+<p>Serial.println(myIP);</p>
+<p>digitalWrite(PIN_WIFI_LED, LOW); // Wifi LED off when status as AP mode</p>
+<p>delay(2000);</p>
+<p>}</p>
+<p>// Send a GET request to /?fader=</p>
+<p>server.on(&#34;/&#34;, HTTP_GET, [] (AsyncWebServerRequest *request) {</p>
+<p>String inputValue;</p>
+<p>String inputMessage;</p>
+<p>OSCnewMessage = 1;</p>
+<p>// Get value for Forward/Backward</p>
+<p>if (request-&gt;hasParam(PARAM_FADER1)) {</p>
+<p>OSCpage = 1;</p>
+<p>inputValue = request-&gt;getParam(PARAM_FADER1)-&gt;value();</p>
+<p>inputMessage = PARAM_FADER1;</p>
+<p>OSCfader[0] = inputValue.toFloat();</p>
+<p>}</p>
+<p>// Get value for Right/Left</p>
+<p>else if (request-&gt;hasParam(PARAM_FADER2)) {</p>
+<p>OSCpage = 1;</p>
+<p>inputValue = request-&gt;getParam(PARAM_FADER2)-&gt;value();</p>
+<p>inputMessage = PARAM_FADER2;</p>
+<p>OSCfader[1] = inputValue.toFloat();</p>
+<p>}</p>
+<p>// Get value for Servo0</p>
+<p>else if (request-&gt;hasParam(PARAM_PUSH1)) {</p>
+<p>OSCpage = 1;</p>
+<p>inputValue = request-&gt;getParam(PARAM_PUSH1)-&gt;value();</p>
+<p>inputMessage = PARAM_PUSH1;</p>
+<p>if(inputValue.equals(&#34;1&#34;)) OSCpush[0]=1;</p>
+<p>else OSCpush[0]=0;</p>
+<p>}</p>
+<p>// Get value for Setting</p>
+<p>else if (request-&gt;hasParam(PARAM_PUSH2)) {</p>
+<p>OSCpage = 2;</p>
+<p>inputValue = request-&gt;getParam(PARAM_PUSH2)-&gt;value();</p>
+<p>inputMessage = PARAM_PUSH2;</p>
+<p>if(inputValue.equals(&#34;1&#34;)) OSCpush[2]=1;</p>
+<p>else OSCpush[2]=0;</p>
+<p>}</p>
+<p>// Get value for Buzzer</p>
+<p>else if (request-&gt;hasParam(PARAM_PUSH3)) {</p>
+<p>inputValue = request-&gt;getParam(PARAM_PUSH3)-&gt;value();</p>
+<p>inputMessage = PARAM_PUSH3;</p>
+<p>if(inputValue.equals(&#34;1&#34;)) {</p>
+<p>digitalWrite(PIN_BUZZER, HIGH);</p>
+<p>delay(150);</p>
+<p>digitalWrite(PIN_BUZZER, LOW);</p>
+<p>delay(80);</p>
+<p>digitalWrite(PIN_BUZZER, HIGH);</p>
+<p>delay(150);</p>
+<p>digitalWrite(PIN_BUZZER, LOW);</p>
+<p>delay(80);</p>
+<p>}</p>
+<p>}</p>
+<p>// Get value for Led</p>
+<p>else if (request-&gt;hasParam(PARAM_PUSH4)) {</p>
+<p>inputValue = request-&gt;getParam(PARAM_PUSH4)-&gt;value();</p>
+<p>inputMessage = PARAM_PUSH4;</p>
+<p>if(inputValue.equals(&#34;1&#34;)) digitalWrite(PIN_LED, HIGH);</p>
+<p>else digitalWrite(PIN_LED, LOW);</p>
+<p>}</p>
+<p>// Get value for mode PRO</p>
+<p>else if (request-&gt;hasParam(PARAM_TOGGLE1)) {</p>
+<p>OSCpage = 1;</p>
+<p>inputValue = request-&gt;getParam(PARAM_TOGGLE1)-&gt;value();</p>
+<p>inputMessage = PARAM_TOGGLE1;</p>
+<p>if(inputValue.equals(&#34;1&#34;)) OSCtoggle[0]=1;</p>
+<p>else OSCtoggle[0]=0;</p>
+<p>}</p>
+<p>// Get value for P-Stability</p>
+<p>else if (request-&gt;hasParam(PARAM_FADER3)) {</p>
+<p>OSCpage = 2;</p>
+<p>inputValue = request-&gt;getParam(PARAM_FADER3)-&gt;value();</p>
+<p>inputMessage = PARAM_FADER3;</p>
+<p>OSCfader[0] = inputValue.toFloat();</p>
+<p>}</p>
+<p>// Get value for D-Stability</p>
+<p>else if (request-&gt;hasParam(PARAM_FADER4)) {</p>
+<p>OSCpage = 2;</p>
+<p>inputValue = request-&gt;getParam(PARAM_FADER4)-&gt;value();</p>
+<p>inputMessage = PARAM_FADER4;</p>
+<p>OSCfader[0] = inputValue.toFloat();</p>
+<p>}</p>
+<p>// Get value for P-Speed</p>
+<p>else if (request-&gt;hasParam(PARAM_FADER5)) {</p>
+<p>OSCpage = 2;</p>
+<p>inputValue = request-&gt;getParam(PARAM_FADER5)-&gt;value();</p>
+<p>inputMessage = PARAM_FADER5;</p>
+<p>OSCfader[0] = inputValue.toFloat();</p>
+<p>}</p>
+<p>// Get value for I-Speed</p>
+<p>else if (request-&gt;hasParam(PARAM_FADER6)) {</p>
+<p>OSCpage = 2;</p>
+<p>inputValue = request-&gt;getParam(PARAM_FADER6)-&gt;value();</p>
+<p>inputMessage = PARAM_FADER6;</p>
+<p>OSCfader[0] = inputValue.toFloat();</p>
+<p>}</p>
+<p>else {</p>
+<p>inputValue = &#34;No message sent&#34;;</p>
+<p>}</p>
+<p>Serial.println(inputMessage+&#39;=&#39;+inputValue);</p>
+<p>request-&gt;send(200, &#34;text/text&#34;, &#34;&#34;);</p>
+<p>});</p>
+<p>server.onNotFound (notFound); // when a client requests an unknown URI (i.e. something other than &#34;/&#34;), call function &#34;handleNotFound&#34;</p>
+<p>server.begin(); // actually start the server</p>
+<p>initTimers();</p>
+<p>// default neutral values</p>
+<p>OSCfader[0] = 0.5;</p>
+<p>OSCfader[1] = 0.5;</p>
+<p>OSCfader[2] = 0.5;</p>
+<p>OSCfader[3] = 0.5;</p>
+<p>digitalWrite(PIN_ENABLE_MOTORS, LOW);</p>
+<p>for (uint8_t k = 0; k &lt; 5; k++) {</p>
+<p>setMotorSpeedM1(5);</p>
+<p>setMotorSpeedM2(5);</p>
+<p>ledcWrite(6, SERVO_AUX_NEUTRO + 250);</p>
+<p>delay(200);</p>
+<p>setMotorSpeedM1(-5);</p>
+<p>setMotorSpeedM2(-5);</p>
+<p>ledcWrite(6, SERVO_AUX_NEUTRO - 250);</p>
+<p>delay(200);</p>
+<p>}</p>
+<p>ledcWrite(6, SERVO_AUX_NEUTRO);</p>
+<p>ArduinoOTA.begin(); // enable to receive update/upload firmware via Wifi OTA</p>
+<p>}</p>
+<p>void loop() {</p>
+<p>ArduinoOTA.handle();</p>
+<p>if (OSCnewMessage) {</p>
+<p>OSCnewMessage = 0;</p>
+<p>processOSCMsg();</p>
+<p>}</p>
+<p>timer_value = micros();</p>
+<p>if (MPU6050_newData()) {</p>
+<p>MPU6050_read_3axis();</p>
+<p>dt = (timer_value - timer_old) * 0.000001; // dt in seconds</p>
+<p>//Serial.println(timer_value - timer_old);</p>
+<p>timer_old = timer_value;</p>
+<p>angle_adjusted_Old = angle_adjusted;</p>
+<p>// Get new orientation angle from IMU (MPU6050)</p>
+<p>float MPU_sensor_angle = MPU6050_getAngle(dt);</p>
+<p>angle_adjusted = MPU_sensor_angle + angle_offset;</p>
+<p>if ((MPU_sensor_angle &gt; -15) &amp;&amp; (MPU_sensor_angle &lt; 15))</p>
+<p>angle_adjusted_filtered = angle_adjusted_filtered * 0.99 + MPU_sensor_angle * 0.01;</p>
+<p>// We calculate the estimated robot speed:</p>
+<p>// Estimated_Speed = angular_velocity_of_stepper_motors(combined) - angular_velocity_of_robot(angle measured by IMU)</p>
+<p>actual_robot_speed = (speed_M1 + speed_M2) / 2; // Positive: forward</p>
+<p>int16_t angular_velocity = (angle_adjusted - angle_adjusted_Old) * 25.0; // 25 is an empirical extracted factor to adjust for real units</p>
+<p>int16_t estimated_speed = -actual_robot_speed + angular_velocity;</p>
+<p>estimated_speed_filtered = estimated_speed_filtered * 0.9 + (float) estimated_speed * 0.1; // low pass filter on estimated speed</p>
+<p>if (positionControlMode) {</p>
+<p>// POSITION CONTROL. INPUT: Target steps for each motor. Output: motors speed</p>
+<p>motor1_control = positionPDControl(steps1, target_steps1, Kp_position, Kd_position, speed_M1);</p>
+<p>motor2_control = positionPDControl(steps2, target_steps2, Kp_position, Kd_position, speed_M2);</p>
+<p>// Convert from motor position control to throttle / steering commands</p>
+<p>throttle = (motor1_control + motor2_control) / 2;</p>
+<p>throttle = constrain(throttle, -190, 190);</p>
+<p>steering = motor2_control - motor1_control;</p>
+<p>steering = constrain(steering, -50, 50);</p>
+<p>}</p>
+<p>// ROBOT SPEED CONTROL: This is a PI controller.</p>
+<p>// input:user throttle(robot speed), variable: estimated robot speed, output: target robot angle to get the desired speed</p>
+<p>target_angle = speedPIControl(dt, estimated_speed_filtered, throttle, Kp_thr, Ki_thr);</p>
+<p>target_angle = constrain(target_angle, -max_target_angle, max_target_angle); // limited output</p>
+<p>// Stability control (100Hz loop): This is a PD controller.</p>
+<p>// input: robot target angle(from SPEED CONTROL), variable: robot angle, output: Motor speed</p>
+<p>// We integrate the output (sumatory), so the output is really the motor acceleration, not motor speed.</p>
+<p>control_output += stabilityPDControl(dt, angle_adjusted, target_angle, Kp, Kd);</p>
+<p>control_output = constrain(control_output, -MAX_CONTROL_OUTPUT, MAX_CONTROL_OUTPUT); // Limit max output from control</p>
+<p>// The steering part from the user is injected directly to the output</p>
+<p>motor1 = control_output + steering;</p>
+<p>motor2 = control_output - steering;</p>
+<p>// Limit max speed (control output)</p>
+<p>motor1 = constrain(motor1, -MAX_CONTROL_OUTPUT, MAX_CONTROL_OUTPUT);</p>
+<p>motor2 = constrain(motor2, -MAX_CONTROL_OUTPUT, MAX_CONTROL_OUTPUT);</p>
+<p>int angle_ready;</p>
+<p>if (OSCpush[0]) // If we press the SERVO button we start to move</p>
+<p>angle_ready = 82;</p>
+<p>else</p>
+<p>angle_ready = 74; // Default angle</p>
+<p>if ((angle_adjusted &lt; angle_ready) &amp;&amp; (angle_adjusted &gt; -angle_ready)) // Is robot ready (upright?)</p>
+<p>{</p>
+<p>// NORMAL MODE</p>
+<p>digitalWrite(PIN_ENABLE_MOTORS, LOW); // Motors enable</p>
+<p>// NOW we send the commands to the motors</p>
+<p>setMotorSpeedM1(motor1);</p>
+<p>setMotorSpeedM2(motor2);</p>
+<p>} else // Robot not ready (flat), angle &gt; angle_ready =&gt; ROBOT OFF</p>
+<p>{</p>
+<p>digitalWrite(PIN_ENABLE_MOTORS, HIGH); // Disable motors</p>
+<p>setMotorSpeedM1(0);</p>
+<p>setMotorSpeedM2(0);</p>
+<p>PID_errorSum = 0; // Reset PID I term</p>
+<p>Kp = KP_RAISEUP; // CONTROL GAINS FOR RAISE UP</p>
+<p>Kd = KD_RAISEUP;</p>
+<p>Kp_thr = KP_THROTTLE_RAISEUP;</p>
+<p>Ki_thr = KI_THROTTLE_RAISEUP;</p>
+<p>// RESET steps</p>
+<p>steps1 = 0;</p>
+<p>steps2 = 0;</p>
+<p>positionControlMode = false;</p>
+<p>OSCmove_mode = false;</p>
+<p>throttle = 0;</p>
+<p>steering = 0;</p>
+<p>}</p>
+<p>// Push1 Move servo arm</p>
+<p>if (OSCpush[0]) {</p>
+<p>if (angle_adjusted &gt; -40)</p>
+<p>ledcWrite(6, SERVO_MAX_PULSEWIDTH);</p>
+<p>else</p>
+<p>ledcWrite(6, SERVO_MIN_PULSEWIDTH);</p>
+<p>} else</p>
+<p>ledcWrite(6, SERVO_AUX_NEUTRO);</p>
+<p>// Servo2</p>
+<p>//ledcWrite(6, SERVO2_NEUTRO + (OSCfader[2] - 0.5) * SERVO2_RANGE);</p>
+<p>// Normal condition?</p>
+<p>if ((angle_adjusted &lt; 56) &amp;&amp; (angle_adjusted &gt; -56)) {</p>
+<p>Kp = Kp_user; // Default user control gains</p>
+<p>Kd = Kd_user;</p>
+<p>Kp_thr = Kp_thr_user;</p>
+<p>Ki_thr = Ki_thr_user;</p>
+<p>} else // We are in the raise up procedure =&gt; we use special control parameters</p>
+<p>{</p>
+<p>Kp = KP_RAISEUP; // CONTROL GAINS FOR RAISE UP</p>
+<p>Kd = KD_RAISEUP;</p>
+<p>Kp_thr = KP_THROTTLE_RAISEUP;</p>
+<p>Ki_thr = KI_THROTTLE_RAISEUP;</p>
+<p>}</p>
+<p>} // End of new IMU data</p>
+<p>}</p>
+<p>void processOSCMsg() {</p>
+<p>if (OSCpage == 1) {</p>
+<p>if (modifing_control_parameters) // We came from the settings screen</p>
+<p>{</p>
+<p>OSCfader[0] = 0.5; // default neutral values</p>
+<p>OSCfader[1] = 0.5; // default neutral values</p>
+<p>OSCtoggle[0] = 0; // Normal mode</p>
+<p>mode = 0;</p>
+<p>modifing_control_parameters = false;</p>
+<p>}</p>
+<p>if (OSCmove_mode) {</p>
+<p>Serial.print(&#34;M &#34;);</p>
+<p>Serial.print(OSCmove_speed);</p>
+<p>Serial.print(&#34; &#34;);</p>
+<p>Serial.print(OSCmove_steps1);</p>
+<p>Serial.print(&#34;,&#34;);</p>
+<p>Serial.println(OSCmove_steps2);</p>
+<p>positionControlMode = true;</p>
+<p>OSCmove_mode = false;</p>
+<p>target_steps1 = steps1 + OSCmove_steps1;</p>
+<p>target_steps2 = steps2 + OSCmove_steps2;</p>
+<p>} else {</p>
+<p>positionControlMode = false;</p>
+<p>throttle = (OSCfader[0] - 0.5) * max_throttle;</p>
+<p>// We add some exponential on steering to smooth the center band</p>
+<p>steering = OSCfader[1] - 0.5;</p>
+<p>if (steering &gt; 0)</p>
+<p>steering = (steering * steering + 0.5 * steering) * max_steering;</p>
+<p>else</p>
+<p>steering = (-steering * steering + 0.5 * steering) * max_steering;</p>
+<p>}</p>
+<p>if ((mode == 0) &amp;&amp; (OSCtoggle[0])) {</p>
+<p>// Change to PRO mode</p>
+<p>max_throttle = MAX_THROTTLE_PRO;</p>
+<p>max_steering = MAX_STEERING_PRO;</p>
+<p>max_target_angle = MAX_TARGET_ANGLE_PRO;</p>
+<p>mode = 1;</p>
+<p>}</p>
+<p>if ((mode == 1) &amp;&amp; (OSCtoggle[0] == 0)) {</p>
+<p>// Change to NORMAL mode</p>
+<p>max_throttle = MAX_THROTTLE;</p>
+<p>max_steering = MAX_STEERING;</p>
+<p>max_target_angle = MAX_TARGET_ANGLE;</p>
+<p>mode = 0;</p>
+<p>}</p>
+<p>} else if (OSCpage == 2) { // OSC page 2</p>
+<p>if (!modifing_control_parameters) {</p>
+<p>for (uint8_t i = 0; i &lt; 4; i++)</p>
+<p>OSCfader[i] = 0.5;</p>
+<p>OSCtoggle[0] = 0;</p>
+<p>modifing_control_parameters = true;</p>
+<p>//OSC_MsgSend(&#34;$P2&#34;, 4);</p>
+<p>}</p>
+<p>// User could adjust KP, KD, KP_THROTTLE and KI_THROTTLE (fadder3,4,5,6)</p>
+<p>// Now we need to adjust all the parameters all the times because we dont know what parameter has been moved</p>
+<p>Kp_user = KP * 2 * OSCfader[0];</p>
+<p>Kd_user = KD * 2 * OSCfader[1];</p>
+<p>Kp_thr_user = KP_THROTTLE * 2 * OSCfader[2];</p>
+<p>Ki_thr_user = KI_THROTTLE * 2 * OSCfader[3];</p>
+<p>// Send a special telemetry message with the new parameters</p>
+<p>char auxS[50];</p>
+<p>sprintf(auxS, &#34;$tP,%d,%d,%d,%d&#34;, int(Kp_user * 1000), int(Kd_user * 1000), int(Kp_thr_user * 1000), int(Ki_thr_user * 1000));</p>
+<p>//OSC_MsgSend(auxS, 50);</p>
+<p>// Calibration mode??</p>
+<p>if (OSCpush[2] == 1) {</p>
+<p>Serial.print(&#34;Calibration MODE &#34;);</p>
+<p>angle_offset = angle_adjusted_filtered;</p>
+<p>Serial.println(angle_offset);</p>
+<p>}</p>
+<p>// Kill robot =&gt; Sleep</p>
+<p>while (OSCtoggle[0] == 1) {</p>
+<p>//Reset external parameters</p>
+<p>PID_errorSum = 0;</p>
+<p>timer_old = millis();</p>
+<p>setMotorSpeedM1(0);</p>
+<p>setMotorSpeedM2(0);</p>
+<p>digitalWrite(PIN_ENABLE_MOTORS, HIGH); // Disable motors</p>
+<p>}</p>
+<p>}</p>
+<p>}</p>

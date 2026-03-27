@@ -1,0 +1,22 @@
+﻿{
+    "title":  "Robot Motor Math and WiFi Resilience",
+    "type":  "ARTIFACT_TYPE_AUDIO_OVERVIEW",
+    "sources":  [
+                    {
+                        "sourceId":  {
+                                         "id":  "37055d66-45a3-4967-8db1-c392e2c7e7f8"
+                                     }
+                    }
+                ],
+    "status":  "ARTIFACT_STATUS_READY",
+    "audioOverview":  {
+                          "generationOptions":  {
+                                                    "episodeFocus":  "This podcast should feature a technical deep dive between a senior developer and a hobbyist roboticist. They should discuss the architecture of the provided Arduino sketch for an ESP8266-based robot. Key points to cover include: how the code manages dual WiFi modes (Station and Access Point) as a fail-safe, the logic behind mapping HTTP request arguments (like \u0027F\u0027 for forward or \u0027S\u0027 for stop) to specific motor control functions, and the implementation of speed control using PWM and a speed coefficient for turning. The tone should be instructional yet enthusiastic about DIY electronics, explaining how the code handles real-time commands and even OTA (Over-the-Air) updates to allow for wireless maintenance.",
+                                                    "episodeLength":  "EPISODE_LENGTH_MEDIUM",
+                                                    "targetAudience":  "TARGET_AUDIENCE_UNSPECIFIED",
+                                                    "languageCode":  "en",
+                                                    "showFormat":  "SHOW_FORMAT_UNSPECIFIED"
+                                                },
+                          "isInteractive":  true
+                      }
+}

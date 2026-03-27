@@ -1,0 +1,39 @@
+<p>To build your data model locally for use in <strong>Survey123 Connect</strong> and <strong>ArcEarth</strong>, you can use the following PowerShell script. This script aggregates the hardware assets, signal metrics, and grid references found throughout the sources into a structured object array and exports it as a CSV.</p>
+<h3 id="powershell-script-build-networkdatamodel-ps1"><strong>PowerShell Script: Build-NetworkDataModel.ps1</strong></h3>
+<pre><code class="language-powershell lang-powershell no-auto-prettify"># Define the data set based on technical fielding reports
+$NetworkUnits = @(
+    # FLEX MAX 321e Units
+    [PSCustomObject]@{Asset_ID=&#34;A32B&#34;; Equipment=&#34;FLEX MAX 321e&#34;; Grid=&#34;#54 #6-4 #40&#34;; Street=&#34;WILLOW SPRINGS DR&#34;; Port=&#34;C9&#34;; In_L=24.3; In_H=20.7; Out_L=31.7; Out_H=29.8; Config=&#34;46 04 21.5 21.5&#34;; Routing=&#34;IN&#34;; Node=&#34;HDV-110&#34;; Status=&#34;BUILT&#34;},
+    [PSCustomObject]@{Asset_ID=&#34;J100&#34;; Equipment=&#34;FLEX MAX 321e&#34;; Grid=&#34;#54 #6-4 #40&#34;; Street=&#34;WILLOW SPRINGS DR&#34;; Port=&#34;C7&#34;; In_L=22.2; In_H=20.0; Out_L=26.9; Out_H=25.1; Config=&#34;46 04 21.5 21.5&#34;; Routing=&#34;IN&#34;; Node=&#34;HDV-110&#34;; Status=&#34;BUILT&#34;},
+    [PSCustomObject]@{Asset_ID=&#34;K100&#34;; Equipment=&#34;FLEX MAX 321e&#34;; Grid=&#34;#54 #6-4 #40&#34;; Street=&#34;WILLOW SPRINGS DR&#34;; Port=&#34;C5&#34;; In_L=19.3; In_H=18.1; Out_L=26.7; Out_H=24.5; Config=&#34;46 03 21.5 21.5&#34;; Routing=&#34;THRU&#34;; Node=&#34;HDV-110&#34;; Status=&#34;BUILT&#34;},
+    [PSCustomObject]@{Asset_ID=&#34;A54E&#34;; Equipment=&#34;FLEX MAX 321e&#34;; Grid=&#34;#54 #6-4 #41&#34;; Street=&#34;HICKORY HOLLOW ESTATES DR&#34;; Port=&#34;C5&#34;; In_L=21.8; In_H=20.7; Out_L=28.9; Out_H=26.1; Config=&#34;46 05 21.5 21.5&#34;; Routing=&#34;THRU&#34;; Node=&#34;HDV-110&#34;; Status=&#34;BUILT&#34;},
+    [PSCustomObject]@{Asset_ID=&#34;A54F&#34;; Equipment=&#34;FLEX MAX 321e&#34;; Grid=&#34;#54 #6-4 #42&#34;; Street=&#34;HICKORY HOLLOW ESTATES DR&#34;; Port=&#34;C3&#34;; In_L=20.0; In_H=20.2; Out_L=28.6; Out_H=25.5; Config=&#34;46 05 21.5 21.5&#34;; Routing=&#34;THRU&#34;; Node=&#34;HDV-208&#34;; Status=&#34;BUILT&#34;},
+    [PSCustomObject]@{Asset_ID=&#34;G100&#34;; Equipment=&#34;FLEX MAX 321e&#34;; Grid=&#34;#54 #7-4 #40&#34;; Street=&#34;PATTERSON RD&#34;; Port=&#34;C9&#34;; In_L=19.0; In_H=15.0; Out_L=33.1; Out_H=32.0; Config=&#34;46 00 21.5 21.5&#34;; Routing=&#34;IN&#34;; Node=&#34;HDV-110&#34;; Status=&#34;BUILT&#34;},
+    [PSCustomObject]@{Asset_ID=&#34;B14P&#34;; Equipment=&#34;FLEX MAX 321e&#34;; Grid=&#34;#54 #7-4 #41&#34;; Street=&#34;RAMBLING DR&#34;; Port=&#34;C4&#34;; In_L=18.8; In_H=18.7; Out_L=29.6; Out_H=27.3; Config=&#34;46 03 21.5 21.5&#34;; Routing=&#34;IN&#34;; Node=&#34;HDV-110&#34;; Status=&#34;BUILT&#34;},
+    [PSCustomObject]@{Asset_ID=&#34;001D3&#34;; Equipment=&#34;FLEX MAX 321e&#34;; Grid=&#34;#58- 37&#34;; Street=&#34;PLEASANT GROVE RD&#34;; Port=&#34;C7&#34;; In_L=27.9; In_H=25.6; Out_L=25.0; Out_H=22.6; Config=&#34;46 10 21.5 21.5&#34;; Routing=&#34;IN&#34;; Node=&#34;HDV-115&#34;; Status=&#34;BUILT&#34;},
+    [PSCustomObject]@{Asset_ID=&#34;B33R&#34;; Equipment=&#34;FLEX MAX 321e&#34;; Grid=&#34;#55 #0-4 #34&#34;; Street=&#34;SCARLET OAKS DR&#34;; Port=&#34;C6&#34;; In_L=26.0; In_H=24.0; Out_L=27.5; Out_H=26.0; Config=&#34;46 08 21.5 21.5&#34;; Routing=&#34;IN&#34;; Node=&#34;HDV-115&#34;; Status=&#34;BUILT&#34;},
+    [PSCustomObject]@{Asset_ID=&#34;106-03A&#34;; Equipment=&#34;FLEX MAX 321e&#34;; Grid=&#34;#55 #0-4 #34&#34;; Street=&#34;ARMSTRONG RD&#34;; Port=&#34;C9&#34;; In_L=23.4; In_H=19.8; Out_L=32.6; Out_H=31.3; Config=&#34;46 03 21.5 21.5&#34;; Routing=&#34;IN&#34;; Node=&#34;HDV-115&#34;; Status=&#34;BUILT&#34;},
+
+    # FLEX MAX 601e / 602 / ISX Units
+    [PSCustomObject]@{Asset_ID=&#34;A300&#34;; Equipment=&#34;FLEX MAX 601e&#34;; Grid=&#34;#54 #5-4 #40&#34;; Street=&#34;SHALOM LN&#34;; Port=&#34;C2&#34;; In_L=17.3; In_H=18.4; Out_L=28.2; Out_H=25.5; Config=&#34;46 13 20 20&#34;; Routing=&#34;THRU&#34;; Node=&#34;HDV-110&#34;; Status=&#34;BUILT&#34;},
+    [PSCustomObject]@{Asset_ID=&#34;110-8&#34;; Equipment=&#34;FLEX MAX 602&#34;; Grid=&#34;#54 #4-4 #40&#34;; Street=&#34;EVANS RD&#34;; Port=&#34;C2&#34;; In_L=18.8; In_H=20.2; Out_L=25.2; Out_H=22.1; Config=&#34;46 15 20 20&#34;; Routing=&#34;IN&#34;; Node=&#34;HDV-110&#34;; Status=&#34;BUILT&#34;},
+    [PSCustomObject]@{Asset_ID=&#34;HDV-110&#34;; Equipment=&#34;ISX 302 Node&#34;; Grid=&#34;#54 #7-4 #40&#34;; Street=&#34;PATTERSON RD&#34;; Port=&#34;NONE&#34;; In_L=0.0; In_H=0.0; Out_L=60.6; Out_H=0.0; Config=&#34;NONE&#34;; Routing=&#34;THRU&#34;; Node=&#34;HDV-110&#34;; Status=&#34;BUILT&#34;}
+)
+
+# Export to CSV for Survey123/ArcEarth compatibility
+$OutputPath = Join-Path $HOME &#34;Desktop\NetworkFieldingData.csv&#34;
+$NetworkUnits | Export-Csv -Path $OutputPath -NoTypeInformation -Encoding UTF8
+
+Write-Host &#34;Success: Data model CSV created at $OutputPath&#34; -ForegroundColor Green
+</code></pre>
+<h3 id="data-model-insights-from-sources"><strong>Data Model Insights from Sources</strong></h3>
+<ul>
+<li><strong>Asset Connectivity:</strong> Assets such as <strong>A32B</strong>, <strong>J100</strong>, and <strong>K100</strong> are physically connected on <strong>Willow Springs Dr</strong> and terminate at <strong>HDV-110</strong> [1-4].</li>
+<li><strong>Grid References:</strong> Each grid reference (e.g., #54 #6-4 #40) corresponds to a specific map sheet, which can be linked as a feature attribute in ArcEarth [3, 5, 6].</li>
+<li><strong>Signal Standards:</strong> Units consistently operate at <strong>38V</strong> [3, 7, 8]. Most FLEX MAX 321e units use a standardized config code (e.g., 46 04 21.5 21.5) that defines the gain settings [1, 9, 10].</li>
+<li><strong>Status Metadata:</strong> The model includes a <code>Status</code> field to account for units marked as <strong>&#34;NOT BUILT&#34;</strong> in later fielding reports like <strong>549-434.pdf</strong> [11].</li>
+<li><strong>Port Mapping:</strong> The <code>Connector_Ref</code> (Port) mapping (C2, C5, C9) allows Survey123 to pre-populate which cable path the technician should verify [2, 7, 12].</li>
+</ul>
+<h3 id="arcgis-integration"><strong>ArcGIS Integration</strong></h3>
+<p>The <strong>Server Administration Toolkit</strong> documentation (<code>__ReadMe.pdf</code>) suggests that these data models can be further automated by creating map services or using the <code>agsAdmin.exe</code> tool to manage the published feature classes containing this data [13-15].</p>
+<p>Would you like me to expand the script to include the &#34;NOT BUILT&#34; assets for your planning model?</p>
