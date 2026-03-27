@@ -1,0 +1,54 @@
+﻿{
+    "title":  "Robotics Flashcards",
+    "type":  "ARTIFACT_TYPE_APP",
+    "sources":  [
+                    {
+                        "sourceId":  {
+                                         "id":  "37055d66-45a3-4967-8db1-c392e2c7e7f8"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "37c84b6d-38c5-4d94-afde-489078b80e8f"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "669231ee-846c-4a4e-aa38-380f771fec88"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "86b7aec0-9910-4892-bf7b-0e6c1edf39b1"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "aad3498f-6d37-4dfe-b200-076f7b881409"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "ae8a4d6c-5509-46cd-a377-6d2f1e651161"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "b8c900e8-24b5-4f98-85c7-d9e4a4d42fd4"
+                                     }
+                    }
+                ],
+    "status":  "ARTIFACT_STATUS_READY",
+    "app":  {
+                "appHtml":  "",
+                "generationOptions":  {
+                                          "appType":  "APP_TYPE_FLASHCARDS",
+                                          "languageCode":  "en",
+                                          "flashcardsGenerationOptions":  {
+                                                                              "cardQuantity":  "CARD_QUANTITY_STANDARD",
+                                                                              "flashcardsDifficulty":  "FLASHCARDS_DIFFICULTY_MEDIUM"
+                                                                          },
+                                          "enableU18Classifier":  true
+                                      }
+            }
+}

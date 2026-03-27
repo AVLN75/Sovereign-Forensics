@@ -1,0 +1,27 @@
+﻿{
+    "title":  "The Invisible Engine: Standard 200.215, Structured Cabling, and the Iron Grip Governing Airport Security, Baggage, and Life Safety",
+    "type":  "ARTIFACT_TYPE_AUDIO_OVERVIEW",
+    "sources":  [
+                    {
+                        "sourceId":  {
+                                         "id":  "2ca26ff3-0c15-46b5-87b0-753242496da8"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "47a643a0-9934-49a8-b822-663a4bce8b40"
+                                     }
+                    }
+                ],
+    "status":  "ARTIFACT_STATUS_READY",
+    "audioOverview":  {
+                          "generationOptions":  {
+                                                    "episodeFocus":  "",
+                                                    "episodeLength":  "EPISODE_LENGTH_LONG",
+                                                    "targetAudience":  "TARGET_AUDIENCE_UNSPECIFIED",
+                                                    "languageCode":  "en",
+                                                    "showFormat":  "SHOW_FORMAT_UNSPECIFIED"
+                                                },
+                          "isInteractive":  true
+                      }
+}

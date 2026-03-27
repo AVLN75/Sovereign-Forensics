@@ -1,0 +1,8 @@
+<p>Partitions</p>
+<p>Get-Partition | Where-Object { $_.DriveLetter -eq &#39;D&#39; }</p>
+<h1 id="partition-1-storage-1tb">Partition 1: Storage (1TB)</h1>
+<p>New-Partition -DiskNumber 2 -Size 1TB -DriveLetter S | Format-Volume -FileSystem NTFS -NewFileSystemLabel &#34;Storage&#34;</p>
+<h1 id="partition-2-vms-500gb">Partition 2: VMs (500GB)</h1>
+<p>New-Partition -DiskNumber 0 -Size 500GB -DriveLetter V | Format-Volume -FileSystem NTFS -NewFileSystemLabel &#34;VMs&#34;</p>
+<h1 id="partition-3-vm-swap-space-100gb">Partition 3: VM Swap Space (100GB)</h1>
+<p>New-Partition -DiskNumber 0 -Size 100GB -DriveLetter W | Format-Volume -FileSystem NTFS -NewFileSystemLabel &#34;VM Swap&#34;</p>

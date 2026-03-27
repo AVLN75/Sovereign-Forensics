@@ -1,0 +1,95 @@
+<p>#!/usr/bin/env python3</p>
+<p>import re</p>
+<p>import sys</p>
+<p>from datetime import datetime</p>
+<p>import yaml # python3 -m pip install pyyaml --user</p>
+<p>&#34;OUTPUT_FILE = &#34;&#34;./devices.md&#34;&#34;&#34;</p>
+<p>&#34;INPUT_FILE = &#34;&#34;./devices.yml&#34;&#34;&#34;</p>
+<p>&#34;repo_msg = f&#34;&#34;&#34;&#34;&#34;&#34;&#34;</p>
+<p><em>This table was <a href="https://gitlab.com/kalilinux/build-scripts/kali-arm/-/blob/master/devices.yml">generated automatically</a> on {datetime.now().strftime(&#39;%Y-%B-%d %H:%M:%S&#39;)} from the <a href="https://gitlab.com/kalilinux/build-scripts/kali-arm">Kali ARM GitLab repository</a></em></p>
+<p>&#34;&#34;&#34;&#34;&#34;&#34;&#34;&#34;</p>
+<p>qty_devices = 00</p>
+<h1 id="input">Input:</h1>
+<h1 id="-">------------------------------------------------------------</h1>
+<h1 id="see-devices-yml">See: ./devices.yml</h1>
+<h1 id="https-gitlab-com-kalilinux-build-scripts-kali-arm-blob-master-devices-yml"><a href="https://gitlab.com/kalilinux/build-scripts/kali-arm/-/blob/master/devices.yml">https://gitlab.com/kalilinux/build-scripts/kali-arm/-/blob/master/devices.yml</a></h1>
+<p>def yaml_parse(content):</p>
+<p>&#34;result = &#34;&#34;&#34;&#34;&#34;</p>
+<p>lines = content.split(&#39;\n&#39;)</p>
+<p>for line in lines:</p>
+<p>if line.strip() and not line.strip().startswith(&#39;#&#39;):</p>
+<p>&#34;result += line + &#34;&#34;\n&#34;&#34;&#34;</p>
+<p>return yaml.safe_load(result)</p>
+<h1 id="https-stackoverflow-com-a-11150413"><a href="https://stackoverflow.com/a/11150413">https://stackoverflow.com/a/11150413</a></h1>
+<p>def natural_sort(l):</p>
+<p>def convert(text): return int(text) if text.isdigit() else text.lower()</p>
+<p>def alphanum_key(key): return [convert(c)</p>
+<p>for c in re.split(&#39;([0-9]+)&#39;, key)]</p>
+<p>return sorted(l, key=alphanum_key)</p>
+<p>def generate_table(data):</p>
+<p>global qty_devices</p>
+<p>&#34;default = &#34;&#34;&#34;&#34;&#34;</p>
+<p>&#34;table = &#34;&#34;| Vendor | Board | CPU | CPU Cores | GPU | RAM | RAM Size (MB) | Ethernet | Ethernet Speed (MB) | Wi-Fi | Bluetooth | USB2 | USB3 | Storage | Notes |\n&#34;&#34;&#34;</p>
+<p>&#34;table += &#34;&#34;|--------|-------|-----|-----------|-----|-----|---------------|----------|---------------------|-------|-----------|------|------|---------|---------------------|\n&#34;&#34;&#34;</p>
+<h1 id="iterate-over-per-input-depth-1">Iterate over per input (depth 1)</h1>
+<p>&#34;for yaml in data[&#34;&#34;devices&#34;&#34;]:&#34;</p>
+<h1 id="iterate-over-vendors">Iterate over vendors</h1>
+<p>for vendor in yaml.keys():</p>
+<h1 id="iterate-over-board-depth-2">Iterate over board (depth 2)</h1>
+<p>for board in yaml[vendor]:</p>
+<p>qty_devices += 1</p>
+<p>&#34;ram_size = &#34;&#34;&#34;&#34;&#34;</p>
+<p>&#34;storage = &#34;&#34;&#34;&#34;&#34;</p>
+<p>i = 0</p>
+<p>&#34;for f in natural_sort(board.get(&#34;&#34;ram-size&#34;&#34;, default)):&#34;</p>
+<p>if i &gt; 0:</p>
+<p>&#34;ram_size += &#34;&#34;, &#34;&#34;&#34;</p>
+<p>ram_size += f</p>
+<p>i += 1</p>
+<p>i = 0</p>
+<p>&#34;for f in natural_sort(board.get(&#34;&#34;storage&#34;&#34;, default)):&#34;</p>
+<p>if i &gt; 0:</p>
+<p>&#34;storage += &#34;&#34;, &#34;&#34;&#34;</p>
+<p>storage += f</p>
+<p>i += 1</p>
+<p>&#34;table += f&#34;&#34;| {vendor} | {board.get(&#39;name&#39;, default)} | {board.get(&#39;cpu&#39;, default)} | {board.get(&#39;cpu-cores&#39;, default)} | {board.get(&#39;gpu&#39;, default)} | {board.get(&#39;ram&#39;, default)} | {ram_size} | {board.get(&#39;ethernet&#39;, default)} | {board.get(&#39;ethernet-speed&#39;, default)} | {board.get(&#39;wifi&#39;, default)} | {board.get(&#39;bluetooth&#39;, default)} | {board.get(&#39;usb2&#39;, default)} | {board.get(&#39;usb3&#39;, default)} | {storage} | {board.get(&#39;notes&#39;, default)} |\n&#34;&#34;&#34;</p>
+<p>return table</p>
+<p>def read_file(file):</p>
+<p>try:</p>
+<p>with open(file) as f:</p>
+<p>data = f.read()</p>
+<p>except Exception as e:</p>
+<p>&#34;print(f&#34;&#34;[-] Cannot open input file: {file} - {e}&#34;&#34;)&#34;</p>
+<p>return data</p>
+<p>def write_file(data, file):</p>
+<p>try:</p>
+<p>&#34;with open(file, &#34;&#34;w&#34;&#34;) as f:&#34;</p>
+<p>&#34;meta = &#34;&#34;---\n&#34;&#34;&#34;</p>
+<p>&#34;meta += &#34;&#34;title: Kali ARM Devices\n&#34;&#34;&#34;</p>
+<p>&#34;meta += &#34;&#34;---\n\n&#34;&#34;&#34;</p>
+<p>&#34;stats = f&#34;&#34;- The official <a href="https://gitlab.com/kalilinux/build-scripts/kali-arm">Kali ARM repository</a> contains build-scripts to support <a href="device-stats.html"><strong>{qty_devices}</strong> Kali ARM devices</a>\n&#34;&#34;&#34;</p>
+<p>&#34;stats += &#34;&#34;- <a href="index.html">Kali ARM Statistics</a>\n\n&#34;&#34;&#34;</p>
+<p>f.write(str(meta))</p>
+<p>f.write(str(stats))</p>
+<p>f.write(str(data))</p>
+<p>f.write(str(repo_msg))</p>
+<p>&#34;print(f&#34;&#34;[+] File: {OUTPUT_FILE} successfully written&#34;&#34;)&#34;</p>
+<p>except Exception as e:</p>
+<p>&#34;print(f&#34;&#34;[-] Cannot write to output file: {file} - {e}&#34;&#34;)&#34;</p>
+<p>return 0</p>
+<p>def print_summary():</p>
+<p>&#34;print(f&#34;&#34;Devices: {qty_devices}&#34;&#34;)&#34;</p>
+<p>def main(argv):</p>
+<h1 id="assign-variables">Assign variables</h1>
+<p>data = read_file(INPUT_FILE)</p>
+<h1 id="get-data">Get data</h1>
+<p>res = yaml_parse(data)</p>
+<p>generated_markdown = generate_table(res)</p>
+<h1 id="create-markdown-file">Create markdown file</h1>
+<p>write_file(generated_markdown, OUTPUT_FILE)</p>
+<h1 id="print-result">Print result</h1>
+<p>print_summary()</p>
+<h1 id="exit">Exit</h1>
+<p>exit(0)</p>
+<p>&#34;if <strong>name</strong> == &#34;&#34;<strong>main</strong>&#34;&#34;:&#34;</p>
+<p>main(sys.argv[1:])</p>

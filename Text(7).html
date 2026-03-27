@@ -1,0 +1,119 @@
+<p>#!/usr/bin/env python3</p>
+<p>import subprocess</p>
+<p>import ipaddress</p>
+<p>def scan_network(network_prefix):</p>
+<p>&#34;&#34;&#34;Scans a network for active hosts.</p>
+<p>Args:</p>
+<p>network_prefix (str): The network prefix in CIDR notation (e.g., &#34;192.168.1.0/24&#34;).</p>
+<p>Returns:</p>
+<p>list: A list of active IP addresses found on the network.</p>
+<p>&#34;&#34;&#34;</p>
+<p>active_hosts = []</p>
+<p>try:</p>
+<p>network = ipaddress.ip_network(network_prefix, strict=False)</p>
+<p>for ip in network.hosts():</p>
+<p>ip_str = str(ip)</p>
+<h1 id="use-ping-to-check-if-the-host-is-alive-adjust-parameters-as-needed">Use ping to check if the host is alive. Adjust parameters as needed.</h1>
+<h1 id="c-1-send-only-one-ping-packet">-c 1: Send only one ping packet</h1>
+<h1 id="w-1-wait-at-most-1-second-for-a-response">-W 1: Wait at most 1 second for a response</h1>
+<p>ping_command = f&#34;ping -c 1 -W 1 {ip_str}&#34;</p>
+<p>process = subprocess.Popen(ping_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)</p>
+<p>stdout, stderr = process.communicate()</p>
+<p>if process.returncode == 0:</p>
+<p>active_hosts.append(ip_str)</p>
+<p>print(f&#34;Host {ip_str} is active.&#34;)</p>
+<p>except ValueError:</p>
+<p>print(f&#34;Error: Invalid network prefix &#39;{network_prefix}&#39;.&#34;)</p>
+<p>return active_hosts</p>
+<p>def get_device_info(ip_address):</p>
+<p>&#34;&#34;&#34;Attempts to get basic information about a device using ARP.</p>
+<p>Args:</p>
+<p>ip_address (str): The IP address of the device.</p>
+<p>Returns:</p>
+<p>dict: A dictionary containing &#39;ip&#39; and &#39;mac&#39; address if found, otherwise None.</p>
+<p>&#34;&#34;&#34;</p>
+<p>arp_command = f&#34;arp -n {ip_address}&#34;</p>
+<p>process = subprocess.Popen(arp_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)</p>
+<p>stdout, stderr = process.communicate()</p>
+<p>for line in stdout.decode().splitlines():</p>
+<p>parts = line.split()</p>
+<p>if len(parts) &gt;= 2 and parts[0] == ip_address:</p>
+<p>return {&#34;ip&#34;: parts[0], &#34;mac&#34;: parts[1]}</p>
+<p>return None</p>
+<p>def main():</p>
+<p>&#34;&#34;&#34;Main function to scan the network and import device information.&#34;&#34;&#34;</p>
+<p>network_prefix = input(&#34;Enter the network prefix to scan (e.g., 192.168.1.0/24): &#34;)</p>
+<p>active_ips = scan_network(network_prefix)</p>
+<p>if active_ips:</p>
+<p>print(&#34;\nScanning active hosts for device information (ARP):&#34;)</p>
+<p>devices = []</p>
+<p>for ip in active_ips:</p>
+<p>device_info = get_device_info(ip)</p>
+<p>if device_info:</p>
+<p>devices.append(device_info)</p>
+<p>print(f&#34; IP: {device_info[&#39;ip&#39;]}, MAC: {device_info[&#39;mac&#39;]}&#34;)</p>
+<p>else:</p>
+<p>print(f&#34; IP: {ip}, MAC: Not found (ARP entry might not exist).&#34;)</p>
+<p>if devices:</p>
+<p>print(&#34;\nConnected Devices:&#34;)</p>
+<p>for device in devices:</p>
+<p>print(f&#34; IP Address: {device[&#39;ip&#39;]}, MAC Address: {device[&#39;mac&#39;]}&#34;)</p>
+<p>else:</p>
+<p>print(&#34;\nNo devices found on the network (ARP entries not available).&#34;)</p>
+<p>else:</p>
+<p>print(&#34;\nNo active hosts found on the specified network.&#34;)</p>
+<p>if <strong>name</strong> == &#34;<strong>main</strong>&#34;:</p>
+<p>main()</p>
+<p>Explanation:</p>
+<p>#!/usr/bin/env python3: Shebang line, specifies the interpreter for the script.</p>
+<p>import subprocess: Imports the subprocess module to run external commands like ping and arp.</p>
+<p>import ipaddress: Imports the ipaddress module for working with IP network addresses.</p>
+<p>scan_network(network_prefix) function:</p>
+<p>Takes the network prefix (e.g., &#34;192.168.1.0/24&#34;) as input.</p>
+<p>Uses ipaddress.ip_network() to generate a list of all possible host IP addresses within the given network.</p>
+<p>Iterates through each IP address.</p>
+<p>Uses subprocess.Popen() to execute the ping command with the following options:</p>
+<p>-c 1: Sends only one ICMP echo request (ping packet).</p>
+<p>-W 1: Sets a timeout of 1 second for a response. This makes the scan faster.</p>
+<p>Checks the process.returncode. A return code of 0 usually indicates success (the host responded to the ping).</p>
+<p>If a host is active, its IP address is added to the active_hosts list and printed.</p>
+<p>Handles potential ValueError if the provided network_prefix is invalid.</p>
+<p>Returns the list of active IP addresses.</p>
+<p>get_device_info(ip_address) function:</p>
+<p>Takes an IP address as input.</p>
+<p>Uses subprocess.Popen() to execute the arp -n command. The arp command displays the ARP cache, which maps IP addresses to MAC addresses on the local network. The -n flag prevents DNS lookups, making it faster.</p>
+<p>Parses the output of the arp command. It looks for a line where the first part matches the given ip_address.</p>
+<p>If a matching entry is found, it extracts the IP and MAC address and returns them in a dictionary.</p>
+<p>Returns None if no ARP entry is found for the given IP address. This can happen if the device is not actively communicating or if the ARP entry has expired.</p>
+<p>main() function:</p>
+<p>Prompts the user to enter the network prefix to scan.</p>
+<p>Calls scan_network() to get a list of active IP addresses.</p>
+<p>If active IPs are found:</p>
+<p>Iterates through the active_ips list.</p>
+<p>Calls get_device_info() for each active IP to try and retrieve its MAC address.</p>
+<p>Prints the IP and MAC address if found.</p>
+<p>Keeps a list of devices with both IP and MAC addresses.</p>
+<p>Finally, prints a summary of the connected devices found.</p>
+<p>If no active hosts are found, it prints a corresponding message.</p>
+<p>if <strong>name</strong> == &#34;<strong>main</strong>&#34;:: Ensures that the main() function is called only when the script is executed directly.</p>
+<p>How to Use:</p>
+<p>Save the script: Save the code to a file, for example, network_scanner.py.</p>
+<p>Make it executable: Open your Linux terminal and run:</p>
+<p>chmod +x network_scanner.py</p>
+<p>Run the script: Execute the script with:</p>
+<p>./network_scanner.py</p>
+<p>Enter the network prefix: When prompted, enter the network prefix of your local network. For example, if your router&#39;s IP is typically 192.168.1.1, your network prefix is likely 192.168.1.0/24.</p>
+<p>Important Considerations and Potential Improvements:</p>
+<p>Permissions: You might need sudo privileges to run ping effectively on some systems. If you encounter permission errors, try running the script with sudo:</p>
+<p>sudo ./network_scanner.py</p>
+<p>ARP Limitations: ARP only works within the same local network segment (Layer 2). You won&#39;t be able to get MAC addresses of devices on different subnets using this method.</p>
+<p>Firewalls: Firewalls on target devices might block ICMP (ping) requests, causing the scanner to miss active hosts.</p>
+<p>Speed: For larger networks, this script might take some time to complete as it pings each possible IP address. You could explore asynchronous methods (like using the asyncio library) or multithreading/multiprocessing to speed up the scanning process.</p>
+<p>More Information: You could extend this script to gather more information about the devices, such as:</p>
+<p>Hostname: Using tools like nmblookup (for NetBIOS names) or performing reverse DNS lookups.</p>
+<p>Open Ports and Services: Using tools like nmap (which is a more powerful network scanning tool but requires installation).</p>
+<p>Operating System Fingerprinting: This is a more advanced technique and often involves analyzing network responses.</p>
+<p>Error Handling: You could add more robust error handling for network issues and command execution failures.</p>
+<p>Output Formatting: You could format the output in a more structured way (e.g., using CSV or JSON).</p>
+<p>User Interface: For a more user-friendly experience, you could consider building a simple graphical user interface (GUI) using libraries like Tkinter or PyQt.</p>
+<p>This script provides a basic foundation for network scanning and device discovery on a Linux system. You can expand upon it based on your specific needs and the level of detail you require. Remember that network scanning should be done responsibly and ethically, and you should only scan networks that you have permission to access.</p>

@@ -1,0 +1,97 @@
+<h1 id="spdx-license-identifier-lgpl-2-1-or-later">SPDX-License-Identifier: LGPL-2.1-or-later</h1>
+<h1 id></h1>
+<h1 id="this-file-is-part-of-systemd">This file is part of systemd.</h1>
+<h1 id="-2"></h1>
+<h1 id="systemd-is-free-software-you-can-redistribute-it-and-or-modify-it">systemd is free software; you can redistribute it and/or modify it</h1>
+<h1 id="under-the-terms-of-the-gnu-lesser-general-public-license-as-published-by">under the terms of the GNU Lesser General Public License as published by</h1>
+<h1 id="the-free-software-foundation-either-version-2-1-of-the-license-or">the Free Software Foundation; either version 2.1 of the License, or</h1>
+<h1 id="at-your-option-any-later-version">(at your option) any later version.</h1>
+<p>ACTION==&#34;remove&#34;, GOTO=&#34;uaccess_end&#34;</p>
+<p>ENV{MAJOR}==&#34;&#34;, GOTO=&#34;uaccess_end&#34;</p>
+<h1 id="ptp-mtp-protocol-devices-cameras-portable-media-players">PTP/MTP protocol devices, cameras, portable media players</h1>
+<p>SUBSYSTEM==&#34;usb&#34;, ENV{ID_USB_INTERFACES}==&#34;<em>:060101:</em>&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="digicams-with-proprietary-protocol">Digicams with proprietary protocol</h1>
+<p>ENV{ID_GPHOTO2}==&#34;?*&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="scsi-and-usb-scanners">SCSI and USB scanners</h1>
+<p>ENV{libsane_matched}==&#34;yes&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="hplip-devices-necessary-for-ink-level-check-and-hp-tool-maintenance">HPLIP devices (necessary for ink level check and HP tool maintenance)</h1>
+<p>ENV{ID_HPLIP}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="optical-drives">optical drives</h1>
+<p>SUBSYSTEM==&#34;block&#34;, ENV{ID_CDROM}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<p>SUBSYSTEM==&#34;scsi_generic&#34;, SUBSYSTEMS==&#34;scsi&#34;, ATTRS{type}==&#34;4|5&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="sound-devices">Sound devices</h1>
+<p>SUBSYSTEM==&#34;sound&#34;, TAG+=&#34;uaccess&#34;, \</p>
+<p>OPTIONS+=&#34;static_node=snd/timer&#34;, OPTIONS+=&#34;static_node=snd/seq&#34;</p>
+<h1 id="webcams-frame-grabber-tv-cards">Webcams, frame grabber, TV cards</h1>
+<p>SUBSYSTEM==&#34;video4linux&#34;, TAG+=&#34;uaccess&#34;</p>
+<p>SUBSYSTEM==&#34;dvb&#34;, TAG+=&#34;uaccess&#34;</p>
+<p>SUBSYSTEM==&#34;media&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="libcamera-software-isp-used-with-some-cams-requires-udmabuf-access">libcamera software ISP used with some cams requires udmabuf access</h1>
+<p>KERNEL==&#34;udmabuf&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="industrial-cameras-some-webcams-camcorders-set-top-boxes-tv-sets-audio-devices-and-more">industrial cameras, some webcams, camcorders, set-top boxes, TV sets, audio devices, and more</h1>
+<p>SUBSYSTEM==&#34;firewire&#34;, TEST==&#34;units&#34;, ENV{IEEE1394_UNIT_FUNCTION_MIDI}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<p>SUBSYSTEM==&#34;firewire&#34;, TEST==&#34;units&#34;, ENV{IEEE1394_UNIT_FUNCTION_AUDIO}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<p>SUBSYSTEM==&#34;firewire&#34;, TEST==&#34;units&#34;, ENV{IEEE1394_UNIT_FUNCTION_VIDEO}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="dri-video-devices">DRI video devices</h1>
+<p>SUBSYSTEM==&#34;drm&#34;, KERNEL==&#34;card*&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="dri-render-nodes">DRI render nodes</h1>
+<p>SUBSYSTEM==&#34;drm&#34;, KERNEL==&#34;renderD*&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="kvm">KVM</h1>
+<p>SUBSYSTEM==&#34;misc&#34;, KERNEL==&#34;kvm&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="smart-card-readers">smart-card readers</h1>
+<p>ENV{ID_SMARTCARD_READER}==&#34;?*&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="usb-authentication-devices">(USB) authentication devices</h1>
+<p>ENV{ID_SECURITY_TOKEN}==&#34;?*&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="pda-devices">PDA devices</h1>
+<p>ENV{ID_PDA}==&#34;?*&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="programmable-remote-control">Programmable remote control</h1>
+<p>ENV{ID_REMOTE_CONTROL}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="joysticks">joysticks</h1>
+<p>SUBSYSTEM==&#34;input&#34;, ENV{ID_INPUT_JOYSTICK}==&#34;?*&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="color-measurement-devices">color measurement devices</h1>
+<p>ENV{COLOR_MEASUREMENT_DEVICE}==&#34;?*&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="ddc-ci-device-usually-high-end-monitors-such-as-the-dreamcolor">DDC/CI device, usually high-end monitors such as the DreamColor</h1>
+<p>ENV{DDC_DEVICE}==&#34;?*&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="media-player-raw-devices-for-user-mode-drivers-android-sdk-etc">media player raw devices (for user-mode drivers, Android SDK, etc.)</h1>
+<p>SUBSYSTEM==&#34;usb&#34;, ENV{ID_MEDIA_PLAYER}==&#34;?*&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="android-devices-adb-dbc-adb-fastboot">Android devices (ADB DbC, ADB, Fastboot)</h1>
+<h1 id="used-to-interact-with-devices-over-android-debug-bridge-and-fastboot-protocols-see">Used to interact with devices over Android Debug Bridge and Fastboot protocols, see:</h1>
+<h1 id="https-developer-android-com-tools-adb">* <a href="https://developer.android.com/tools/adb">https://developer.android.com/tools/adb</a></h1>
+<h1 id="https-source-android-com-docs-setup-test-running">* <a href="https://source.android.com/docs/setup/test/running">https://source.android.com/docs/setup/test/running</a></h1>
+<h1 id="https-source-android-com-docs-setup-test-flash">* <a href="https://source.android.com/docs/setup/test/flash">https://source.android.com/docs/setup/test/flash</a></h1>
+<h1 id="-3"></h1>
+<h1 id="the-binterfaceclass-and-binterfacesubclass-used-are-documented-in-source-code-here">The bInterfaceClass and bInterfaceSubClass used are documented in source code here:</h1>
+<h1 id="https-android-googlesource-com-platform-packages-modules-adb-d0db47dcdf941673f405e1095e6ffb5e565902e5-adb-h-199">* <a href="https://android.googlesource.com/platform/packages/modules/adb/+/d0db47dcdf941673f405e1095e6ffb5e565902e5/adb.h#199">https://android.googlesource.com/platform/packages/modules/adb/+/d0db47dcdf941673f405e1095e6ffb5e565902e5/adb.h#199</a></h1>
+<h1 id="https-android-googlesource-com-platform-system-core-7199051aaf0ddfa2849650933119307327d8669c-fastboot-fastboot-cpp-244">* <a href="https://android.googlesource.com/platform/system/core/+/7199051aaf0ddfa2849650933119307327d8669c/fastboot/fastboot.cpp#244">https://android.googlesource.com/platform/system/core/+/7199051aaf0ddfa2849650933119307327d8669c/fastboot/fastboot.cpp#244</a></h1>
+<h1 id="-4"></h1>
+<h1 id="since-it-s-using-a-generic-vendor-specific-interface-class-this-can-potentially-result">Since it&#39;s using a generic vendor specific interface class, this can potentially result</h1>
+<h1 id="in-a-rare-case-where-non-adb-fastboot-device-ends-up-with-an-id_debug_appliance-android">in a rare case where non-ADB/Fastboot device ends up with an ID_DEBUG_APPLIANCE=&#34;android&#34;.</h1>
+<p>SUBSYSTEM==&#34;usb&#34;, ENV{ID_USB_INTERFACES}==&#34;<em>:dc0201:</em>|<em>:ff4201:</em>|<em>:ff4203:</em>&#34;, ENV{ID_DEBUG_APPLIANCE}=&#34;android&#34;</p>
+<h1 id="software-defined-radio-communication-devices">software-defined radio communication devices</h1>
+<p>ENV{ID_SOFTWARE_RADIO}==&#34;?*&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="3d-printers-cnc-machines-laser-cutters-3d-scanners-etc">3D printers, CNC machines, laser cutters, 3D scanners, etc.</h1>
+<p>ENV{ID_MAKER_TOOL}==&#34;?*&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="protocol-analyzers">Protocol analyzers</h1>
+<p>ENV{ID_SIGNAL_ANALYZER}==&#34;?*&#34;, ENV{DEVTYPE}==&#34;usb_device&#34;, TAG+=&#34;uaccess&#34;</p>
+<p>ENV{ID_SIGNAL_ANALYZER}==&#34;?<em>&#34;, KERNEL==&#34;ttyACM[0-9]</em>&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="rfkill-radio-killswitches">rfkill / radio killswitches</h1>
+<p>KERNEL==&#34;rfkill&#34;, SUBSYSTEM==&#34;misc&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="av-production-controllers">AV production controllers</h1>
+<h1 id="most-of-these-devices-use-hid-for-the-knobs-faders-buttons-encoders-and-jog-wheels">Most of these devices use HID for the knobs, faders, buttons, encoders, and jog wheels.</h1>
+<p>SUBSYSTEM==&#34;hidraw&#34;, ENV{ID_AV_PRODUCTION_CONTROLLER}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="some-devices-use-vendor-defined-protocols-on-usb-bulk-endpoints-for-controllers">Some devices use vendor defined protocols on USB Bulk endpoints for controllers.</h1>
+<h1 id="other-devices-transfer-graphics-to-screens-on-the-device-through-usb-bulk-endpoints">Other devices transfer graphics to screens on the device through USB Bulk endpoints.</h1>
+<h1 id="this-also-allows-accessing-hid-devices-with-the-libusb-backend-of-hidapi">This also allows accessing HID devices with the libusb backend of hidapi.</h1>
+<p>SUBSYSTEM==&#34;usb&#34;, ENV{ID_AV_PRODUCTION_CONTROLLER}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="usb-and-bluetooth-controllable-lights">USB and Bluetooth controllable lights</h1>
+<p>SUBSYSTEM==&#34;hidraw&#34;, ENV{ID_AV_LIGHTS}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<p>SUBSYSTEM==&#34;usb&#34;, ENV{ID_AV_LIGHTS}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="hardware-wallets">Hardware wallets</h1>
+<p>SUBSYSTEM==&#34;usb&#34;, ENV{ID_HARDWARE_WALLET}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<p>SUBSYSTEM==&#34;hidraw&#34;, ENV{ID_HARDWARE_WALLET}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="3d-mice">3D mice</h1>
+<h1 id="as-defined-in-https-en-wikipedia-org-wiki-3dconnexion">As defined in <a href="https://en.wikipedia.org/wiki/3Dconnexion">https://en.wikipedia.org/wiki/3Dconnexion</a></h1>
+<p>SUBSYSTEM==&#34;hidraw&#34;, ENV{ID_INPUT_3D_MOUSE}==&#34;1&#34;, TAG+=&#34;uaccess&#34;</p>
+<h1 id="debug-interfaces-e-g-android-debug-bridge">Debug interfaces (e.g. Android Debug Bridge)</h1>
+<p>ENV{ID_DEBUG_APPLIANCE}==&#34;?*&#34;, TAG+=&#34;uaccess&#34;</p>
+<p>LABEL=&#34;uaccess_end&#34;</p>

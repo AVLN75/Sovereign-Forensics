@@ -1,0 +1,49 @@
+﻿{
+    "color":  "DEFAULT",
+    "isTrashed":  false,
+    "isPinned":  false,
+    "isArchived":  false,
+    "annotations":  [
+                        {
+                            "description":  "",
+                            "source":  "WEBLINK",
+                            "title":  "",
+                            "url":  "https://gemini.google.com/app/3e3c7ee950d26375?source=keep"
+                        }
+                    ],
+    "listContent":  [
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eInstall Microsoft Loopback Adapter via Device Manager (Add Legacy Hardware) to manifest the 10.50.0.1 interface.\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Install Microsoft Loopback Adapter via Device Manager (Add Legacy Hardware) to manifest the 10.50.0.1 interface.",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eVerify Windows Activation status after KMS command (slmgr /ato).\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Verify Windows Activation status after KMS command (slmgr /ato).",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eConfirm IKEv2 Adapter visibility in PowerShell after Loopback installation.\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Confirm IKEv2 Adapter visibility in PowerShell after Loopback installation.",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eRestart ArcGIS License Manager service to bind to 10.50.0.1.\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Restart ArcGIS License Manager service to bind to 10.50.0.1.",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eConnect Tablet to IKEv2 VPN using 10.50.0.1 as the gateway.\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Connect Tablet to IKEv2 VPN using 10.50.0.1 as the gateway.",
+                            "isChecked":  false
+                        },
+                        {
+                            "textHtml":  "\u003cp dir=\"ltr\" style=\"line-height:1.38;margin-top:0.0pt;margin-bottom:0.0pt;\"\u003e\u003cspan style=\"font-size:7.2pt;font-family:\u0027Google Sans\u0027;color:#000000;background-color:transparent;font-weight:400;font-style:normal;font-variant:normal;text-decoration:none;vertical-align:baseline;white-space:pre;white-space:pre-wrap;\"\u003eTest License Sync for ArcGIS Earth and Survey123 Connect.\u003c/span\u003e\u003c/p\u003e",
+                            "text":  "Test License Sync for ArcGIS Earth and Survey123 Connect.",
+                            "isChecked":  false
+                        }
+                    ],
+    "title":  "Sovereign Setup Progress",
+    "userEditedTimestampUsec":  1772823956575000,
+    "createdTimestampUsec":  1772823956575000
+}

@@ -1,0 +1,26 @@
+﻿{
+    "title":  "Navigating Google Drive Sign-In",
+    "type":  "ARTIFACT_TYPE_INFOGRAPHIC",
+    "sources":  [
+                    {
+                        "sourceId":  {
+                                         "id":  "f7c9a038-0c59-4b3f-81d8-5744c25adef8"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "fceba996-49eb-473b-b4e5-657df5b82959"
+                                     }
+                    }
+                ],
+    "status":  "ARTIFACT_STATUS_READY",
+    "infographic":  {
+                        "generationOptions":  {
+                                                  "userSteeringPrompt":  "security perameters and account status corrections",
+                                                  "languageCode":  "en",
+                                                  "aspectRatio":  "ASPECT_RATIO_LANDSCAPE",
+                                                  "informationDensity":  "INFORMATION_DENSITY_HIGH"
+                                              },
+                        "title":  "Navigating Google Drive Sign-In"
+                    }
+}
