@@ -1,0 +1,27 @@
+﻿{
+    "title":  "Workato\u0027s Seventh iPaaS Leadership Explained",
+    "type":  "ARTIFACT_TYPE_AUDIO_OVERVIEW",
+    "sources":  [
+                    {
+                        "sourceId":  {
+                                         "id":  "2118d4f1-c095-4b8c-ae05-fa4066dca524"
+                                     }
+                    },
+                    {
+                        "sourceId":  {
+                                         "id":  "e1802597-16c5-410a-885a-3941301292b8"
+                                     }
+                    }
+                ],
+    "status":  "ARTIFACT_STATUS_READY",
+    "audioOverview":  {
+                          "generationOptions":  {
+                                                    "episodeFocus":  "A two-person discussion examining Workato\u0027s repeated recognition as a Leader in the Gartner Magic Quadrant for iPaaS (Integration Platform as a Service). The first speaker should introduce the significance of the Gartner Magic Quadrant as an evaluation tool for technology vendors. The second speaker should explain the definition of iPaaS and detail what it means for Workato to be named a Leader for the 7th time, focusing on how this positioning reflects their execution and vision in the market.",
+                                                    "episodeLength":  "EPISODE_LENGTH_SHORT",
+                                                    "targetAudience":  "TARGET_AUDIENCE_UNSPECIFIED",
+                                                    "languageCode":  "en",
+                                                    "showFormat":  "SHOW_FORMAT_UNSPECIFIED"
+                                                },
+                          "isInteractive":  true
+                      }
+}

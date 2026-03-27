@@ -1,0 +1,17 @@
+﻿{
+    "title":  "Historical Events and Entities Analysis",
+    "type":  "ARTIFACT_TYPE_TABLE",
+    "sources":  [
+                    {
+                        "sourceId":  {
+                                         "id":  "3e6871ba-2942-4ed5-9b64-317a4a9065c1"
+                                     }
+                    }
+                ],
+    "status":  "ARTIFACT_STATUS_READY",
+    "table":  {
+                  "generationOptions":  {
+                                            "languageCode":  "en"
+                                        }
+              }
+}

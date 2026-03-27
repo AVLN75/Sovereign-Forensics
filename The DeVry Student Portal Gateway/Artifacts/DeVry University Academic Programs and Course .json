@@ -1,0 +1,17 @@
+﻿{
+    "title":  "DeVry University Academic Programs and Course Information",
+    "type":  "ARTIFACT_TYPE_TABLE",
+    "sources":  [
+                    {
+                        "sourceId":  {
+                                         "id":  "61f291ae-dcdc-4f87-ad3d-9a7ca60fdd28"
+                                     }
+                    }
+                ],
+    "status":  "ARTIFACT_STATUS_READY",
+    "table":  {
+                  "generationOptions":  {
+                                            "languageCode":  "en"
+                                        }
+              }
+}

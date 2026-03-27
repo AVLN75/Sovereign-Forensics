@@ -1,0 +1,22 @@
+﻿{
+    "title":  "Redacted for Brevity: The Battle Between Immersive Content and Information Overload",
+    "type":  "ARTIFACT_TYPE_AUDIO_OVERVIEW",
+    "sources":  [
+                    {
+                        "sourceId":  {
+                                         "id":  "3e55dada-0779-43af-9555-906d6a38495c"
+                                     }
+                    }
+                ],
+    "status":  "ARTIFACT_STATUS_READY",
+    "audioOverview":  {
+                          "generationOptions":  {
+                                                    "episodeFocus":  "Two experts discuss the nature of immersive content, focusing on the concepts of brevity, redaction, and how these choices affect the final experience. They should speculate on what kind of immersive content would be so extensive it requires explicit redaction for a text excerpt, and debate the trade-offs between full detail and conciseness when presenting complex information to an audience. The discussion should remain theoretical, using the provided source context as a starting point.",
+                                                    "episodeLength":  "EPISODE_LENGTH_SHORT",
+                                                    "targetAudience":  "TARGET_AUDIENCE_UNSPECIFIED",
+                                                    "languageCode":  "en",
+                                                    "showFormat":  "SHOW_FORMAT_UNSPECIFIED"
+                                                },
+                          "isInteractive":  true
+                      }
+}
