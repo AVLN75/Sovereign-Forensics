@@ -1,0 +1,34 @@
+# --- NC-16: ARCGIS EARTH "FLYTO" INTEGRATOR ---
+function Invoke-PaintFlyTo {
+    param(
+        [double]$x = -82.5020, # Default: Thomson, GA
+        [double]$y = 33.4700,
+        [double]$z = 1500,     # Altitude for the "Paint" overlay
+        [double]$tilt = 45      # Angle to view "Metallic" reflections
+    )
+
+    # Construct the JSON according to your Earth Protocol
+    $CameraJSON = @{
+        camera = @{
+            position = @{
+                x = $x
+                y = $y
+                z = $z
+                spatialReference = @{ wkid = 4326 }
+            }
+            heading = 0
+            tilt = $tilt
+        }
+    } | ConvertTo-Json -Compress
+
+    # Encode to Base64 (The "Secret Sauce" for the protocol link)
+    $Bytes = [System.Text.Encoding]::UTF8.GetBytes($CameraJSON)
+    $Encoded = [Convert]::Base64String($Bytes)
+
+    # Launch the ArcGIS Earth Protocol
+    Start-Process "arcgis-earth://flyto?data=$Encoded"
+    Write-Host "[+] Camera Panned to Paint Coordinate: [$x, $y]" -ForegroundColor Green
+}
+
+# Example: Fly to the current paint splash
+Invoke-PaintFlyTo -x -82.5020 -y 33.4700

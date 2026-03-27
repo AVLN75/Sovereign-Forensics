@@ -1,0 +1,8 @@
+# Reset Date for License Auth
+Set-Date -Date "02/15/2026"
+
+# Create the Stealth Bridge so the Media stays 'Connected' regardless of location
+New-NetIPAddress -InterfaceAlias "Sovereign-Anchor" -IPAddress 10.0.0.1 -PrefixLength 24 -ErrorAction SilentlyContinue
+
+# Map the NAS Media folder to the Virtual Gateway
+net use N: "\\10.0.0.1\Sovereign_Archive" /user:admin password /persistent:yes

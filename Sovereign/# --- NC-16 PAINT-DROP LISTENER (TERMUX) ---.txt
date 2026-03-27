@@ -1,0 +1,21 @@
+# --- NC-16: PAINT-DROP LISTENER (TERMUX) ---
+cat << 'EOF' > ~/paint_drop.py
+import asyncio, websockets
+
+async def handle_paint(ws, path):
+    async for message in ws:
+        # Check if packet is "Metallic" (high frequency) or "Matte" (low frequency)
+        frequency = len(set(message)) / len(message)
+        print(f"[*] Paint Drop Received: Intensity {frequency:.2f}")
+        with open("paint_stream.log", "a") as f:
+            f.write(f"{message.hex()}\n")
+
+async def main():
+    async with websockets.serve(handle_paint, "0.0.0.0", 8889):
+        print("[+] Paint-Drop Listener Active on 8889")
+        await asyncio.Future()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+EOF
+python3 ~/paint_drop.py

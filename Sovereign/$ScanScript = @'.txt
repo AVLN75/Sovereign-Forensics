@@ -1,0 +1,30 @@
+$ScanScript = @'
+import os
+
+root_dir = r"C:\Sovereign_Ghost\ArcGIS\.Sovereign_Workspace"
+targets = ["arcpy", "SearchCursor", "da.Walk", "da.SearchCursor"]
+
+print("--- NC-16: WORKSPACE SCAN START ---")
+
+if not os.path.exists(root_dir):
+    print(f"Error: Path not found: {root_dir}")
+else:
+    for root, dirs, files in os.walk(root_dir):
+        for file in files:
+            if file.endswith((".py", ".ps1")):
+                path = os.path.join(root, file)
+                try:
+                    with open(path, "r", errors="ignore") as f:
+                        content = f.read()
+                        found = [t for t in targets if t in content]
+                        if found:
+                            size = os.path.getsize(path) / 1024
+                            print(f"[+] FOUND: {file} ({size:.2f} KB)")
+                            print(f"    Path: {path}")
+                            print(f"    Hooks: {', '.join(found)}")
+                except:
+                    continue
+print("--- SCAN COMPLETE ---")
+'@
+
+python -c $ScanScript

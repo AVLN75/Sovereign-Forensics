@@ -1,0 +1,14 @@
+# --- NC-16: SPATIAL NAVIGATION ---
+function Set-SovereignCamera {
+    param($x = -82.5020, $y = 33.4700, $z = 1000)
+    
+    $JSON = '{"camera":{"position":{"x":'+$x+',"y":'+$y+',"z":'+$z+',"spatialReference":{"wkid":4326}},"heading":0,"tilt":0}}'
+    $Bytes = [System.Text.Encoding]::UTF8.GetBytes($JSON)
+    $Encoded = [Convert]::ToBase64String($Bytes)
+    
+    Start-Process "arcgis-earth://flyto?data=$Encoded"
+    Write-Host "[+] ArcGIS Earth: Flying to Sector [$x, $y]" -ForegroundColor Cyan
+}
+
+# Triggering to your Thomson, GA workspace
+Set-SovereignCamera

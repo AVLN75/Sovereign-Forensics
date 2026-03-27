@@ -1,0 +1,20 @@
+# --- NC-16: TERMUX PAINT-BRUSH ---
+cat << 'EOF' > ~/paint_brush.py
+import asyncio
+import websockets
+import os
+
+async def brush_stream():
+    uri = "ws://172.16.100.26:8888" # Your Laptop's IPv4
+    async with websockets.connect(uri) as ws:
+        print("[+] Brush Connected to Laptop. Painting...")
+        while True:
+            # Capture 32 bytes of 'Network Pigment'
+            pigment = os.urandom(32)
+            await ws.send(pigment)
+            await asyncio.sleep(0.5) # Splash rate
+
+if __name__ == "__main__":
+    asyncio.run(brush_stream())
+EOF
+python3 ~/paint_brush.py

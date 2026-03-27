@@ -1,0 +1,42 @@
+# --- NC-16: STREET-PAINTER PROTOCOL ---
+$StreetPainter = @'
+function Add-StreetPaint {
+    param(
+        [string]$StreetName = "Main St",
+        [double]$StartLat = 33.4700,
+        [double]$StartLong = -82.5020,
+        [double]$EndLat = 33.4710,
+        [double]$EndLong = -82.5030,
+        [string]$Color = "7f0000ff" # Hex for Semi-Transparent Red
+    )
+
+    # 1. Build the KML "Paint" Object
+    $KML = @"
+<?xml version='1.0' encoding='UTF-8'?>
+<kml xmlns='http://www.opengis.net/kml/2.2'>
+  <Document>
+    <Placemark>
+      <name>Painted Line: $StreetName</name>
+      <Style>
+        <LineStyle><color>$Color</color><width>10</width></LineStyle>
+      </Style>
+      <LineString>
+        <coordinates>$StartLong,$StartLat,0 $EndLong,$EndLat,0</coordinates>
+      </LineString>
+    </Placemark>
+  </Document>
+</kml>
+"@
+
+    # 2. Save to the Sovereign Vault (NAS)
+    $FilePath = "N:\Sovereign_Archive\Paint_Layers\line_$($StreetName.Replace(' ','_')).kml"
+    $KML | Out-File -FilePath $FilePath -Encoding utf8
+
+    # 3. Inject into ArcGIS Earth
+    Start-Process "arcgis-earth://add_layer?url=$FilePath"
+    Write-Host "[+] Street Painted: $StreetName. Line anchored to GPS lattice." -ForegroundColor Green
+}
+'@
+
+Invoke-Expression $StreetPainter
+# Usage: Add-StreetPaint -StreetName "Thomson Workspace" -StartLat 33.4705 -StartLong -82.5022 -EndLat 33.4715 -EndLong -82.5032

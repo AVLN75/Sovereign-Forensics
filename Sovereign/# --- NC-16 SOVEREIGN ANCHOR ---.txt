@@ -1,0 +1,38 @@
+# --- NC-16: SOVEREIGN ANCHOR ---
+$SovereignLogic = @'
+function Start-SovereignLink {
+    # 1. Fix broken Environment Variables for the compiler [cite: 281]
+    $env:TEMP = "C:\ESP32_Storage\temp"
+    $env:TMP = "C:\ESP32_Storage\temp"
+    if (!(Test-Path $env:TEMP)) { New-Item -ItemType Directory -Force -Path $env:TEMP }
+
+    # 2. Network Discovery and IKEv2 Handshake [cite: 630]
+    Write-Host "[*] Scanning for Secure Gateway..." -ForegroundColor Cyan
+    # Replace 'auto-profile' with your specific IKEv2 config name [cite: 638]
+    & ipsec up auto-profile 2>$null 
+
+    # 3. Mount ESP32 Storage [cite: 83, 107]
+    $port = (arduino-cli board list | Select-String "ESP32-S3").ToString().Split(" ")[0]
+    if ($port) {
+        Write-Host "[+] Found ESP32 on $port. Initiating Mount..." -ForegroundColor Green
+        # Add logic here to mount as VHD or physical drive [cite: 323]
+    }
+}
+
+function Invoke-VaultDedupe {
+    param($Path = "C:\Sovereign_Ghost")
+    Write-Host "[*] Hashing and Cleaning: $Path" -ForegroundColor Yellow
+    Get-ChildItem -Path $Path -Recurse -File | Group-Object -Property Length | 
+    Where-Object { $_.Count -gt 1 } | ForEach-Object { $_.Group | Get-FileHash } | 
+    Group-Object -Property Hash | Where-Object { $_.Count -gt 1 } | ForEach-Object {
+        $_.Group | Select-Object -Skip 1 | ForEach-Object { 
+            Write-Host "[-] Purging Duplicate: $($_.Path)" -ForegroundColor Red
+            # Remove-Item $_.Path -Confirm:$false # Uncomment to auto-delete [cite: 167, 176]
+        }
+    }
+}
+'@
+
+# Execute the Logic
+Invoke-Expression $SovereignLogic
+Start-SovereignLink

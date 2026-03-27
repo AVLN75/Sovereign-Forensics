@@ -1,0 +1,54 @@
+# --- NC-16: LIVE-PAINT WEBSOCKET BINDER ---
+$LivePaintScript = @'
+import asyncio
+import websockets
+import json
+import base64
+import subprocess
+
+async def paint_handler(websocket, path):
+    print("[*] Paint Stream Established...")
+    async for message in websocket:
+        try:
+            # 1. Transduce: Convert raw packet bytes into 'Paint' coordinates
+            # Uses the first 4 bytes for X and next 4 for Y
+            raw = message.encode() if isinstance(message, str) else message
+            if len(raw) < 8: continue
+            
+            # Map frequency to Thomson, GA sector offsets
+            x_offset = (raw[0] / 255) * 0.01
+            y_offset = (raw[1] / 255) * 0.01
+            
+            x, y = -82.5020 + x_offset, 33.4700 + y_offset
+            
+            # 2. Construct the ArcGIS 'FlyTo' Payload
+            camera = {
+                "camera": {
+                    "position": {"x": x, "y": y, "z": 1200, "spatialReference": {"wkid": 4326}},
+                    "heading": 0, "tilt": 45
+                }
+            }
+            
+            # 3. Base64 Encode and Trigger the 'Splash'
+            json_str = json.dumps(camera)
+            encoded = base64.b64encode(json_str.encode()).decode()
+            
+            # Execute the protocol link directly from the stream
+            cmd = f'Start-Process "arcgis-earth://flyto?data={encoded}"'
+            subprocess.run(["powershell", "-Command", cmd])
+            
+            print(f"[+] Paint Splash at: {x:.4f}, {y:.4f}")
+            
+        except Exception as e:
+            print(f"[-] Dropped Paint: {e}")
+
+async def main():
+    # Listen on all interfaces (for Termux/ESP32 access)
+    async with websockets.serve(paint_handler, "0.0.0.0", 8888):
+        await asyncio.Future()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+'@
+
+python -c $LivePaintScript

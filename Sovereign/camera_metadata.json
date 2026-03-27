@@ -1,0 +1,12 @@
+cat << 'EOF' > camera_metadata.json
+{
+    "camera_id": "SCOUT_01",
+    "hardware": "ESP32-CAM",
+    "lens_type": "FishEye",
+    "fov_settings": {
+        "horizontal": 120,
+        "vertical": 90
+    },
+    "security_level": "290_Harden_v1"
+}
+EOF

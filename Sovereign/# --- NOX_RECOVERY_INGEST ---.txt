@@ -1,0 +1,30 @@
+# --- NOX_RECOVERY_INGEST ---
+$GitHubUser = "AVLN75"
+$BaseRepo = "https://raw.githubusercontent.com/$GitHubUser/M2n2_Nexus_Sovereign"
+$Manifest = @(
+    "core/NettunDevice.ps1",
+    "perceptions/PowerlineScanner.py",
+    "tesla/TeslaOverlay.py",
+    "scripts/allseeingeye-info.nse",
+    "gis/GeoEvent_Config.xml"
+)
+
+foreach ($Item in $Manifest) {
+    $FileName = $Item.Split('/')[-1]
+    $Success = $false
+    
+    foreach ($Branch in @("main", "master", "dev")) {
+        $Url = "$BaseRepo/$Branch/$Item"
+        $Dest = "C:\Sovereign_Ghost\Sovereign_Assets\Cells\$FileName"
+        
+        try {
+            Invoke-WebRequest -Uri $Url -OutFile $Dest -UseBasicParsing -ErrorAction Stop
+            Write-Host "[OK] Nox Engraved $FileName from $Branch" -ForegroundColor Green
+            $Success = $true
+            break
+        } catch {
+            continue 
+        }
+    }
+    if (-not $Success) { Write-Host "[!!] FAILURE: $FileName not found in any branch." -ForegroundColor Red }
+}

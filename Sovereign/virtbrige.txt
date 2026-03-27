@@ -1,0 +1,6 @@
+# 1. Enable the "Bridge" feature on the Anchor adapter
+$BridgeName = "Sovereign-Virtual-Switch"
+New-NetIPAddress -InterfaceAlias "Sovereign-Anchor" -IPAddress 10.0.0.1 -PrefixLength 24
+
+# 2. Set the Vehicle's "Onlive" drive to point to this static internal gateway
+net use N: "\\10.0.0.1\Sovereign_Archive" /persistent:yes

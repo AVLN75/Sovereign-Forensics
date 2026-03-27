@@ -1,0 +1,42 @@
+# --- NC-16: PERSISTENT STREET PAINT ---
+$StreetPaintScript = @'
+function Add-StreetPaint {
+    param(
+        [string]$Name = "Data_Trail_01",
+        [double[]]$Coords = @(-82.5020, 33.4700, -82.5030, 33.4710), # [Long, Lat, Long, Lat]
+        [string]$Color = "ff0000ff" # Solid Red (AABBGGRR hex)
+    )
+
+    # 1. Format coordinates for KML (Long,Lat,0)
+    $KMLCoords = ""
+    for ($i = 0; $i -lt $Coords.Count; $i += 2) {
+        $KMLCoords += "$($Coords[$i]),$($Coords[$i+1]),0 "
+    }
+
+    # 2. Build the KML Data "Pigment"
+    $KML = @"
+<?xml version='1.0' encoding='UTF-8'?>
+<kml xmlns='http://www.opengis.net/kml/2.2'>
+  <Document>
+    <Placemark>
+      <name>$Name</name>
+      <Style>
+        <LineStyle><color>$Color</color><width>12</width></LineStyle>
+      </Style>
+      <LineString><coordinates>$($KMLCoords.Trim())</coordinates></LineString>
+    </Placemark>
+  </Document>
+</kml>
+"@
+
+    # 3. Save to NAS and Inject
+    $Path = "N:\Sovereign_Archive\Paint_Layers\$Name.kml"
+    $KML | Out-File -FilePath $Path -Encoding utf8
+    Start-Process "arcgis-earth://add_layer?url=$Path"
+    
+    Write-Host "[+] Street Painted: $Name" -ForegroundColor Green
+    Write-Host "[*] Persistent File Saved to: $Path" -ForegroundColor Cyan
+}
+'@
+
+Invoke-Expression $StreetPaintScript

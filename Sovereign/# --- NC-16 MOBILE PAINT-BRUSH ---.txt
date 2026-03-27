@@ -1,0 +1,20 @@
+# --- NC-16: MOBILE PAINT-BRUSH ---
+cat << 'EOF' > ~/realtime_paint.py
+import asyncio
+import websockets
+import json
+
+async def paint_as_i_walk():
+    uri = "ws://172.16.100.26:8888" # Laptop IP
+    async with websockets.connect(uri) as ws:
+        print("[+] Brush Active. GPS Breadcrumbs = ON.")
+        while True:
+            # Simulate grabbing GPS from Termux-API
+            # termux-location -p network
+            coords = {"lat": 33.4700, "lon": -82.5020, "type": "paint_line"} 
+            await ws.send(json.dumps(coords))
+            await asyncio.sleep(2) # Paint every 2 seconds
+
+if __name__ == "__main__":
+    asyncio.run(paint_as_i_walk())
+EOF

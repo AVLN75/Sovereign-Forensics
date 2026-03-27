@@ -1,0 +1,30 @@
+# --- NC-16: SOVEREIGN HUD BRIDGE (TRANSPARENCY) ---
+$HUDBridge = @'
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public class WindowTrans {
+    [DllImport("user32.dll")]
+    public static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+    [DllImport("user32.dll")]
+    public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+    [DllImport("user32.dll")]
+    public static extern bool SetLayeredWindowAttributes(IntPtr hWnd, uint crKey, byte bAlpha, uint dwFlags);
+}
+"@
+
+function Set-SovereignAlpha {
+    param([string]$WindowTitle, [byte]$Alpha = 180) # 0 = Invisible, 255 = Opaque
+    $process = Get-Process | Where-Object { $_.MainWindowTitle -like "*$WindowTitle*" }
+    if ($process) {
+        $hwnd = $process.MainWindowHandle
+        $long = [WindowTrans]::GetWindowLong($hwnd, -20)
+        [WindowTrans]::SetWindowLong($hwnd, -20, $long -bor 0x80000)
+        [WindowTrans]::SetLayeredWindowAttributes($hwnd, 0, $Alpha, 0x2)
+        Write-Host "[+] HUD Alpha set to $Alpha for $WindowTitle" -ForegroundColor Green
+    }
+}
+'@
+
+Invoke-Expression $HUDBridge
+# Usage: Set-SovereignAlpha -WindowTitle "Google Maps" -Alpha 150

@@ -1,0 +1,24 @@
+# --- NC-16: TILE MIGRATOR (SSD CLEANUP) ---
+$Migrator = @'
+import sqlite3, os, hashlib, zlib
+
+SOURCE = r"C:\Sovereign_Ghost"
+VAULT = r"N:\Sovereign_Master_Archive.tile"
+
+def migrate():
+    conn = sqlite3.connect(VAULT)
+    conn.execute("CREATE TABLE IF NOT EXISTS assets (name TEXT, hash TEXT PRIMARY KEY, content BLOB, path TEXT)") 
+    
+    for root, dirs, files in os.walk(SOURCE):
+        for file in files:
+            full_path = os.path.join(root, file)
+            with open(full_path, "rb") as f:
+                data = f.read()
+                f_hash = hashlib.sha256(data).hexdigest()
+                conn.execute("INSERT OR IGNORE INTO assets VALUES (?,?,?,?)", (file, f_hash, zlib.compress(data), full_path)) 
+            print(f"[+] Blobbed: {file}")
+            # os.remove(full_path) # Uncomment to clear SSD space
+    conn.commit()
+migrate()
+'@
+python -c $Migrator

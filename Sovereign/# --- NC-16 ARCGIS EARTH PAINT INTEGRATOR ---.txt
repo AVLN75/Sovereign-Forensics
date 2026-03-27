@@ -1,0 +1,18 @@
+# --- NC-16: ARCGIS EARTH PAINT INTEGRATOR ---
+function Set-SovereignCamera {
+    param($x = -82.5020, $y = 33.4700, $z = 1000)
+    
+    # 1. Create the JSON camera payload
+    $JSON = '{"camera":{"position":{"x":'+$x+',"y":'+$y+',"z":'+$z+',"spatialReference":{"wkid":4326}},"heading":0,"tilt":0}}'
+    
+    # 2. Encode to Base64 for the arcgis-earth:// protocol
+    $Bytes = [System.Text.Encoding]::UTF8.GetBytes($JSON)
+    $Encoded = [Convert]::ToBase64String($Bytes)
+    
+    # 3. Trigger the FlyTo in ArcGIS Earth
+    Start-Process "arcgis-earth://flyto?data=$Encoded"
+    Write-Host "[+] ArcGIS Earth: Syncing Camera to Paint Splashes at [$x, $y]" -ForegroundColor Cyan
+}
+
+# Run the flyto command for your active sector
+Set-SovereignCamera

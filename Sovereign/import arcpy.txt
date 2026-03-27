@@ -1,0 +1,41 @@
+import arcpy
+import os
+
+# Paths based on your setup
+WORKSPACE = r"N:\Sovereign_Master_Archive" # Scan the NAS
+OUTPUT_LOG = r"C:\Sovereign_Stub.db"       # Store readings locally
+
+def scan_and_read():
+    print("[*] NC-16: INITIALIZING ARCPY DATA EXTRACTION...")
+    
+    # Walk through every folder in the NAS/Sovereign-Anchor
+    walker = arcpy.da.Walk(WORKSPACE, datatype="FeatureClass")
+    
+    for dirpath, dirnames, filenames in walker:
+        for filename in filenames:
+            full_path = os.path.join(dirpath, filename)
+            print(f"[+] Scanning: {filename}")
+            
+            try:
+                # Describe the data (License check happens here)
+                desc = arcpy.Describe(full_path)
+                
+                # Use a SearchCursor to read the actual rows/data
+                # We only take the attributes, not the heavy 'SHAPE@' geometry
+                fields = [f.name for f in arcpy.ListFields(full_path)]
+                
+                with arcpy.da.SearchCursor(full_path, fields) as cursor:
+                    count = 0
+                    for row in cursor:
+                        # Process your readings here
+                        # (e.g., save to your OSI_Vault index)
+                        count += 1
+                        if count > 10: break # Limit scan to save memory
+                
+                print(f"    - Identity: {desc.baseName} | Type: {desc.dataType} | Rows: {count}")
+                
+            except Exception as e:
+                print(f"    [!] Skip {filename}: License or Path Error")
+
+if __name__ == "__main__":
+    scan_and_read()

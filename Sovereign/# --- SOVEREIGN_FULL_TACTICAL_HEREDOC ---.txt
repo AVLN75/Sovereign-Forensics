@@ -1,0 +1,99 @@
+# --- SOVEREIGN_FULL_TACTICAL_HEREDOC ---
+$baseDir = "C:\Sovereign_Ghost\Sovereign_Assets\Drones"
+
+$fullTacticalCode = @'
+#include "esp_camera.h"
+#include <WiFi.h>
+#include <ESPAsyncWebServer.h>
+#include <ArduinoOTA.h>
+#include <Wire.h>
+#include "MPU6050.h"
+
+// --- IDENTITY ---
+const char* BOT_ID = "DRONE_X";
+
+// --- PIN DEFS (AI-THINKER + PERIPHERALS) ---
+#define PWDN_GPIO_NUM 32
+#define XCLK_GPIO_NUM 0
+#define SIOD_GPIO_NUM 26
+#define SIOC_GPIO_NUM 27
+#define Y9_GPIO_NUM 35
+#define Y2_GPIO_NUM 5
+#define VSYNC_GPIO_NUM 25
+#define HREF_GPIO_NUM 23
+#define PCLK_GPIO_NUM 22
+
+int IN1 = 14; int IN2 = 15; int IN3 = 13; int IN4 = 12; // L298N
+const int trigPin = 16; const int echoPin = 17;        // Ultrasonic
+const int irLeft = 13; const int irRight = 12;         // Line Follower IR
+const int servoPin = 2;
+
+// --- STATE & LOAD BALANCING ---
+enum Mode { MANUAL, FOLLOWER, AVOIDANCE, LINE_FOLLOWER, SCANNER, STANDBY };
+Mode currentMode = MANUAL;
+int distanceCm = 0;
+AsyncWebServer server(80);
+
+// --- MOTOR LOGIC ---
+void moveForward() { digitalWrite(IN1, 1); digitalWrite(IN2, 0); digitalWrite(IN3, 1); digitalWrite(IN4, 0); }
+void turnRight() { digitalWrite(IN1, 1); digitalWrite(IN2, 0); digitalWrite(IN3, 0); digitalWrite(IN4, 1); }
+void stopMotors() { digitalWrite(IN1, 0); digitalWrite(IN2, 0); digitalWrite(IN3, 0); digitalWrite(IN4, 0); }
+
+// --- MODE: OBJECT DETECTION & AVOIDANCE ---
+void modeAvoidance() {
+    digitalWrite(trigPin, 1); delayMicroseconds(10); digitalWrite(trigPin, 0);
+    distanceCm = pulseIn(echoPin, 1) / 58.26;
+    if (distanceCm > 0 && distanceCm < 20) {
+        stopMotors(); delay(200); turnRight(); delay(500);
+    } else {
+        moveForward();
+    }
+}
+
+// --- MODE: LINE FOLLOWER ---
+void modeLineFollower() {
+    int L = digitalRead(irLeft); int R = digitalRead(irRight);
+    if (L == 0 && R == 0) moveForward();
+    else if (L == 1) turnRight(); // Simplified tracking
+    else stopMotors();
+}
+
+void setup() {
+    Serial.begin(115200);
+    pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT); pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+    pinMode(trigPin, OUTPUT); pinMode(echoPin, INPUT);
+    pinMode(irLeft, INPUT); pinMode(irRight, INPUT);
+
+    WiFi.begin("YOUR_SSID", "YOUR_PASS");
+    ArduinoOTA.setHostname(BOT_ID);
+    ArduinoOTA.setPassword("5864229114");
+    ArduinoOTA.begin();
+
+    // --- LOAD BALANCER & REMOTE COMMANDS ---
+    server.on("/mode", HTTP_GET, [](AsyncWebServerRequest *request){
+        if(request->hasParam("val")) {
+            int val = request->getParam("val")->value().toInt();
+            currentMode = (Mode)val;
+        }
+        request->send(200, "text/plain", "NODE_ACK");
+    });
+    server.begin();
+}
+
+void loop() {
+    ArduinoOTA.handle();
+    if (currentMode == AVOIDANCE) modeAvoidance();
+    else if (currentMode == LINE_FOLLOWER) modeLineFollower();
+    else if (currentMode == STANDBY) stopMotors(); 
+}
+'@
+
+# Generate 20 Nodes with Full Suite
+for ($i = 1; $i -le 20; $i++) {
+    $name = "Drone_$i"
+    $path = "$baseDir\$name"
+    if (!(Test-Path $path)) { New-Item -ItemType Directory -Path $path -Force }
+    $fullTacticalCode.Replace("DRONE_X", $name) | Out-File -FilePath "$path\$name.ino" -Encoding utf8
+}
+
+Write-Host "[!] 20 Drone Nodes Grounded with Full Tactical Suite." -ForegroundColor Green

@@ -1,0 +1,60 @@
+# --- NC-16: SOVEREIGN ACTION-LINK MASTER BUILD ---
+$ActionBuild = @'
+# 1. DIRECTORY & INITIALIZATION
+$Base = "C:\Sovereign_Ghost"
+$Vault = "N:\Sovereign_Archive"
+$Layers = @("L3_NETW", "L7_APP", "Action_Scripts")
+foreach ($L in $Layers) { if (!(Test-Path "$Base\$L")) { New-Item -ItemType Directory -Force -Path "$Base\$L" } }
+
+# 2. THE QUANTUM ACTION FUNCTION
+# This is the "Trigger" that links the digital, physical, and schematic worlds
+$ActionScript = @"
+function Invoke-SovereignAction {
+    param(
+        [double]$Lat = 33.4700, 
+        [double]$Lon = -82.5020,
+        [string]$Sector = "Thomson_GA"
+    )
+
+    # ACTION A: Inject KML/KMZ to ArcGIS Earth
+    $KMLPath = "$Vault\Paint_Layers\$Sector\_Live_Path.kml"
+    if (Test-Path $KMLPath) {
+        Start-Process "arcgis-earth://add_layer?url=$KMLPath"
+        Write-Host "[+] KML Lattice Injected: $Sector" -ForegroundColor Cyan
+    }
+
+    # ACTION B: Link to Visio Schematic
+    # Opens the Visio diagram showing the OSI logic for this specific sector
+    $VisioPath = "$Vault\Schematics\$Sector\_Logic.vsdx"
+    if (Test-Path $VisioPath) {
+        Start-Process $VisioPath
+        Write-Host "[+] Visio Schematic Opened: $Sector Logic" -ForegroundColor Blue
+    }
+
+    # ACTION C: WebSocket Quantum Collapse
+    # Sends coordinates to the 'Blade' (Gimbal/Laser) for physical manifestation
+    $Payload = @{ lat = $Lat; lon = $Lon; status = "Collapse" } | ConvertTo-Json
+    $client = New-Object System.Net.WebSockets.ClientWebSocket
+    $ct = New-Object System.Threading.CancellationToken
+    try {
+        $conn = $client.ConnectAsync("ws://localhost:8890", $ct)
+        while (!$conn.IsCompleted) { Start-Sleep -m 50 }
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($Payload)
+        $client.SendAsync((New-Object ArraySegment[byte] -ArgumentList (,$bytes)), [System.Net.WebSockets.WebSocketMessageType]::Text, $true, $ct) | Out-Null
+        Write-Host "[!] Quantum State Collapsed: Physical Street Painted." -ForegroundColor Green
+    } catch {
+        Write-Host "[-] WebSocket Offline: Physical Transduction Failed." -ForegroundColor Red
+    }
+}
+"@
+
+# Save the function to the Action_Scripts folder for persistence
+$ActionScript | Out-File -FilePath "$Base\Action_Scripts\Sovereign_Actions.ps1" -Encoding utf8
+
+# 3. GLOBAL SOURCE
+Invoke-Expression $ActionScript
+Write-Host "[+] Sovereign Action-Link Deployed." -ForegroundColor Green
+Write-Host "[*] Ready to link KML, Visio, and WebSockets." -ForegroundColor Yellow
+'@
+
+Invoke-Expression $ActionBuild

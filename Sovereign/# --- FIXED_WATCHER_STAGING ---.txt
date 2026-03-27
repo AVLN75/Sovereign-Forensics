@@ -1,0 +1,23 @@
+# --- FIXED_WATCHER_STAGING ---
+$watcherScript = @'
+while($true) {
+    # Check for files modified in the last 6 seconds
+    Get-ChildItem -Path "C:\Sovereign_Ghost" -Recurse -ErrorAction SilentlyContinue | 
+    Where-Object { $_.LastWriteTime -gt (Get-Date).AddSeconds(-6) -and $_.Attributes -ne "Directory" } | 
+    ForEach-Object {
+        $timestamp = Get-Date -Format "HH:mm:ss"
+        $entry = "- [ ] $timestamp: Update detected in $($_.FullName.Replace('C:\Sovereign_Ghost\',''))"
+        
+        # Prevent duplicate logs for the same change
+        $currentTodo = Get-Content "C:\Sovereign_Ghost\TODO.md" -ErrorAction SilentlyContinue
+        if ($currentTodo -notcontains $entry) {
+            Add-Content -Path "C:\Sovereign_Ghost\TODO.md" -Value $entry
+            Write-Host "[+] Logged to TODO: $($_.Name)" -ForegroundColor Green
+        }
+    }
+    Start-Sleep -Seconds 5
+}
+'@
+
+$watcherScript | Out-File -FilePath "C:\Sovereign_Ghost\Watcher.ps1" -Encoding utf8
+Write-Host "[!] Watcher.ps1 Fixed and Grounded." -ForegroundColor Cyan

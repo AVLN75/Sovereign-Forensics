@@ -1,0 +1,31 @@
+# --- NC-16: PAINTBALL TAP (CRYSTALLIZER) ---
+$PaintballScript = @'
+import hashlib, os, csv
+
+def crystallize_stream(input_file, output_csv):
+    # Transducing raw bits into the "Paint" coordinate system
+    with open(input_file, "rb") as f:
+        raw = f.read()
+    
+    # Generate the "Lattice" (the grid for the paint)
+    splashes = []
+    chunks = [raw[i:i+32] for i in range(0, len(raw), 32)]
+    
+    for chunk in chunks:
+        h = hashlib.sha256(chunk).hexdigest()
+        # Mapping Hex to Spatial Coordinates (X, Y, Intensity)
+        x = (int(h[0:4], 16) % 36000) / 100.0 - 180
+        y = (int(h[4:8], 16) % 18000) / 100.0 - 90
+        intensity = int(h[8:10], 16) / 255.0
+        splashes.append({'x': x, 'y': y, 'intensity': intensity})
+    
+    with open(output_csv, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=['x', 'y', 'intensity'])
+        writer.writeheader()
+        writer.writerows(splashes)
+    print(f"[+] Crystallized {len(splashes)} paint splashes.")
+
+if __name__ == "__main__":
+    crystallize_stream(r"C:\Sovereign_Ghost\raw_stream.bin", r"C:\Sovereign_Ghost\paint_coords.csv")
+'@
+python -c $PaintballScript

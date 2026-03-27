@@ -1,0 +1,53 @@
+Since you’ve successfully broken through the WinRM service barrier and raised your shell’s memory quota, let's wrap this up with a "Sovereign" approach to your PowerShell toolkit.
+
+To keep your terminal efficient and avoid those "useless files" you mentioned earlier, we'll use Heredocs (specifically PowerShell's @' ... '@ syntax) to define compact functions for your memory management.
+
+🛠️ The "Memory Master" Final Script
+This script uses a Heredoc to create a set of functions you can paste directly into your terminal or add to your $PROFILE.
+
+PowerShell
+$MemoryTools = @'
+function Get-RamHogs {
+    Get-Process | Sort-Object WorkingSet -Descending | Select-Object -First 10 Name, 
+    @{Name="RAM(MB)";Expression={[math]::Round($_.WorkingSet / 1MB, 2)}}
+}
+
+function Clear-Standby {
+    Write-Host "Flushing memory..." -ForegroundColor Cyan
+    [System.GC]::Collect()
+    Get-Process | Where-Object {$_.Name -eq "chrome" -or $_.Name -eq "Code"} | Stop-Process -Force
+    Write-Host "Chrome and VS Code background processes cleared." -ForegroundColor Green
+}
+
+function Set-ShellLimit {
+    param([int]$MB = 2048)
+    Set-Item WSMan:\localhost\Shell\MaxMemoryPerShellMB $MB
+    winrm set winrm/config/winrs "@{MaxMemoryPerShellMB='$MB'}"
+}
+'@
+
+# Execute the Heredoc to load the functions into your current session
+Invoke-Expression $MemoryTools
+📖 Command Descriptions
+1. Get-RamHogs
+What it does: Instantly identifies the top 10 memory-consuming processes.
+
+Why use it: It rounds the MB to two decimal places, making it much easier to read than the raw output you got earlier.
+
+2. Clear-Standby
+What it does: Runs a Garbage Collection ([System.GC]::Collect()) on the shell and kills any lingering Chrome or VS Code processes.
+
+Why use it: It’s a "panic button" for when your system feels sluggish.
+
+3. Set-ShellLimit
+What it does: Updates both the WSMan path and the WinRM config for memory limits in one go.
+
+Why use it: Since you set it to 2048 already, you likely won't need this often, but it's there if you ever need to push to 4096 (4GB) for massive data tasks.
+
+🚀 Final Summary of Commands Used
+Command	Purpose
+winrm quickconfig	Enables the management service for configuration changes.
+Get-Item WSMan:\localhost\Shell\...	Checks the current PowerShell environment memory cap.
+Set-Item ... -Value 2048	Raises the per-shell memory ceiling to 2GB.
+Stop-Process -Name "chrome" -Force	Terminates all instances of a specific app.
+Would you like me to show you how to append these functions to your PowerShell profile so they are available every time you open the terminal?

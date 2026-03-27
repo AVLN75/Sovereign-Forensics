@@ -1,0 +1,26 @@
+﻿2026-03-04 00:44:49.982 | 09688 |    INFO | D | NONE |
+=========================
+CtxsDPS
+Time: 2026-03-04 00:44:49
+UTC : 2026-03-04 08:44:49
+Version: 25.10.1.10
+========================= |
+2026-03-04 00:44:49.982 | 09688 |    INFO | D | NONE | Max Log Level: VERB, Max Log Size (MB):300, Max Log Files Count:3 |
+2026-03-04 00:44:49.982 | 09688 |   EVENT | D | NONE | Starting Service, lpCmdLine = '--clean-user-installs' |
+2026-03-04 00:44:49.982 | 09688 |   ERROR | D | NONE | Got empty URL. Hence fetching feature flag for last loggedIn URL |
+2026-03-04 00:44:49.983 | 09688 |   ERROR | D | NONE | Failed to read last logged in URL from registry. |
+2026-03-04 00:44:49.983 | 09688 |   EVENT | S | NONE | Getting the value for feature: EnableMiniDump with url:  |
+2026-03-04 00:44:49.983 | 09688 | VERBOSE | D | NONE | The registry value for feature: EnableMiniDump is not defined or the feature data is empty |
+2026-03-04 00:44:49.983 | 09688 |   DEBUG | S | NONE | Reading the boolean feature flag: EnableMiniDump for url:  |
+2026-03-04 00:44:49.983 | 09688 |   EVENT | D | NONE | Decode input string : No error |
+2026-03-04 00:44:49.983 | 09688 |   ERROR | D | NONE | Unknown error or the input string url is just 1 char and was successfully decoded |
+2026-03-04 00:44:49.983 | 09688 |   EVENT | S | NONE | Getting status of feature flag: CSACLIENTS-9587-Enable-Minidump for FQDN:  |
+2026-03-04 00:44:49.983 | 09688 |   ERROR | D | NONE | Failed to get the flag value from the registry. |
+2026-03-04 00:44:49.983 | 09688 |   EVENT | S | NONE | The feature flag: CSACLIENTS-9587-Enable-Minidump is Unknown |
+2026-03-04 00:44:49.983 | 09688 | VERBOSE | D | NONE | The flag value for feature EnableMiniDump is not defined in the Feature Flag service. |
+2026-03-04 00:44:49.983 | 09688 |   EVENT | S | NONE | The feature value is not defined. Using the default value. |
+2026-03-04 00:44:49.983 | 09688 |   EVENT | S | NONE |  The Minidump handler feature is disabled |
+2026-03-04 00:44:49.983 | 09688 |   DEBUG | S | NONE | Minidump handler is disabled |
+2026-03-04 00:44:49.983 | 09688 |   ERROR | D | NONE | Query registry value failed to open key ProductCode. Error: (2) The system cannot find the file specified. |
+2026-03-04 00:44:49.983 | 09688 |   EVENT | D | NONE | User mode installation of the app not found : No error |
+2026-03-04 00:44:49.983 | 09688 |   EVENT | D | NONE | User mode EPA uninstallation complete. Exiting. |

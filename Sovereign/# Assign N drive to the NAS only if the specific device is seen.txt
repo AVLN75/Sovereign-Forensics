@@ -1,0 +1,8 @@
+# Assign N: drive to the NAS only if the specific device is seen on the network
+$VehicleMAC = "62-3D-26-73-AE-10"
+$ArpCheck = arp -a | Select-String $VehicleMAC
+
+if ($ArpCheck) {
+    net use N: "\\172.16.100.254\Sovereign_Archive" /user:admin password /persistent:yes
+    Write-Host "[+] Infotainment Drive Linked via MAC Verification." -ForegroundColor Green
+}

@@ -1,0 +1,36 @@
+# --- NC-16: SOVEREIGN-EYE REALTIME SYNC ---
+$EyeSync = @'
+import asyncio, websockets, json, webbrowser, subprocess, base64
+
+async def sync_view(websocket, path):
+    print("[*] Sovereign-Eye Linked. Awaiting coordinates...")
+    async for message in websocket:
+        data = json.loads(message)
+        lat, lon = data['lat'], data['lon']
+        
+        # 1. Update Street View (Plain Eyes View)
+        # Opens in your default browser and refreshes/redirects
+        sv_url = f"https://www.google.com/maps/@?api=1&map_action=pano&viewpoint={lat},{lon}"
+        webbrowser.open(sv_url)
+
+        # 2. Update ArcGIS Earth (Sovereign View)
+        camera = {
+            "camera": {
+                "position": {"x": lon, "y": lat, "z": 150, "spatialReference": {"wkid": 4326}},
+                "heading": 0, "tilt": 70 # Low tilt for "street level" feel
+            }
+        }
+        encoded = base64.b64encode(json.dumps(camera).encode()).decode()
+        subprocess.run(["powershell", "-Command", f'Start-Process "arcgis-earth://flyto?data={encoded}"'])
+        
+        print(f"[+] Sync: {lat}, {lon}")
+
+async def main():
+    async with websockets.serve(sync_view, "0.0.0.0", 8888):
+        await asyncio.Future()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+'@
+
+python -c $EyeSync

@@ -1,0 +1,16 @@
+﻿2026-03-04 00:41:08.171 | 10972 |    INFO | D | NONE |
+=========================
+ngLauncher
+Time: 2026-03-04 00:41:08
+UTC : 2026-03-04 08:41:08
+Version: 25.10.1.10
+========================= |
+2026-03-04 00:41:08.171 | 10972 |    INFO | D | NONE | Max Log Level: VERB, Max Log Size (MB):300, Max Log Files Count:3 |
+2026-03-04 00:41:08.171 | 10972 |   DEBUG | D | NONE | Started with command line: [autoLaunch] |
+2026-03-04 00:41:08.173 | 10972 |   EVENT | S | NONE | Launcher got called after upgrade. |
+2026-03-04 00:41:08.174 | 10972 |   EVENT | S | NONE | Launched EPA using a cookie |
+2026-03-04 00:41:30.268 | 11084 |   DEBUG | S | NONE | Closing NGlauncher because of timeout. Last Request Time = 1772613668 |
+2026-03-04 00:41:30.268 | 11084 |   DEBUG | S | NONE | Closing listen socket due to timeout |
+2026-03-04 00:41:30.271 | 10972 |   DEBUG | D | NONE | Socket accept failed with error: (10004) A blocking operation was interrupted by a call to WSACancelBlockingCall. |
+2026-03-04 00:41:30.271 | 10972 |   DEBUG | D | NONE | Listen thread is ending |
+2026-03-04 00:41:30.271 | 10972 |   DEBUG | S | NONE | Cleaning up resources |

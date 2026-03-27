@@ -1,0 +1,26 @@
+# --- NC-16: SOVEREIGN ANCHOR & ARDUINO FIX ---
+$SovereignLogic = @'
+# 1. Force Local Environment to bypass G: drive errors
+$env:TEMP = "C:\ESP32_Storage\temp"
+$env:TMP = "C:\ESP32_Storage\temp"
+$env:ARDUINO_DIRECTORIES_DATA = "C:\ESP32_Storage\arduino-data"
+
+# 2. Map the Network NAS (Stealth Mode)
+$NAS_PATH = "\\172.16.100.254\Sovereign_Archive"
+if (!(Test-Path N:)) {
+    New-PSDrive -Name "N" -PSProvider FileSystem -Root $NAS_PATH -Persist -ErrorAction SilentlyContinue
+}
+
+# 3. Flash ESP32-S3 (Mass Storage Mode)
+function Flash-SovereignBlade {
+    $cli = "C:\ESP32_Storage\arduino-cli.exe"
+    & $cli core update-index
+    & $cli compile --fqbn esp32:esp32:esp32s3 --build-property "build.extra_flags=-DARDUINO_USB_MODE=0 -DARDUINO_USB_MSC_ON_BOOT=1" C:\ESP32_Storage
+    & $cli upload -p COM3 --fqbn esp32:esp32:esp32s3 C:\ESP32_Storage
+}
+
+Write-Host "[+] Sovereign Environment Active. Vault at N:\" -ForegroundColor Green
+'@
+
+# Execute the Herestring
+Invoke-Expression $SovereignLogic

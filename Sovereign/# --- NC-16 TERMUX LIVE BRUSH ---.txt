@@ -1,0 +1,21 @@
+# --- NC-16: TERMUX LIVE BRUSH ---
+cat << 'EOF' > ~/live_brush.py
+import asyncio
+import websockets
+import json
+
+async def stream_location():
+    # Laptop WebSocket IP
+    uri = "ws://172.16.100.26:8888" 
+    async with websockets.connect(uri) as ws:
+        print("[+] Brush Active. Painting street...")
+        while True:
+            # In a real scenario, use: termux-location
+            # Here we simulate a movement shift
+            my_data = {"type": "paint", "lat": 33.4700, "lon": -82.5020}
+            await ws.send(json.dumps(my_data))
+            await asyncio.sleep(1)
+
+if __name__ == "__main__":
+    asyncio.run(stream_location())
+EOF

@@ -1,0 +1,93 @@
+# --- SOVEREIGN_ORIGINAL_NODE_REBUILD ---
+$baseDir = "C:\Sovereign_Ghost\Sovereign_Assets\Drones"
+
+$originalNodeCode = @'
+#include "esp_camera.h"
+#include <WiFi.h>
+#include <ESPAsyncWebServer.h>
+#include <ArduinoOTA.h>
+#include <Wire.h>
+#include "MPU6050.h"
+
+// --- IDENTITY & NET ---
+const char* BOT_ID = "DRONE_X"; 
+const char* ssid = "YOUR_SSID";
+const char* password = "YOUR_PASS";
+
+// --- PIN DEFINITIONS (AI-THINKER) ---
+#define PWDN_GPIO_NUM 32
+#define RESET_GPIO_NUM -1
+#define XCLK_GPIO_NUM 0
+#define SIOD_GPIO_NUM 26
+#define SIOC_GPIO_NUM 27
+#define Y9_GPIO_NUM 35
+#define Y8_GPIO_NUM 34
+#define Y7_GPIO_NUM 39
+#define Y6_GPIO_NUM 36
+#define Y5_GPIO_NUM 21
+#define Y4_GPIO_NUM 19
+#define Y3_GPIO_NUM 18
+#define Y2_GPIO_NUM 5
+#define VSYNC_GPIO_NUM 25
+#define HREF_GPIO_NUM 23
+#define PCLK_GPIO_NUM 22
+
+// Actuators
+int IN1 = 14; int IN2 = 15; int IN3 = 13; int IN4 = 12; 
+const int trigPin = 16; const int echoPin = 17;
+const int servoPin = 2;
+
+// State
+enum Mode { MANUAL, FOLLOWER, AVOIDANCE, SCANNER };
+Mode currentMode = MANUAL;
+AsyncWebServer server(80);
+
+void moveForward() { digitalWrite(IN1, 1); digitalWrite(IN2, 0); digitalWrite(IN3, 1); digitalWrite(IN4, 0); }
+void stopMotors() { digitalWrite(IN1, 0); digitalWrite(IN2, 0); digitalWrite(IN3, 0); digitalWrite(IN4, 0); }
+
+int getDistance() {
+    digitalWrite(trigPin, 1); delayMicroseconds(10); digitalWrite(trigPin, 0);
+    return pulseIn(echoPin, 1) / 58.26;
+}
+
+void setup() {
+    Serial.begin(115200);
+    pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT); pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+    pinMode(trigPin, OUTPUT); pinMode(echoPin, INPUT);
+    
+    // Camera Init
+    camera_config_t config;
+    config.pin_d0 = Y2_GPIO_NUM; config.pin_d7 = Y9_GPIO_NUM;
+    config.pin_xclk = XCLK_GPIO_NUM; config.pin_pclk = PCLK_GPIO_NUM;
+    config.pixel_format = PIXFORMAT_JPEG; config.frame_size = FRAMESIZE_VGA;
+    esp_camera_init(&config);
+
+    WiFi.begin(ssid, password);
+    ArduinoOTA.setHostname(BOT_ID);
+    ArduinoOTA.setPassword("5864229114");
+    ArduinoOTA.begin();
+
+    server.on("/mode", HTTP_GET, [](AsyncWebServerRequest *request){
+        if(request->hasParam("val")) currentMode = (Mode)request->getParam("val")->value().toInt();
+        request->send(200, "text/plain", "OK");
+    });
+    server.begin();
+}
+
+void loop() {
+    ArduinoOTA.handle();
+    if(currentMode == AVOIDANCE) {
+        if(getDistance() < 20) stopMotors(); else moveForward();
+    }
+}
+'@
+
+# Generate 20 Nodes with Original Code
+for ($i = 1; $i -le 20; $i++) {
+    $name = "Drone_$i"
+    $path = "$baseDir\$name"
+    if (!(Test-Path $path)) { New-Item -ItemType Directory -Path $path -Force }
+    $originalNodeCode.Replace("DRONE_X", $name) | Out-File -FilePath "$path\$name.ino" -Encoding utf8
+}
+
+Write-Host "[!] Original Drone Nodes Re-Staged." -ForegroundColor Green

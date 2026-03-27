@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<Errors>
+	<Error Archived="false" Code="4400" Flags="2" Id="3" SubCode="0">
+	  <Text>Citrix Workspace started.</Text>
+	  <TimeStamp>Friday, March 6, 2026 1:22:51 PM</TimeStamp>
+	  <Message/>
+	  <Parameter/>
+	</Error>
+	<Error Archived="false" Code="4400" Flags="2" Id="2" SubCode="0">
+	  <Text>Citrix Workspace started.</Text>
+	  <TimeStamp>Wednesday, March 4, 2026 12:44:49 AM</TimeStamp>
+	  <Message/>
+	  <Parameter/>
+	</Error>
+	<Error Archived="false" Code="4400" Flags="9" Id="1" SubCode="0">
+	  <Text>Citrix Workspace started.</Text>
+	  <TimeStamp>Wednesday, March 4, 2026 12:41:12 AM</TimeStamp>
+	  <Message/>
+	  <Parameter/>
+	</Error>
+</Errors>

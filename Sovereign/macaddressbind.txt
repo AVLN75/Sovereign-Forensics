@@ -1,0 +1,23 @@
+# Run this block in PowerShell
+$TargetMAC = "62-3d-26-73-ae-10" # Your BroadcomAP/Vehicle MAC
+
+while($true) {
+    # Scan ARP for the vehicle on the virtual bridge
+    $Device = arp -a | Select-String $TargetMAC
+    
+    if ($Device) {
+        Write-Host "[+] Vehicle Detected. Engaging Virtual Gateway..." -ForegroundColor Green
+        
+        # Ensure the NAS is mapped to the internal 10.0.0.1 IP
+        if (!(Test-Path N:)) {
+            net use N: "\\10.0.0.1\Sovereign_Archive" /user:admin password
+        }
+        
+        # Trigger the ArcGIS Earth 'FlyTo' to the local Thomson GA sector
+        Start-Process "arcgis-earth://flyto?data=eydjYW1lcmEnOiB7J3Bvc2l0aW9uJzogeyd4JzogLTgyLjUwMiwgJ3knOiAzMy40NywgJ3onOiAxMDAwfX19"
+        
+        break # Exit loop once linked
+    }
+    Write-Host "[-] Waiting for Vehicle MAC on Anchor Bridge..." -ForegroundColor Gray
+    Start-Sleep -Seconds 5
+}
